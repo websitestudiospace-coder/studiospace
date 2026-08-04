@@ -22,6 +22,8 @@ export default function Preloader() {
 
     const finish = () => {
       document.body.style.overflow = "";
+      window.__preloaderDone = true;
+      window.dispatchEvent(new Event("preloader:complete"));
       setVisible(false);
     };
 
@@ -100,7 +102,7 @@ export default function Preloader() {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[999] flex flex-col items-center justify-center gap-8"
+      className="fixed inset-0 z-[999] flex flex-col items-center justify-center gap-6"
       style={{ backgroundColor: CREAM }}
       role="presentation"
       aria-hidden="true"
