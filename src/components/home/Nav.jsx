@@ -64,10 +64,10 @@ export default function Nav() {
             <Link
               key={link.href}
               href={link.href}
-              className="group relative text-[11px] uppercase tracking-[0.15em]"
+              className="group relative text-[13px] uppercase tracking-[0.15em]"
               style={{
                 color: textColor,
-                fontFamily: "var(--font-inter)",
+                fontFamily: "var(--font-agatho)",
                 transition: "color 0.3s",
               }}
             >
@@ -83,11 +83,11 @@ export default function Nav() {
         <div className="hidden md:block">
           <Link
             href="/contact"
-            className="inline-block px-6 py-2.5 text-[11px] uppercase tracking-[0.15em] transition-opacity hover:opacity-90"
+            className="inline-block px-6 py-2.5 text-[13px] uppercase tracking-[0.15em] transition-opacity hover:opacity-90"
             style={{
               backgroundColor: MAROON,
               color: CREAM,
-              fontFamily: "var(--font-inter)",
+              fontFamily: "var(--font-agatho)",
             }}
           >
             Inquire
@@ -132,11 +132,11 @@ export default function Nav() {
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="border-b py-3 text-[12px] uppercase tracking-[0.15em]"
+              className="border-b py-3 text-[14px] uppercase tracking-[0.15em]"
               style={{
                 color: INK,
                 borderColor: "rgba(43,38,34,0.08)",
-                fontFamily: "var(--font-inter)",
+                fontFamily: "var(--font-agatho)",
               }}
             >
               {link.label}
@@ -145,11 +145,11 @@ export default function Nav() {
           <Link
             href="/contact"
             onClick={() => setMenuOpen(false)}
-            className="mt-4 inline-block px-6 py-3 text-center text-[11px] uppercase tracking-[0.15em]"
+            className="mt-4 inline-block px-6 py-3 text-center text-[13px] uppercase tracking-[0.15em]"
             style={{
               backgroundColor: MAROON,
               color: CREAM,
-              fontFamily: "var(--font-inter)",
+              fontFamily: "var(--font-agatho)",
             }}
           >
             Inquire

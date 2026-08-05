@@ -137,7 +137,7 @@ export default function Preloader() {
         <span
           ref={percentRef}
           className="text-[12px] uppercase tracking-[0.2em]"
-          style={{ color: INK, fontFamily: "var(--font-inter)" }}
+          style={{ color: INK, fontFamily: "var(--font-agatho)" }}
         >
           LOADING — 0%
         </span>

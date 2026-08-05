@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -119,8 +120,8 @@ export default function Hero() {
         className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2"
       >
         <span
-          className="text-[11px] uppercase tracking-[0.15em]"
-          style={{ color: CREAM, fontFamily: "var(--font-inter)" }}
+          className="text-[12px] uppercase tracking-[0.15em]"
+          style={{ color: CREAM, fontFamily: "var(--font-agatho)" }}
         >
           Scroll
         </span>
@@ -141,7 +142,7 @@ export default function Hero() {
 
       <div className="absolute inset-x-0 bottom-0 px-6 pb-16 md:px-14 md:pb-20">
         <div className="max-w-3xl">
-          <h1 className="mb-6" style={{ fontFamily: "var(--font-fraunces)" }}>
+          <h1 className="mb-6" style={{ fontFamily: "var(--font-juana)" }}>
             {HEADLINE_LINES.map((line, i) => (
               <span
                 key={line}
@@ -170,8 +171,8 @@ export default function Hero() {
 
           <p
             ref={subRef}
-            className="mb-8 max-w-md text-[13px] uppercase tracking-[0.15em]"
-            style={{ color: CREAM, fontFamily: "var(--font-inter)" }}
+            className="mb-8 max-w-md text-[15px] uppercase tracking-[0.15em]"
+            style={{ color: CREAM, fontFamily: "var(--font-corporate)" }}
           >
             Crafting warm, considered spaces where architecture and everyday
             life meet.
@@ -180,19 +181,19 @@ export default function Hero() {
           <div ref={ctaRef} className="flex flex-wrap items-center gap-6">
             <Link
               href="/projects"
-              className="px-7 py-3 text-[11px] uppercase tracking-[0.15em] transition-opacity hover:opacity-90"
+              className="px-7 py-3 text-[14px] uppercase tracking-[0.15em] transition-opacity hover:opacity-90"
               style={{
                 backgroundColor: MAROON,
                 color: CREAM,
-                fontFamily: "var(--font-inter)",
+                fontFamily: "var(--font-agatho)",
               }}
             >
               View Projects
             </Link>
             <Link
               href="/contact"
-              className="group inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.15em]"
-              style={{ color: CREAM, fontFamily: "var(--font-inter)" }}
+              className="group inline-flex items-center gap-2 text-[14px] uppercase tracking-[0.15em]"
+              style={{ color: CREAM, fontFamily: "var(--font-agatho)" }}
             >
               Begin Your Project
               <span className="transition-transform duration-300 group-hover:translate-x-1">
