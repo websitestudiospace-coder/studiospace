@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono, Inter, Fraunces } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Fraunces, Manrope } from "next/font/google";
 import localFont from "next/font/local";
 import Preloader from "@/components/Preloader";
 import "./globals.css";
@@ -23,20 +23,9 @@ const fraunces = Fraunces({
   subsets: ["latin"],
 });
 
-const juana = localFont({
-  src: [
-    {
-      path: "../fonts/juana-regular.otf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../fonts/juana-medium.otf",
-      weight: "500",
-      style: "normal",
-    },
-  ],
-  variable: "--font-juana",
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
 });
 
 const agatho = localFont({
@@ -44,13 +33,6 @@ const agatho = localFont({
   weight: "400",
   style: "normal",
   variable: "--font-agatho",
-});
-
-const corporate = localFont({
-  src: "../fonts/corporate-regular.otf",
-  weight: "400",
-  style: "normal",
-  variable: "--font-corporate",
 });
 
 export const metadata = {
@@ -62,9 +44,9 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${fraunces.variable} ${juana.variable} ${agatho.variable} ${corporate.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${fraunces.variable} ${manrope.variable} ${agatho.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-manrope">
         <Preloader />
         {children}
       </body>

@@ -45,7 +45,7 @@ export default function Nav() {
           href="/"
           className="relative z-10 shrink-0"
           style={{
-            filter: solid ? "none" : "drop-shadow(0 1px 6px rgba(0,0,0,0.35))",
+            filter: solid ? "none" : "brightness(0) invert(1)",
             transition: "filter 0.3s",
           }}
         >
@@ -64,7 +64,7 @@ export default function Nav() {
             <Link
               key={link.href}
               href={link.href}
-              className="group relative text-[13px] uppercase tracking-[0.15em]"
+              className="group relative text-[14px] uppercase tracking-[0.15em]"
               style={{
                 color: textColor,
                 fontFamily: "var(--font-agatho)",
@@ -83,7 +83,7 @@ export default function Nav() {
         <div className="hidden md:block">
           <Link
             href="/contact"
-            className="inline-block px-6 py-2.5 text-[13px] uppercase tracking-[0.15em] transition-opacity hover:opacity-90"
+            className="inline-block px-6 py-2.5 text-[14px] uppercase tracking-[0.15em] transition-opacity hover:opacity-90"
             style={{
               backgroundColor: MAROON,
               color: CREAM,

@@ -10,9 +10,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-juana: var(--font-juana), serif;
-  --font-agatho: var(--font-agatho), sans-serif;
-  --font-corporate: var(--font-corporate), sans-serif;
+  --font-agatho: var(--font-agatho), serif;
+  --font-manrope: var(--font-manrope), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
