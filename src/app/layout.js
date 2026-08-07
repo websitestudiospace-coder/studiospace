@@ -1,27 +1,8 @@
-import { Geist, Geist_Mono, Inter, Fraunces, Manrope } from "next/font/google";
+import { Manrope } from "next/font/google";
 import localFont from "next/font/local";
 import Preloader from "@/components/Preloader";
+import SmoothScroll from "@/components/SmoothScroll";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-});
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -44,11 +25,11 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${fraunces.variable} ${manrope.variable} ${agatho.variable} h-full antialiased`}
+      className={`${manrope.variable} ${agatho.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-manrope">
         <Preloader />
-        {children}
+        <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>
   );

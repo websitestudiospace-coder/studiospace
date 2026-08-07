@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -18,11 +18,36 @@ const LINKS = [
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 80);
-    onScroll();
+    lastScrollY.current = window.scrollY;
+    let ticking = false;
+
+    const update = () => {
+      const currentY = window.scrollY;
+      setScrolled(currentY > 80);
+
+      if (currentY > lastScrollY.current && currentY > 120) {
+        setHidden(true);
+      } else if (currentY < lastScrollY.current) {
+        setHidden(false);
+      }
+
+      lastScrollY.current = currentY;
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(update);
+        ticking = true;
+      }
+    };
+
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -32,12 +57,15 @@ export default function Nav() {
 
   return (
     <header
-      className="fixed top-0 left-0 z-[100] w-full transition-colors duration-300"
+      className="fixed top-0 left-0 z-[100] w-full"
       style={{
         backgroundColor: solid ? CREAM : "transparent",
         boxShadow: solid
           ? "0 1px 0 rgba(43,38,34,0.08), 0 4px 16px rgba(43,38,34,0.06)"
           : "none",
+        transform: hidden && !menuOpen ? "translateY(-100%)" : "translateY(0)",
+        transition:
+          "transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease",
       }}
     >
       <div className="mx-auto flex max-w-[1600px] items-center justify-between px-6 py-4 md:px-10">
