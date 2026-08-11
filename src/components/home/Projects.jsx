@@ -71,7 +71,7 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
               <div
                 className="absolute inset-0"
                 style={{
-                  background: `linear-gradient(135deg, ${INK} 0%, #5C5347 100%)`,
+                  background: `linear-gradient(135deg, ${INK} 0%, rgba(43,38,34,0.6) 100%)`,
                 }}
               />
             ) : (

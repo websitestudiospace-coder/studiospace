@@ -47,10 +47,19 @@ export default function Quote() {
   const q2Words = QUOTE_2.split(" ");
 
   useEffect(() => {
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    setSimple(reduceMotion);
+    // Matches About.jsx/Projects.jsx: the heavy scroll-jacked treatment is
+    // opted out on mobile as well as reduced-motion, both folding into the
+    // same "simple" static-stack fallback.
+    const mobileMql = window.matchMedia("(max-width: 767px)");
+    const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setSimple(mobileMql.matches || motionMql.matches);
+    update();
+    mobileMql.addEventListener("change", update);
+    motionMql.addEventListener("change", update);
+    return () => {
+      mobileMql.removeEventListener("change", update);
+      motionMql.removeEventListener("change", update);
+    };
   }, []);
 
   useEffect(() => {

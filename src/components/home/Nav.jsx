@@ -78,11 +78,12 @@ export default function Nav() {
           }}
         >
           <Image
-            src="/logos/logo.png" 
+            src="/logos/logo.png"
             alt="Studio Splace"
-            width={160}
+            width={165}
             height={40}
             className="h-10 w-auto"
+            style={{ width: "auto" }}
             priority
           />
         </Link>
@@ -95,7 +96,7 @@ export default function Nav() {
               className="group relative text-[14px] uppercase tracking-[0.15em]"
               style={{
                 color: textColor,
-                fontFamily: "var(--font-agatho)",
+                fontFamily: "var(--font-manrope)",
                 transition: "color 0.3s",
               }}
             >
@@ -115,7 +116,7 @@ export default function Nav() {
             style={{
               backgroundColor: MAROON,
               color: CREAM,
-              fontFamily: "var(--font-agatho)",
+              fontFamily: "var(--font-manrope)",
             }}
           >
             Inquire
@@ -164,7 +165,7 @@ export default function Nav() {
               style={{
                 color: INK,
                 borderColor: "rgba(43,38,34,0.08)",
-                fontFamily: "var(--font-agatho)",
+                fontFamily: "var(--font-manrope)",
               }}
             >
               {link.label}
@@ -177,7 +178,7 @@ export default function Nav() {
             style={{
               backgroundColor: MAROON,
               color: CREAM,
-              fontFamily: "var(--font-agatho)",
+              fontFamily: "var(--font-manrope)",
             }}
           >
             Inquire

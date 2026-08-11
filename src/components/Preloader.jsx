@@ -5,7 +5,7 @@ import Image from "next/image";
 import gsap from "gsap";
 
 const CREAM = "#F7EFE4";
-const TRACK = "#E5DCCB";
+const TRACK = "rgba(43,38,34,0.15)";
 const MAROON = "#6E1F24";
 const INK = "#2B2622";
 
@@ -137,7 +137,7 @@ export default function Preloader() {
         <span
           ref={percentRef}
           className="text-[12px] uppercase tracking-[0.2em]"
-          style={{ color: INK, fontFamily: "var(--font-agatho)" }}
+          style={{ color: INK, fontFamily: "var(--font-manrope)" }}
         >
           LOADING — 0%
         </span>

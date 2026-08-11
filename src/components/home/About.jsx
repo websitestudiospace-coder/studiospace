@@ -277,7 +277,7 @@ export default function About() {
             src="/images/about/about-hero.jpg"
             alt="Splace studio"
             fill
-            sizes="100vw"
+            sizes="50vw"
             className="object-cover"
           />
         </div>
