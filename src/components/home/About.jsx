@@ -29,7 +29,7 @@ function AboutCopy() {
         className="uppercase tracking-[0.2em] text-xs md:text-sm"
         style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.6 }}
       >
-        About Splace
+        About Studio SP_ACE
       </p>
       <h2
         className="mt-4"
@@ -48,7 +48,7 @@ function AboutCopy() {
         className="mt-6 text-sm md:text-base"
         style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
       >
-        Splace was founded on the belief that a home should be designed
+        Studio SP_ACE was founded on the belief that a home should be designed
         around the way you actually live in it. We work closely with every
         client, blending timeless materials with careful, considered detail
         to create spaces that feel warm, personal, and built to last.
@@ -127,7 +127,7 @@ export default function About() {
             trigger: outerRef.current,
             start: "top top",
             end: "bottom bottom",
-            scrub: 1,
+            scrub: true,
           },
         });
 
@@ -213,7 +213,7 @@ export default function About() {
         <div className="relative h-[50vh] w-full overflow-hidden">
           <Image
             src="/images/about/about-hero.jpg"
-            alt="Splace studio"
+            alt="Studio SP_ACE"
             fill
             sizes="100vw"
             className="object-cover grayscale"
@@ -235,7 +235,7 @@ export default function About() {
         <div className="relative h-[70vh] w-[55%] overflow-hidden">
           <Image
             src="/images/about/about-hero.jpg"
-            alt="Splace studio"
+            alt="Studio SP_ACE"
             fill
             sizes="55vw"
             className="object-cover grayscale"
@@ -275,7 +275,7 @@ export default function About() {
         >
           <Image
             src="/images/about/about-hero.jpg"
-            alt="Splace studio"
+            alt="Studio SP_ACE"
             fill
             sizes="50vw"
             className="object-cover"

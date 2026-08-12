@@ -14,9 +14,9 @@ const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
 const PROJECTS = [
-  { name: "The Modern Classical Home", image: "/images/projects/project-1.jpg" },
   { name: "The Modern Organic Home", image: "/images/projects/project-2.jpg" },
   { name: "The Neo Colonial Home", image: "/images/projects/project-3.jpg" },
+  { name: "The Modern Classical Home", image: "/images/projects/project-1.jpg" },
 ];
 
 // Heading + "See All" row. Part of the same pinned/scrubbed sequence as the

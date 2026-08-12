@@ -229,6 +229,7 @@ export default function Press() {
           className="text-center text-3xl md:text-4xl"
           style={{ fontFamily: "var(--font-agatho)", color: INK }}
         >
+          Studio{" "}
           <span style={{ fontStyle: "italic" }}>
             <InlineWordmark text="SP_ACE" />
           </span>{" "}

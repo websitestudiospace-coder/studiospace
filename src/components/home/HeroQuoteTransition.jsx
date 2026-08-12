@@ -32,11 +32,10 @@ export default function HeroQuoteTransition() {
     const ctx = gsap.context(() => {
       // heroPinRef is the ONLY pinned/transformed element this component
       // owns, and heroInnerRef (its transformed content) has no descendant
-      // with its own separate ScrollTrigger. Everything that used to sit
-      // directly below it -- Quote, and now Parallax too -- renders as a
-      // plain, untransformed sibling at the page.js level instead of being
-      // nested in here, so their own ScrollTriggers always measure against
-      // a stable ancestor.
+      // with its own separate ScrollTrigger. Quote, which used to sit
+      // directly below it, renders as a plain, untransformed sibling at the
+      // page.js level instead of being nested in here, so its own
+      // ScrollTrigger always measures against a stable ancestor.
       //
       // This is the fix for a bug that used to live here: Quote was once
       // wrapped in a div animated by this same pin's scrub. Because that
@@ -48,7 +47,7 @@ export default function HeroQuoteTransition() {
       // real scrolling -- the visible "bounce back" on the Hero handoff.
       // Keeping the pin's transform confined to content with no
       // independently-triggered descendants removes that failure mode
-      // entirely. See Parallax.jsx and page.js for the other half of this.
+      // entirely. See page.js for the other half of this.
       gsap.set(heroInnerRef.current, { scale: 1.15 });
       gsap.to(heroInnerRef.current, {
         yPercent: -8,

@@ -109,14 +109,18 @@ export default function Footer() {
       // the "right" value is what reveals the image left-to-right.
       gsap.set(wordmarkRef.current, { clipPath: "inset(0% 100% 0% 0%)" });
 
+      // scrub: 0.5 matches Instagram.jsx/Press.jsx's own viewport-entry
+      // reveals -- this used to be a fixed-duration one-shot play on entry,
+      // which read as a different "speed" than those two since it ignored
+      // how fast the page was actually being scrolled.
       gsap.to(wordmarkRef.current, {
         clipPath: "inset(0% 0% 0% 0%)",
-        duration: 1.1,
-        ease: "power2.inOut",
+        ease: "none",
         scrollTrigger: {
           trigger: wordmarkRef.current,
           start: "top 85%",
-          toggleActions: "play none none none",
+          end: "bottom 65%",
+          scrub: 0.5,
         },
       });
     }, sectionRef);
@@ -135,7 +139,7 @@ export default function Footer() {
                 World
               </span>
               <span className="block text-lg uppercase tracking-[0.05em] md:text-xl">
-                of <InlineWordmark text={WORDMARK} />
+                of Studio <InlineWordmark text={WORDMARK} />
               </span>
             </h3>
             <p
@@ -243,7 +247,7 @@ export default function Footer() {
             className="justify-self-center md:justify-self-end md:text-right"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
           >
-            © 2026 Studio Splace. All rights reserved.
+            © 2026 Studio SP_ACE. All rights reserved.
           </span>
         </div>
       </div>

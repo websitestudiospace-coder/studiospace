@@ -5,17 +5,14 @@ import Image from "next/image";
 import gsap from "gsap";
 
 const CREAM = "#F7EFE4";
-const TRACK = "rgba(43,38,34,0.15)";
-const MAROON = "#6E1F24";
-const INK = "#2B2622";
 
 export default function Preloader() {
   const [visible, setVisible] = useState(true);
   const overlayRef = useRef(null);
   const logoRef = useRef(null);
-  const barWrapRef = useRef(null);
-  const fillRef = useRef(null);
-  const percentRef = useRef(null);
+  // Not rendered — kept only so the exit is paced against a loading
+  // progress value, in case something later wants to read this out.
+  const progressRef = useRef(0);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -36,8 +33,7 @@ export default function Preloader() {
 
     if (reduceMotion) {
       gsap.set(logoRef.current, { opacity: 1, y: 0, filter: "blur(0px)" });
-      gsap.set(fillRef.current, { width: "100%" });
-      if (percentRef.current) percentRef.current.textContent = "LOADING — 100%";
+      progressRef.current = 1;
 
       reducedTimer = setTimeout(() => {
         gsap.to(overlayRef.current, {
@@ -63,22 +59,17 @@ export default function Preloader() {
         }
       )
         .fromTo(
-          fillRef.current,
-          { width: "0%" },
+          progressRef,
+          { current: 0 },
           {
-            width: "100%",
+            current: 1,
             duration: 1.8,
             ease: "power1.inOut",
-            onUpdate: function () {
-              if (!percentRef.current) return;
-              const pct = Math.round(this.progress() * 100);
-              percentRef.current.textContent = `LOADING — ${pct}%`;
-            },
           },
           ">-0.1"
         )
         .to({}, { duration: 0.3 })
-        .to([logoRef.current, barWrapRef.current], {
+        .to(logoRef.current, {
           opacity: 0,
           duration: 0.3,
           ease: "power2.in",
@@ -114,33 +105,13 @@ export default function Preloader() {
       >
         <Image
           src="/logos/logo.png"
-          alt="Studio Splace — Architecture | Interiors"
+          alt="Studio SP_ACE — Architecture | Interiors"
           width={1536}
           height={1024}
           preload
           sizes="(max-width: 640px) 220px, 400px"
           className="w-full h-auto"
         />
-      </div>
-
-      <div ref={barWrapRef} className="flex flex-col items-center gap-3">
-        <div
-          className="relative overflow-hidden rounded-full"
-          style={{ width: 200, height: 2, backgroundColor: TRACK }}
-        >
-          <div
-            ref={fillRef}
-            className="absolute left-0 top-0 h-full"
-            style={{ width: "0%", backgroundColor: MAROON }}
-          />
-        </div>
-        <span
-          ref={percentRef}
-          className="text-[12px] uppercase tracking-[0.2em]"
-          style={{ color: INK, fontFamily: "var(--font-manrope)" }}
-        >
-          LOADING — 0%
-        </span>
       </div>
     </div>
   );
