@@ -12,11 +12,11 @@ const LINKS = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
   { label: "Projects", href: "/projects" },
-  { label: "Media", href: "/media" },
+  { label: "Media", href: "/#press" },
   { label: "Contact Us", href: "/contact" },
 ];
 
-export default function Nav() {
+export default function Nav({ lightHero = false }) {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -75,7 +75,12 @@ export default function Nav() {
   // cream logo/text (same as the un-scrolled state) instead of switching
   // to the solid cream treatment, so it reads as one continuous ink
   // takeover rather than a cream bar sitting on top of an ink panel.
-  const solid = scrolled && !menuOpen;
+  // `lightHero` covers pages whose hero content is cream-on-cream from
+  // y=0 (e.g. About) -- unlike Home/Projects, which have a dark
+  // video/image hero for the un-scrolled cream text to sit on, those
+  // pages have nothing dark for cream text to read against until the
+  // user scrolls, so the solid/ink treatment applies from the start.
+  const solid = (scrolled || lightHero) && !menuOpen;
   const textColor = solid ? INK : CREAM;
 
   return (
@@ -92,7 +97,7 @@ export default function Nav() {
             "transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease",
         }}
       >
-        <div className="relative z-10 mx-auto flex max-w-[1600px] items-center justify-between px-6 py-4 md:px-10">
+        <div className="relative z-10 mx-auto flex max-w-[1600px] items-center justify-between px-6 py-4 md:px-16">
           <Link
             href="/"
             className="relative z-10 shrink-0"
@@ -126,7 +131,7 @@ export default function Nav() {
               >
                 {link.label}
                 <span
-                  className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 transition-transform duration-300 ease-out group-hover:scale-x-100"
+                  className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 transition-transform duration-200 ease-out group-hover:scale-x-100"
                   style={{ backgroundColor: textColor }}
                 />
               </Link>
@@ -136,7 +141,7 @@ export default function Nav() {
           <div className="hidden md:block">
             <Link
               href="/contact"
-              className="inline-block px-6 py-2.5 text-[14px] uppercase tracking-[0.15em] transition-opacity hover:opacity-90"
+              className="inline-block px-6 py-2.5 text-[14px] uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-90"
               style={{
                 backgroundColor: MAROON,
                 color: CREAM,

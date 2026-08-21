@@ -108,7 +108,7 @@ export default function Preloader() {
           alt="Studio SP_ACE — Architecture | Interiors"
           width={1536}
           height={1024}
-          preload
+          priority
           sizes="(max-width: 640px) 220px, 400px"
           className="w-full h-auto"
         />

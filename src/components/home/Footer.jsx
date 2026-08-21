@@ -28,7 +28,7 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
   { label: "Projects", href: "/projects" },
-  { label: "Media", href: "/media" },
+  { label: "Media", href: "/#press" },
   { label: "Contact Us", href: "/contact" },
 ];
 
@@ -87,8 +87,147 @@ function FormField({ label, ...inputProps }) {
   );
 }
 
+function SignupBlock({ blockRef }) {
+  return (
+    <div ref={blockRef} className="col-span-2 md:col-span-1">
+      <h3 style={{ fontFamily: "var(--font-agatho)", color: CREAM }} className="leading-none">
+        <span className="block text-lg uppercase tracking-[0.05em] md:text-xl">Join the</span>
+        <span className="block text-6xl uppercase md:text-7xl" style={{ lineHeight: 0.95 }}>
+          World
+        </span>
+        <span className="block text-lg uppercase tracking-[0.05em] md:text-xl">
+          of Studio <InlineWordmark text={WORDMARK} />
+        </span>
+      </h3>
+      <p
+        className="mt-4 max-w-xs text-sm"
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.6 }}
+      >
+        Subscribe to join our community and stay up to date with the studio.
+      </p>
+
+      <form className="mt-8 w-full max-w-sm">
+        <div className="grid grid-cols-2 gap-6">
+          <FormField label="First Name" type="text" name="firstName" autoComplete="given-name" />
+          <FormField label="Last Name" type="text" name="lastName" autoComplete="family-name" />
+        </div>
+
+        <div className="relative mt-6 max-w-xs">
+          <FormField label="Email" type="email" name="email" autoComplete="email" />
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0 bottom-3"
+          >
+            <path d="M1 1L11 6L1 11V1Z" fill={CREAM} />
+          </svg>
+        </div>
+
+        <button
+          type="submit"
+          className="mt-8 inline-block border-b pb-1 text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70"
+          style={{ borderColor: CREAM, color: CREAM, fontFamily: "var(--font-manrope)" }}
+        >
+          Submit Form
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function LinksColumns({ navRef, socialRef }) {
+  return (
+    <>
+      <nav ref={navRef} className="flex flex-col items-start gap-3">
+        {NAV_LINKS.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
+            style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+
+      <div ref={socialRef} className="flex flex-col items-start gap-3">
+        {SOCIAL_LINKS.map((link) => (
+          <a
+            key={link.href}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
+            style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
+          >
+            {link.label}
+          </a>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function Wordmark({ wordmarkRef }) {
+  return (
+    <div className="mt-8 flex w-full justify-center md:mt-24">
+      <div
+        ref={wordmarkRef}
+        className="relative w-[79.2%]"
+        style={{ aspectRatio: LOGO_ASPECT_RATIO }}
+      >
+        <Image
+          src="/logos/logo.png"
+          alt="SP_ACE"
+          fill
+          sizes="(max-width: 768px) 90vw, 1300px"
+          className="object-contain"
+          style={{ filter: CREAM_LOGO_FILTER }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function LegalRow() {
+  return (
+    <div
+      className="mt-6 grid grid-cols-1 gap-3 border-t py-4 text-center text-[11px] uppercase tracking-[0.15em] md:mt-10 md:grid-cols-3 md:gap-4 md:py-6 md:text-left"
+      style={{ borderColor: "rgba(247, 239, 228, 0.15)" }}
+    >
+      <Link
+        href="/terms"
+        className="justify-self-center md:justify-self-start"
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+      >
+        Terms of Service
+      </Link>
+      <Link
+        href="/privacy"
+        className="justify-self-center"
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+      >
+        Privacy Policy
+      </Link>
+      <span
+        className="justify-self-center md:justify-self-end md:text-right"
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+      >
+        © 2026 Studio SP_ACE. All rights reserved.
+      </span>
+    </div>
+  );
+}
+
 export default function Footer() {
   const sectionRef = useRef(null);
+  const signupRef = useRef(null);
+  const navRef = useRef(null);
+  const socialRef = useRef(null);
   const wordmarkRef = useRef(null);
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -103,153 +242,72 @@ export default function Footer() {
   useEffect(() => {
     if (reduceMotion) return;
 
-    const ctx = gsap.context(() => {
-      // Left-to-right wipe: clip the right edge in from 100% down to 0%.
-      // clip-path's inset() args are top/right/bottom/left, so animating
-      // the "right" value is what reveals the image left-to-right.
-      gsap.set(wordmarkRef.current, { clipPath: "inset(0% 100% 0% 0%)" });
+    // One-shot reveal (not scroll-scrubbed): Footer doesn't need to feel
+    // scroll-locked, so it just plays once as it enters the viewport. Still
+    // waits for "preloader:complete" since "top 80%" is calculated against
+    // this section's own position, which depends on every section above it
+    // already being in its final, settled layout.
+    let ctx;
 
-      // scrub: 0.5 matches Instagram.jsx/Press.jsx's own viewport-entry
-      // reveals -- this used to be a fixed-duration one-shot play on entry,
-      // which read as a different "speed" than those two since it ignored
-      // how fast the page was actually being scrolled.
-      gsap.to(wordmarkRef.current, {
-        clipPath: "inset(0% 0% 0% 0%)",
-        ease: "none",
-        scrollTrigger: {
-          trigger: wordmarkRef.current,
-          start: "top 85%",
-          end: "bottom 65%",
-          scrub: 0.5,
-        },
-      });
-    }, sectionRef);
+    const setup = () => {
+      ctx = gsap.context(() => {
+        // ONE consolidated timeline: signup block first, then the nav/social
+        // link columns together, then the wordmark wipes in -- same
+        // single-timeline rule as every other section (no separate triggers
+        // per piece).
+        gsap.set(signupRef.current, { opacity: 0, y: 24 });
+        gsap.set([navRef.current, socialRef.current], { opacity: 0, y: 24 });
+        gsap.set(wordmarkRef.current, { clipPath: "inset(0% 100% 0% 0%)" });
 
-    return () => ctx.revert();
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 80%",
+            toggleActions: "play none none none",
+          },
+        });
+
+        tl.to(signupRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
+        tl.to(
+          [navRef.current, socialRef.current],
+          { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+          0.15
+        );
+        // Left-to-right wipe: clip the right edge in from 100% down to 0%.
+        // clip-path's inset() args are top/right/bottom/left, so animating
+        // the "right" value is what reveals the image left-to-right.
+        tl.to(
+          wordmarkRef.current,
+          { clipPath: "inset(0% 0% 0% 0%)", ease: "power3.out", duration: 0.7 },
+          0.35
+        );
+      }, sectionRef);
+    };
+
+    if (window.__preloaderDone) {
+      setup();
+    } else {
+      window.addEventListener("preloader:complete", setup, { once: true });
+    }
+
+    return () => {
+      ctx?.revert();
+      window.removeEventListener("preloader:complete", setup);
+    };
   }, [reduceMotion]);
 
   return (
-    <footer ref={sectionRef} className="w-full" style={{ backgroundColor: INK }}>
+    <footer id="footer" ref={sectionRef} className="w-full" style={{ backgroundColor: INK }}>
       <div className="mx-auto w-full max-w-[1600px] px-6 pt-16 md:px-16 md:pt-24">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-8">
-          <div>
-            <h3 style={{ fontFamily: "var(--font-agatho)", color: CREAM }} className="leading-none">
-              <span className="block text-lg uppercase tracking-[0.05em] md:text-xl">Join the</span>
-              <span className="block text-6xl uppercase md:text-7xl" style={{ lineHeight: 0.95 }}>
-                World
-              </span>
-              <span className="block text-lg uppercase tracking-[0.05em] md:text-xl">
-                of Studio <InlineWordmark text={WORDMARK} />
-              </span>
-            </h3>
-            <p
-              className="mt-4 max-w-xs text-sm"
-              style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.6 }}
-            >
-              Subscribe to join our community and stay up to date with the studio.
-            </p>
-
-            <form className="mt-8 w-full max-w-sm">
-              <div className="grid grid-cols-2 gap-6">
-                <FormField label="First Name" type="text" name="firstName" autoComplete="given-name" />
-                <FormField label="Last Name" type="text" name="lastName" autoComplete="family-name" />
-              </div>
-
-              <div className="relative mt-6 max-w-xs">
-                <FormField label="Email" type="email" name="email" autoComplete="email" />
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  aria-hidden="true"
-                  className="pointer-events-none absolute right-0 bottom-3"
-                >
-                  <path d="M1 1L11 6L1 11V1Z" fill={CREAM} />
-                </svg>
-              </div>
-
-              <button
-                type="submit"
-                className="mt-8 inline-block border-b pb-1 text-xs uppercase tracking-[0.15em] transition-opacity duration-300 hover:opacity-70"
-                style={{ borderColor: CREAM, color: CREAM, fontFamily: "var(--font-manrope)" }}
-              >
-                Submit Form
-              </button>
-            </form>
-          </div>
-
-          <nav className="flex flex-col items-start gap-3">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-xs uppercase tracking-[0.15em] transition-opacity duration-300 hover:opacity-70 md:text-sm"
-                style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex flex-col items-start gap-3">
-            {SOCIAL_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs uppercase tracking-[0.15em] transition-opacity duration-300 hover:opacity-70 md:text-sm"
-                style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
+        {/* grid-cols-2 (not -1) at mobile, with the signup block spanning
+            both columns, so the nav/social columns share a row instead of
+            each getting their own full-width stack. */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-3 md:gap-8">
+          <SignupBlock blockRef={signupRef} />
+          <LinksColumns navRef={navRef} socialRef={socialRef} />
         </div>
-
-        <div className="mt-16 flex w-full justify-center md:mt-24">
-          <div
-            ref={wordmarkRef}
-            className="relative w-[79.2%]"
-            style={{ aspectRatio: LOGO_ASPECT_RATIO }}
-          >
-            <Image
-              src="/logos/logo.png"
-              alt="SP_ACE"
-              fill
-              sizes="(max-width: 768px) 90vw, 1300px"
-              className="object-contain"
-              style={{ filter: CREAM_LOGO_FILTER }}
-            />
-          </div>
-        </div>
-
-        <div
-          className="mt-10 grid grid-cols-1 gap-3 border-t py-6 text-center text-[11px] uppercase tracking-[0.15em] md:grid-cols-3 md:gap-4 md:text-left"
-          style={{ borderColor: "rgba(247, 239, 228, 0.15)" }}
-        >
-          <Link
-            href="/terms"
-            className="justify-self-center md:justify-self-start"
-            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
-          >
-            Terms of Service
-          </Link>
-          <Link
-            href="/privacy"
-            className="justify-self-center"
-            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
-          >
-            Privacy Policy
-          </Link>
-          <span
-            className="justify-self-center md:justify-self-end md:text-right"
-            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
-          >
-            © 2026 Studio SP_ACE. All rights reserved.
-          </span>
-        </div>
+        <Wordmark wordmarkRef={wordmarkRef} />
+        <LegalRow />
       </div>
     </footer>
   );

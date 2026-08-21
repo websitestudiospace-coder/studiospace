@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# raw/uncompressed source media awaiting compression -- never deploy these
+/media-source/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

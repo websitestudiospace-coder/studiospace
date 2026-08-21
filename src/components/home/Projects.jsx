@@ -28,9 +28,9 @@ function ProjectsHeader({ headingRef, seeAllRef }) {
     <div className="mb-10 flex w-full flex-col items-start justify-between gap-4 md:mb-16 md:flex-row md:items-end">
       <h2
         ref={headingRef}
+        className="text-[32px] md:text-[48px]"
         style={{
           fontFamily: "var(--font-agatho)",
-          fontSize: "clamp(32px, 5vw, 56px)",
           lineHeight: 1.1,
           color: INK,
         }}
@@ -43,7 +43,7 @@ function ProjectsHeader({ headingRef, seeAllRef }) {
         className="group inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] md:text-sm"
         style={{ fontFamily: "var(--font-manrope)", color: INK }}
       >
-        <span className="border-b border-transparent pb-1 transition-colors duration-300 group-hover:border-current">
+        <span className="border-b border-transparent pb-1 transition-colors duration-200 ease-out group-hover:border-current">
           See All
         </span>
         <span aria-hidden="true">→</span>
@@ -57,7 +57,13 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+      {/* grid-cols-2 (not -1) at mobile: the pinned/enhanced render below
+          holds this inside a fixed h-screen sticky viewport with
+          overflow-hidden -- three cards single-column-stacked would be
+          taller than one screen and get clipped, since there's no room to
+          scroll within the pin itself. Two columns keeps the whole grid to
+          two rows, which fits. */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-8">
         {PROJECTS.map((project, i) => (
           <Link
             key={project.name}
@@ -80,7 +86,7 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
                 alt={project.name}
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                className="object-cover transition-transform duration-200 ease-out group-hover:scale-[1.03]"
                 onError={() =>
                   setFailedImages((prev) => new Set(prev).add(i))
                 }
@@ -105,7 +111,7 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
         {/* TODO: replace with popup form once fields are finalized */}
         <Link
           href="/contact"
-          className="inline-block rounded-full px-4 py-2 text-xs transition-opacity duration-300 hover:opacity-70"
+          className="inline-block rounded-full px-4 py-2 text-xs transition-opacity duration-200 ease-out hover:opacity-70"
           style={{
             fontFamily: "var(--font-manrope)",
             color: INK,
@@ -126,25 +132,19 @@ export default function Projects() {
   const seeAllRef = useRef(null);
   const cardRefs = useRef([]);
   const ctaRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    const mobileMql = window.matchMedia("(max-width: 767px)");
     const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updateMobile = () => setIsMobile(mobileMql.matches);
-    const updateMotion = () => setReduceMotion(motionMql.matches);
-    updateMobile();
-    updateMotion();
-    mobileMql.addEventListener("change", updateMobile);
-    motionMql.addEventListener("change", updateMotion);
-    return () => {
-      mobileMql.removeEventListener("change", updateMobile);
-      motionMql.removeEventListener("change", updateMotion);
-    };
+    const update = () => setReduceMotion(motionMql.matches);
+    update();
+    motionMql.addEventListener("change", update);
+    return () => motionMql.removeEventListener("change", update);
   }, []);
 
-  const enhanced = !isMobile && !reduceMotion;
+  // The pinned/scrubbed sequence below now runs at every viewport width --
+  // only prefers-reduced-motion opts out, not device/screen size.
+  const enhanced = !reduceMotion;
 
   useEffect(() => {
     if (!enhanced) return;
@@ -196,42 +196,42 @@ export default function Projects() {
         // 0%-16.7%: "Our Projects" heading reveals.
         tl.to(
           headingRef.current,
-          { opacity: 1, y: 0, ease: "none", duration: STEP },
+          { opacity: 1, y: 0, ease: "power2.out", duration: STEP },
           0 * STEP
         );
 
         // 16.7%-33.3%: "See All" link reveals.
         tl.to(
           seeAllRef.current,
-          { opacity: 1, y: 0, ease: "none", duration: STEP },
+          { opacity: 1, y: 0, ease: "power2.out", duration: STEP },
           1 * STEP
         );
 
         // 33.3%-50%: Card 1 settles.
         tl.to(
           cards[0],
-          { scale: 1, opacity: 1, y: 0, ease: "none", duration: STEP },
+          { scale: 1, opacity: 1, y: 0, ease: "power2.out", duration: STEP },
           2 * STEP
         );
 
         // 50%-66.7%: Card 2 settles.
         tl.to(
           cards[1],
-          { scale: 1, opacity: 1, y: 0, ease: "none", duration: STEP },
+          { scale: 1, opacity: 1, y: 0, ease: "power2.out", duration: STEP },
           3 * STEP
         );
 
         // 66.7%-83.3%: Card 3 settles.
         tl.to(
           cards[2],
-          { scale: 1, opacity: 1, y: 0, ease: "none", duration: STEP },
+          { scale: 1, opacity: 1, y: 0, ease: "power2.out", duration: STEP },
           4 * STEP
         );
 
         // 83.3%-100%: CTA pill reveals.
         tl.to(
           ctaRef.current,
-          { opacity: 1, y: 0, ease: "none", duration: STEP },
+          { opacity: 1, y: 0, ease: "power2.out", duration: STEP },
           5 * STEP
         );
       }, sectionRef);
@@ -264,7 +264,7 @@ export default function Projects() {
   }
 
   return (
-    <section ref={sectionRef} className="relative w-full" style={{ height: "400vh" }}>
+    <section ref={sectionRef} className="relative w-full" style={{ height: "200vh" }}>
       <div
         className="sticky top-0 flex h-screen w-full flex-col justify-center overflow-hidden px-6 md:px-16"
         style={{ backgroundColor: CREAM }}

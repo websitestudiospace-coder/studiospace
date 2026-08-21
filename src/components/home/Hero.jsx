@@ -2,13 +2,17 @@ export default function Hero() {
   return (
     <section className="relative h-[100svh] w-full overflow-hidden">
       <video
-        src="/videos/hero-video.mp4"
+        poster="/images/hero/poster.jpg"
         autoPlay
         loop
         muted
         playsInline
+        preload="none"
         className="absolute inset-0 h-full w-full object-cover"
-      />
+      >
+        <source src="/videos/hero-video-hevc.mp4" type="video/mp4; codecs=hvc1" />
+        <source src="/videos/hero-video-h264.mp4" type="video/mp4" />
+      </video>
 
       <div className="absolute top-0 left-0 h-[250px] w-full bg-gradient-to-b from-black/50 via-black/20 to-transparent" />
     </section>

@@ -94,6 +94,113 @@ function InstagramGlyph() {
   );
 }
 
+function ProfileRow({ profileRef, avatarFailed, setAvatarFailed }) {
+  return (
+    <div ref={profileRef} className="flex items-center gap-4">
+      <div
+        className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full md:h-16 md:w-16"
+        style={{ backgroundColor: INK }}
+      >
+        {!avatarFailed && (
+          <Image
+            src="/images/instagram/avatar.jpg"
+            alt={`@${HANDLE}`}
+            fill
+            sizes="64px"
+            className="object-cover"
+            onError={() => setAvatarFailed(true)}
+          />
+        )}
+      </div>
+      <span
+        className="text-base md:text-lg"
+        style={{ fontFamily: "var(--font-manrope)", color: INK }}
+      >
+        @<InlineHandle text={HANDLE} />
+      </span>
+    </div>
+  );
+}
+
+function PostGrid({ gridWrapRef, gridRefs, colorLayerRefs, canHover }) {
+  return (
+    <div
+      ref={gridWrapRef}
+      className="relative mt-8 grid grid-cols-2 gap-2 md:mt-10 md:grid-cols-4 md:gap-4"
+    >
+      {POSTS.map((post, i) => (
+        <a
+          key={post.image}
+          href={INSTAGRAM_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          ref={(el) => {
+            if (gridRefs) gridRefs.current[i] = el;
+          }}
+          className="group relative block aspect-square w-full overflow-hidden rounded-[6px]"
+        >
+          <div className="absolute inset-0 transition-transform duration-200 ease-out group-hover:scale-[1.04]">
+            <Image
+              src={post.image}
+              alt={`${HANDLE} Instagram post ${i + 1}`}
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-cover"
+              style={canHover ? { filter: "grayscale(1) brightness(0.78)" } : undefined}
+            />
+            {canHover && (
+              <div
+                ref={(el) => {
+                  if (colorLayerRefs) colorLayerRefs.current[i] = el;
+                }}
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  "--x": "-9999px",
+                  "--y": "-9999px",
+                  "--r": "0px",
+                  clipPath: "circle(var(--r) at var(--x) var(--y))",
+                  WebkitClipPath: "circle(var(--r) at var(--x) var(--y))",
+                }}
+              >
+                <Image
+                  src={post.image}
+                  alt=""
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover"
+                />
+              </div>
+            )}
+          </div>
+          {post.isCarousel && <CarouselIcon />}
+          {post.isVideo && <PlayIcon />}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function FollowButton({ followRef, transitionReady }) {
+  return (
+    <div className="mt-10 flex justify-center md:mt-14">
+      <a
+        ref={followRef}
+        href={INSTAGRAM_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-xs uppercase leading-[1.4] tracking-[0.15em] hover:opacity-80 ${
+          transitionReady ? "transition-opacity duration-200 ease-out" : ""
+        }`}
+        style={{ backgroundColor: INK, color: CREAM, fontFamily: "var(--font-manrope)" }}
+      >
+        <InstagramGlyph />
+        Follow on Instagram
+      </a>
+    </div>
+  );
+}
+
 export default function Instagram() {
   const sectionRef = useRef(null);
   const profileRef = useRef(null);
@@ -105,6 +212,7 @@ export default function Instagram() {
   const [avatarFailed, setAvatarFailed] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [canHover, setCanHover] = useState(false);
+  const [entranceDone, setEntranceDone] = useState(false);
 
   useEffect(() => {
     const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -133,7 +241,10 @@ export default function Instagram() {
   // from the actual card width so it stays proportional whether the grid is
   // 2- or 4-columns.
   useEffect(() => {
-    if (!canHover) return;
+    // No entrance timeline plays in the reduced-motion fallback (items are
+    // rendered already-settled), so there's nothing for the spotlight to
+    // wait on there.
+    if (!canHover || !(entranceDone || reduceMotion)) return;
     const wrap = gridWrapRef.current;
     const layers = colorLayerRefs.current.filter(Boolean);
     if (!wrap || layers.length === 0) return;
@@ -178,7 +289,7 @@ export default function Instagram() {
       handleMove(e);
       gsap.to(layers, {
         "--r": `${radiusRef.current}px`,
-        duration: 0.3,
+        duration: 0.2,
         ease: "power2.out",
         overwrite: true,
       });
@@ -187,9 +298,19 @@ export default function Instagram() {
     const handleLeave = () => {
       gsap.to(layers, {
         "--r": "0px",
-        duration: 0.5,
+        duration: 0.2,
         ease: "power2.out",
         overwrite: true,
+        onComplete: () => {
+          // Belt-and-suspenders: with --r back at 0 the circle is already
+          // invisible regardless of --x/--y, but snap the position fully
+          // off-canvas too so there's no leftover coordinate sitting on the
+          // element between hovers.
+          setters.forEach(({ setX, setY }) => {
+            setX(-9999);
+            setY(-9999);
+          });
+        },
       });
     };
 
@@ -204,49 +325,77 @@ export default function Instagram() {
       wrap.removeEventListener("pointerleave", handleLeave);
       gsap.killTweensOf(layers);
     };
-  }, [canHover]);
+  }, [canHover, entranceDone, reduceMotion]);
+
+  // No GSAP entrance runs under reduced motion, so nothing else will ever
+  // flip this -- flip it immediately so the Follow button still gets its
+  // hover transition (see FollowButton's transitionReady prop).
+  useEffect(() => {
+    if (reduceMotion) setEntranceDone(true);
+  }, [reduceMotion]);
 
   useEffect(() => {
     if (reduceMotion) return;
 
-    const ctx = gsap.context(() => {
+    // One-shot reveal (not scroll-scrubbed): this section doesn't need to
+    // feel scroll-locked, so it just plays once as it enters the viewport.
+    // Still waits for "preloader:complete" since "top 80%" is calculated
+    // against this section's own position, which depends on every section
+    // above it already being in its final, settled layout.
+    let ctx;
+
+    const setup = () => {
       const items = gridRefs.current.filter(Boolean);
 
-      // ONE consolidated timeline on the section's own scroll range: profile
-      // row first, then the 8 grid items stagger left-to-right/top-to-bottom,
-      // then the Follow button -- mirrors the single-timeline rule used by
-      // Projects/Footer instead of giving each piece its own ScrollTrigger.
-      gsap.set(profileRef.current, { opacity: 0, y: 24 });
-      gsap.set(items, { opacity: 0, y: 24 });
-      gsap.set(followRef.current, { opacity: 0, y: 24 });
+      ctx = gsap.context(() => {
+        gsap.set(profileRef.current, { opacity: 0, y: 24, willChange: "opacity, transform" });
+        gsap.set(items, { opacity: 0, y: 24, willChange: "opacity, transform" });
+        gsap.set(followRef.current, { opacity: 0, y: 24, willChange: "opacity, transform" });
 
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 80%",
-          end: "bottom 65%",
-          scrub: 0.5,
-        },
-      });
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 80%",
+            toggleActions: "play none none none",
+          },
+          onComplete: () => {
+            gsap.set([profileRef.current, ...items, followRef.current], {
+              opacity: 1,
+              y: 0,
+              willChange: "auto",
+            });
+            // Spotlight hover is gated behind this: the grid should only
+            // show its plain fade+translateY entrance (no interaction
+            // layered on top) until every post has actually finished
+            // entering.
+            setEntranceDone(true);
+          },
+        });
 
-      tl.to(profileRef.current, { opacity: 1, y: 0, duration: 0.4, ease: "none" }, 0);
-
-      items.forEach((item, i) => {
+        tl.to(profileRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
         tl.to(
-          item,
-          { opacity: 1, y: 0, duration: 0.3, ease: "none" },
-          0.3 + i * 0.07
+          items,
+          { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.06 },
+          0.1
         );
-      });
+        tl.to(
+          followRef.current,
+          { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
+          0.1 + items.length * 0.06
+        );
+      }, sectionRef);
+    };
 
-      tl.to(
-        followRef.current,
-        { opacity: 1, y: 0, duration: 0.4, ease: "none" },
-        0.3 + items.length * 0.07 + 0.15
-      );
-    }, sectionRef);
+    if (window.__preloaderDone) {
+      setup();
+    } else {
+      window.addEventListener("preloader:complete", setup, { once: true });
+    }
 
-    return () => ctx.revert();
+    return () => {
+      ctx?.revert();
+      window.removeEventListener("preloader:complete", setup);
+    };
   }, [reduceMotion]);
 
   return (
@@ -256,98 +405,18 @@ export default function Instagram() {
       style={{ backgroundColor: CREAM }}
     >
       <div className="mx-auto w-full max-w-[1100px]">
-        <div ref={profileRef} className="flex items-center gap-4">
-          <div
-            className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full md:h-16 md:w-16"
-            style={{ backgroundColor: INK }}
-          >
-            {!avatarFailed && (
-              <Image
-                src="/images/instagram/avatar.jpg"
-                alt={`@${HANDLE}`}
-                fill
-                sizes="64px"
-                className="object-cover"
-                onError={() => setAvatarFailed(true)}
-              />
-            )}
-          </div>
-          <span
-            className="text-base md:text-lg"
-            style={{ fontFamily: "var(--font-manrope)", color: INK }}
-          >
-            @<InlineHandle text={HANDLE} />
-          </span>
-        </div>
-
-        <div
-          ref={gridWrapRef}
-          className="relative mt-8 grid grid-cols-2 gap-2 md:mt-10 md:grid-cols-4 md:gap-4"
-        >
-          {POSTS.map((post, i) => (
-            <a
-              key={post.image}
-              href={INSTAGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              ref={(el) => {
-                gridRefs.current[i] = el;
-              }}
-              className="group relative block aspect-square w-full overflow-hidden rounded-[6px]"
-            >
-              <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-[1.04]">
-                <Image
-                  src={post.image}
-                  alt={`${HANDLE} Instagram post ${i + 1}`}
-                  fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                  className="object-cover"
-                  style={canHover ? { filter: "grayscale(1) brightness(0.78)" } : undefined}
-                />
-                {canHover && (
-                  <div
-                    ref={(el) => {
-                      colorLayerRefs.current[i] = el;
-                    }}
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      "--x": "0px",
-                      "--y": "0px",
-                      "--r": "0px",
-                      clipPath: "circle(var(--r) at var(--x) var(--y))",
-                      WebkitClipPath: "circle(var(--r) at var(--x) var(--y))",
-                    }}
-                  >
-                    <Image
-                      src={post.image}
-                      alt=""
-                      fill
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-              </div>
-              {post.isCarousel && <CarouselIcon />}
-              {post.isVideo && <PlayIcon />}
-            </a>
-          ))}
-        </div>
-
-        <div className="mt-10 flex justify-center md:mt-14">
-          <a
-            ref={followRef}
-            href={INSTAGRAM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-xs uppercase tracking-[0.15em] transition-opacity duration-300 hover:opacity-80"
-            style={{ backgroundColor: INK, color: CREAM, fontFamily: "var(--font-manrope)" }}
-          >
-            <InstagramGlyph />
-            Follow on Instagram
-          </a>
-        </div>
+        <ProfileRow
+          profileRef={profileRef}
+          avatarFailed={avatarFailed}
+          setAvatarFailed={setAvatarFailed}
+        />
+        <PostGrid
+          gridWrapRef={gridWrapRef}
+          gridRefs={gridRefs}
+          colorLayerRefs={colorLayerRefs}
+          canHover={canHover}
+        />
+        <FollowButton followRef={followRef} transitionReady={entranceDone} />
       </div>
     </section>
   );

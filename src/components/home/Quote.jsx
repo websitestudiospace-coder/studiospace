@@ -11,7 +11,7 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 const MUTED_OPACITY = 0.32;
-const FONT_SIZE = "clamp(32px, 5.5vw, 64px)";
+const HEADING_SIZE_CLASS = "text-[36px] md:text-[64px]";
 const LINE_HEIGHT = 1.18;
 
 const QUOTE_1 =
@@ -47,19 +47,13 @@ export default function Quote() {
   const q2Words = QUOTE_2.split(" ");
 
   useEffect(() => {
-    // Matches About.jsx/Projects.jsx: the heavy scroll-jacked treatment is
-    // opted out on mobile as well as reduced-motion, both folding into the
-    // same "simple" static-stack fallback.
-    const mobileMql = window.matchMedia("(max-width: 767px)");
+    // The pinned/scrubbed sequence below now runs at every viewport width --
+    // only prefers-reduced-motion opts out, not device/screen size.
     const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setSimple(mobileMql.matches || motionMql.matches);
+    const update = () => setSimple(motionMql.matches);
     update();
-    mobileMql.addEventListener("change", update);
     motionMql.addEventListener("change", update);
-    return () => {
-      mobileMql.removeEventListener("change", update);
-      motionMql.removeEventListener("change", update);
-    };
+    return () => motionMql.removeEventListener("change", update);
   }, []);
 
   useEffect(() => {
@@ -93,7 +87,7 @@ export default function Quote() {
       gsap.to(wrapperRef.current, {
         opacity: 1,
         scale: 1,
-        ease: "none",
+        ease: "power2.out",
         scrollTrigger: {
           trigger: wrapperRef.current,
           start: "top bottom",
@@ -121,7 +115,7 @@ export default function Quote() {
           color: INK,
           duration: 0.6,
           stagger: 0.05,
-          ease: "none",
+          ease: "power2.out",
         });
       });
 
@@ -136,13 +130,13 @@ export default function Quote() {
           color: INK,
           duration: 0.6,
           stagger: 0.05,
-          ease: "none",
+          ease: "power2.out",
         });
       });
       const recedeDuration = tl.duration() - recedeStart;
       tl.to(
         quote1Ref.current,
-        { yPercent: -15, ease: "none", duration: recedeDuration },
+        { yPercent: -15, ease: "power2.out", duration: recedeDuration },
         recedeStart
       );
 
@@ -171,7 +165,7 @@ export default function Quote() {
         scaleX: 1,
         duration: 4.5,
         stagger: 0.03,
-        ease: "back.inOut(2)",
+        ease: "power2.out",
       });
       const riseDuration = tl.duration() - riseStart;
       tl.to(
@@ -179,6 +173,14 @@ export default function Quote() {
         { yPercent: 0, ease: "power2.out", duration: riseDuration },
         riseStart
       );
+
+      // Hold — Quote 2 stays settled and centered on screen for a beat
+      // before the pin releases. Without this, the settle tween's end
+      // coincided exactly with the pin's release, so the line was only ever
+      // centered for a single frame before it started scrolling away like
+      // ordinary content -- reading as "stuck" near the top edge with empty
+      // space beneath rather than as an intentionally placed statement.
+      tl.to({}, { duration: 1.5 });
     }, wrapperRef);
 
     return () => ctx.revert();
@@ -187,31 +189,34 @@ export default function Quote() {
   if (simple) {
     return (
       <section style={{ backgroundColor: CREAM }}>
-        {[QUOTE_1, QUOTE_2].map((quote, i) => (
-          <div
-            key={i}
-            className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center md:px-16"
-          >
-            <p
-              className="w-full max-w-[1400px] uppercase text-center"
-              style={{
-                fontFamily: "var(--font-agatho)",
-                fontSize: FONT_SIZE,
-                lineHeight: LINE_HEIGHT,
-                color: INK,
-                textAlign: "center",
-              }}
+        {[QUOTE_1, QUOTE_2].map((quote, i) => {
+          const Tag = i === 0 ? "h1" : "h2";
+          return (
+            <div
+              key={i}
+              className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center md:px-16"
             >
-              {quote}
-            </p>
-          </div>
-        ))}
+              <Tag
+                className={`w-full max-w-[1400px] uppercase text-center ${HEADING_SIZE_CLASS}`}
+                style={{
+                  fontFamily: "var(--font-agatho)",
+                  fontWeight: 400,
+                  lineHeight: LINE_HEIGHT,
+                  color: INK,
+                  textAlign: "center",
+                }}
+              >
+                {quote}
+              </Tag>
+            </div>
+          );
+        })}
       </section>
     );
   }
 
   return (
-    <section ref={wrapperRef} className="relative w-full h-[150vh]">
+    <section ref={wrapperRef} className="relative w-full h-[165vh]">
       <div
         className="sticky top-0 flex h-[100vh] w-full flex-col items-center justify-center overflow-hidden px-6 md:px-16"
         style={{ backgroundColor: CREAM }}
@@ -221,11 +226,11 @@ export default function Quote() {
             ref={quote1Ref}
             className="absolute inset-0 flex items-center justify-center text-center"
           >
-            <p
-              className="w-full max-w-[1400px] uppercase text-center"
+            <h1
+              className={`w-full max-w-[1400px] uppercase text-center ${HEADING_SIZE_CLASS}`}
               style={{
                 fontFamily: "var(--font-agatho)",
-                fontSize: FONT_SIZE,
+                fontWeight: 400,
                 lineHeight: LINE_HEIGHT,
                 textAlign: "center",
               }}
@@ -242,18 +247,18 @@ export default function Quote() {
                   {i < q1Words.length - 1 ? " " : ""}
                 </span>
               ))}
-            </p>
+            </h1>
           </div>
 
           <div
             ref={quote2Ref}
             className="absolute inset-0 flex items-center justify-center overflow-hidden text-center"
           >
-            <span
-              className="inline-block w-full max-w-[1400px] uppercase"
+            <h2
+              className={`inline-block w-full max-w-[1400px] uppercase ${HEADING_SIZE_CLASS}`}
               style={{
                 fontFamily: "var(--font-agatho)",
-                fontSize: FONT_SIZE,
+                fontWeight: 400,
                 lineHeight: LINE_HEIGHT,
                 color: INK,
                 textAlign: "center",
@@ -287,7 +292,7 @@ export default function Quote() {
                   </Fragment>
                 ));
               })()}
-            </span>
+            </h2>
           </div>
         </div>
       </div>

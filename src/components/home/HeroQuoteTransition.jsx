@@ -9,7 +9,10 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-const PIN_DISTANCE = "+=60%";
+// Matches the old GSAP `pin:true` distance ("+=60%" of the trigger's own
+// 100vh) as extra height on the sticky wrapper below -- 100vh natural +
+// 60vh reserved = 160vh total, so nothing after this component shifts.
+const PIN_EXTRA_VH = 60;
 
 export default function HeroQuoteTransition() {
   const heroPinRef = useRef(null);
@@ -48,18 +51,30 @@ export default function HeroQuoteTransition() {
       // Keeping the pin's transform confined to content with no
       // independently-triggered descendants removes that failure mode
       // entirely. See page.js for the other half of this.
+      //
+      // Deliberately NOT using ScrollTrigger's `pin:true` here (even though
+      // it's a one-line way to get the same visual hold): pin:true inserts
+      // a "pin-spacer" wrapper div into the live DOM outside React's fiber
+      // tree. That's invisible to React until something elsewhere on the
+      // page forces this component to unmount its enhanced branch (e.g.
+      // prefers-reduced-motion flipping at runtime) -- React then tries to
+      // remove heroPinRef from the parent IT rendered it under, but GSAP has
+      // rewired the DOM so the real parent is the pin-spacer, producing
+      // "Failed to execute 'removeChild': the node to be removed is not a
+      // child of this node." The sticky+scrub pattern below never mutates
+      // DOM structure (only inline styles), matching every other pinned
+      // section on this page (About/Projects/Instagram/Press/Footer), so
+      // this class of conflict can't happen here either.
       gsap.set(heroInnerRef.current, { scale: 1.15 });
       gsap.to(heroInnerRef.current, {
         yPercent: -8,
         opacity: 0.7,
-        ease: "none",
+        ease: "power2.out",
         scrollTrigger: {
           trigger: heroPinRef.current,
           start: "top top",
-          end: PIN_DISTANCE,
+          end: "bottom bottom",
           scrub: true,
-          pin: true,
-          pinSpacing: true,
         },
       });
     }, heroPinRef);
@@ -72,9 +87,15 @@ export default function HeroQuoteTransition() {
   }
 
   return (
-    <div ref={heroPinRef} className="relative z-0 h-screen w-full overflow-hidden">
-      <div ref={heroInnerRef} className="h-full w-full">
-        <Hero />
+    <div
+      ref={heroPinRef}
+      className="relative z-0 w-full"
+      style={{ height: `${100 + PIN_EXTRA_VH}vh` }}
+    >
+      <div className="sticky top-0 h-screen w-full overflow-hidden">
+        <div ref={heroInnerRef} className="h-full w-full">
+          <Hero />
+        </div>
       </div>
     </div>
   );

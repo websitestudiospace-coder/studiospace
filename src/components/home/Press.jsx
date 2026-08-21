@@ -83,6 +83,103 @@ function InlineWordmark({ text }) {
   );
 }
 
+function PressHeading({ headingRef }) {
+  return (
+    // TODO: placeholder heading copy -- pending final copy approval
+    <h2
+      ref={headingRef}
+      className="text-center text-[32px] md:text-[48px]"
+      style={{ fontFamily: "var(--font-agatho)", color: INK }}
+    >
+      Studio{" "}
+      <span style={{ fontStyle: "italic" }}>
+        <InlineWordmark text="SP_ACE" />
+      </span>{" "}
+      in Press
+    </h2>
+  );
+}
+
+function PressCarousel({
+  revealRef,
+  viewportRef,
+  trackRef,
+  index,
+  goTo,
+}) {
+  return (
+    <div ref={revealRef} className="mt-10 md:mt-14">
+      <div ref={viewportRef} className="overflow-hidden" style={{ touchAction: "pan-y" }}>
+        <div ref={trackRef} className="flex cursor-grab select-none active:cursor-grabbing">
+          {PRESS_ITEMS.map((item) => (
+            <article
+              key={item.publication + item.date + item.headline}
+              className="w-full shrink-0 rounded-[28px] border p-8 md:p-12"
+              style={{ backgroundColor: CARD_BG, borderColor: "rgba(43,38,34,0.1)" }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="h-10 w-10 shrink-0 rounded-full"
+                    style={{ backgroundColor: "rgba(43,38,34,0.12)" }}
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <p
+                      className="text-sm font-bold md:text-base"
+                      style={{ fontFamily: "var(--font-manrope)", color: INK }}
+                    >
+                      {item.publication}
+                    </p>
+                    <p
+                      className="mt-0.5 text-xs md:text-sm"
+                      style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.5 }}
+                    >
+                      {item.date}
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={item.url}
+                  aria-label={`Read the ${item.publication} article`}
+                  className="shrink-0 rounded-full p-2.5 transition-opacity duration-200 ease-out hover:opacity-60"
+                  style={{ border: "1px solid rgba(43,38,34,0.15)" }}
+                >
+                  <ArrowIcon />
+                </a>
+              </div>
+
+              <p
+                className="mt-8 text-2xl font-bold leading-snug md:mt-10 md:text-3xl"
+                style={{ fontFamily: "var(--font-manrope)", color: INK }}
+              >
+                {item.headline}
+              </p>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-8 flex items-center justify-center gap-2 md:mt-10">
+        {PRESS_ITEMS.map((item, i) => (
+          <button
+            key={item.publication + item.date + item.headline}
+            type="button"
+            aria-label={`Go to press item ${i + 1}`}
+            aria-current={i === index}
+            onClick={() => goTo(i, true)}
+            className="h-2.5 rounded-full transition-all duration-300"
+            style={{
+              width: i === index ? "22px" : "10px",
+              backgroundColor: i === index ? MAROON : "rgba(43,38,34,0.2)",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Press() {
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
@@ -196,122 +293,59 @@ export default function Press() {
   useEffect(() => {
     if (reduceMotion) return;
 
-    const ctx = gsap.context(() => {
-      gsap.set(headingRef.current, { opacity: 0, y: 24 });
-      gsap.set(revealRef.current, { opacity: 0, y: 24 });
+    // One-shot reveal (not scroll-scrubbed): this section doesn't need to
+    // feel scroll-locked, so it just plays once as it enters the viewport.
+    // Still waits for "preloader:complete" since "top 80%" is calculated
+    // against this section's own position, which depends on every section
+    // above it already being in its final, settled layout.
+    let ctx;
 
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 80%",
-          end: "bottom 65%",
-          scrub: 0.5,
-        },
-      });
+    const setup = () => {
+      ctx = gsap.context(() => {
+        gsap.set(headingRef.current, { opacity: 0, y: 24 });
+        gsap.set(revealRef.current, { opacity: 0, y: 24 });
 
-      tl.to(headingRef.current, { opacity: 1, y: 0, duration: 0.4, ease: "none" }, 0);
-      tl.to(revealRef.current, { opacity: 1, y: 0, duration: 0.4, ease: "none" }, 0.35);
-    }, sectionRef);
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 80%",
+            toggleActions: "play none none none",
+          },
+        });
 
-    return () => ctx.revert();
+        tl.to(headingRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
+        tl.to(revealRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.15);
+      }, sectionRef);
+    };
+
+    if (window.__preloaderDone) {
+      setup();
+    } else {
+      window.addEventListener("preloader:complete", setup, { once: true });
+    }
+
+    return () => {
+      ctx?.revert();
+      window.removeEventListener("preloader:complete", setup);
+    };
   }, [reduceMotion]);
 
   return (
     <section
+      id="press"
       ref={sectionRef}
       className="w-full px-6 py-12 md:px-16 md:py-[100px]"
       style={{ backgroundColor: CREAM }}
     >
-      <div className="mx-auto w-full max-w-[720px]">
-        {/* TODO: placeholder heading copy -- pending final copy approval */}
-        <h2
-          ref={headingRef}
-          className="text-center text-3xl md:text-4xl"
-          style={{ fontFamily: "var(--font-agatho)", color: INK }}
-        >
-          Studio{" "}
-          <span style={{ fontStyle: "italic" }}>
-            <InlineWordmark text="SP_ACE" />
-          </span>{" "}
-          in Press
-        </h2>
-
-        <div ref={revealRef} className="mt-10 md:mt-14">
-          <div
-            ref={viewportRef}
-            className="overflow-hidden"
-            style={{ touchAction: "pan-y" }}
-          >
-            <div
-              ref={trackRef}
-              className="flex cursor-grab select-none active:cursor-grabbing"
-            >
-              {PRESS_ITEMS.map((item) => (
-                <article
-                  key={item.publication + item.date + item.headline}
-                  className="w-full shrink-0 rounded-[28px] border p-8 md:p-12"
-                  style={{ backgroundColor: CARD_BG, borderColor: "rgba(43,38,34,0.1)" }}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-10 w-10 shrink-0 rounded-full"
-                        style={{ backgroundColor: "rgba(43,38,34,0.12)" }}
-                        aria-hidden="true"
-                      />
-                      <div>
-                        <p
-                          className="text-sm font-bold md:text-base"
-                          style={{ fontFamily: "var(--font-manrope)", color: INK }}
-                        >
-                          {item.publication}
-                        </p>
-                        <p
-                          className="mt-0.5 text-xs md:text-sm"
-                          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.5 }}
-                        >
-                          {item.date}
-                        </p>
-                      </div>
-                    </div>
-                    <a
-                      href={item.url}
-                      aria-label={`Read the ${item.publication} article`}
-                      className="shrink-0 rounded-full p-2.5 transition-opacity duration-300 hover:opacity-60"
-                      style={{ border: "1px solid rgba(43,38,34,0.15)" }}
-                    >
-                      <ArrowIcon />
-                    </a>
-                  </div>
-
-                  <p
-                    className="mt-8 text-2xl font-bold leading-snug md:mt-10 md:text-3xl"
-                    style={{ fontFamily: "var(--font-manrope)", color: INK }}
-                  >
-                    {item.headline}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 flex items-center justify-center gap-2 md:mt-10">
-            {PRESS_ITEMS.map((item, i) => (
-              <button
-                key={item.publication + item.date + item.headline}
-                type="button"
-                aria-label={`Go to press item ${i + 1}`}
-                aria-current={i === index}
-                onClick={() => goTo(i, true)}
-                className="h-2.5 rounded-full transition-all duration-300"
-                style={{
-                  width: i === index ? "22px" : "10px",
-                  backgroundColor: i === index ? MAROON : "rgba(43,38,34,0.2)",
-                }}
-              />
-            ))}
-          </div>
-        </div>
+      <div className="mx-auto w-full max-w-[1100px]">
+        <PressHeading headingRef={headingRef} />
+        <PressCarousel
+          revealRef={revealRef}
+          viewportRef={viewportRef}
+          trackRef={trackRef}
+          index={index}
+          goTo={goTo}
+        />
       </div>
     </section>
   );

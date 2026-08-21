@@ -32,26 +32,26 @@ function AboutCopy() {
         About Studio SP_ACE
       </p>
       <h2
-        className="mt-4"
+        className="mt-4 text-[32px] md:text-[48px]"
         style={{
           fontFamily: "var(--font-agatho)",
-          fontSize: "clamp(24px, 3vw, 40px)",
           lineHeight: 1.25,
           color: INK,
         }}
       >
-        A studio built on honest materials, quiet detail, and homes that feel
-        like you.
+        Design that begins with your story.
       </h2>
-      {/* TODO: replace with real founding story from client */}
       <p
         className="mt-6 text-sm md:text-base"
         style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
       >
-        Studio SP_ACE was founded on the belief that a home should be designed
-        around the way you actually live in it. We work closely with every
-        client, blending timeless materials with careful, considered detail
-        to create spaces that feel warm, personal, and built to last.
+        Based in Bangalore and working pan-India, Studio SP_ACE is a bespoke
+        interior design studio offering a complete journey from design to
+        execution. Every project begins with getting to know the people
+        behind the space, their experiences, personalities and the way they
+        live. We bring these details into the design to create interiors
+        that are not just designed for our clients, but feel inherently like
+        them.
       </p>
       <Link
         href="/about"
@@ -72,25 +72,19 @@ export default function About() {
   const outerRef = useRef(null);
   const imageRef = useRef(null);
   const textRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    const mobileMql = window.matchMedia("(max-width: 767px)");
     const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updateMobile = () => setIsMobile(mobileMql.matches);
-    const updateMotion = () => setReduceMotion(motionMql.matches);
-    updateMobile();
-    updateMotion();
-    mobileMql.addEventListener("change", updateMobile);
-    motionMql.addEventListener("change", updateMotion);
-    return () => {
-      mobileMql.removeEventListener("change", updateMobile);
-      motionMql.removeEventListener("change", updateMotion);
-    };
+    const update = () => setReduceMotion(motionMql.matches);
+    update();
+    motionMql.addEventListener("change", update);
+    return () => motionMql.removeEventListener("change", update);
   }, []);
 
-  const enhanced = !isMobile && !reduceMotion;
+  // The pinned/scrubbed sequence below now runs at every viewport width --
+  // only prefers-reduced-motion opts out, not device/screen size.
+  const enhanced = !reduceMotion;
 
   useEffect(() => {
     if (!enhanced) return;
@@ -151,12 +145,12 @@ export default function About() {
         // image's advancing right edge.
         tl.to(
           imageRef.current,
-          { width: `${IMAGE_SETTLE_WIDTH}%`, ease: "none", duration: 0.27 },
+          { width: `${IMAGE_SETTLE_WIDTH}%`, ease: "power2.out", duration: 0.27 },
           0.08
         );
         tl.to(
           textRef.current,
-          { opacity: 1, x: 0, ease: "none", duration: 0.27 },
+          { opacity: 1, x: 0, ease: "power2.out", duration: 0.27 },
           0.08
         );
 
@@ -165,7 +159,7 @@ export default function About() {
         // Phase 2 end value.
         tl.to(
           imageRef.current,
-          { width: `${IMAGE_HOLD_WIDTH}%`, ease: "none", duration: 0.3 },
+          { width: `${IMAGE_HOLD_WIDTH}%`, ease: "power2.out", duration: 0.3 },
           0.35
         );
 
@@ -178,14 +172,14 @@ export default function About() {
             width: `${IMAGE_FULL_WIDTH}%`,
             height: "100%",
             filter: "grayscale(0%)",
-            ease: "none",
+            ease: "power2.out",
             duration: 0.2,
           },
           0.65
         );
         tl.to(
           textRef.current,
-          { opacity: 0, x: TEXT_SLIDE_X, ease: "none", duration: 0.15 },
+          { opacity: 0, x: TEXT_SLIDE_X, ease: "power2.out", duration: 0.15 },
           0.65
         );
 
@@ -207,41 +201,25 @@ export default function About() {
     };
   }, [enhanced]);
 
-  if (isMobile) {
-    return (
-      <section className="w-full px-6 py-16" style={{ backgroundColor: CREAM }}>
-        <div className="relative h-[50vh] w-full overflow-hidden">
-          <Image
-            src="/images/about/about-hero.jpg"
-            alt="Studio SP_ACE"
-            fill
-            sizes="100vw"
-            className="object-cover grayscale"
-          />
-        </div>
-        <div className="mt-10">
-          <AboutCopy />
-        </div>
-      </section>
-    );
-  }
-
   if (reduceMotion) {
+    // Single fallback for the reduced-motion opt-out at every viewport
+    // width (no separate mobile variant any more) -- stacks image-over-text
+    // below md, sits side by side at md and up.
     return (
       <section
-        className="flex w-full items-center gap-12 px-8 py-24 lg:px-16"
+        className="flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
         style={{ backgroundColor: CREAM }}
       >
-        <div className="relative h-[70vh] w-[55%] overflow-hidden">
+        <div className="relative h-[50vh] w-full overflow-hidden md:h-[70vh] md:w-[55%]">
           <Image
             src="/images/about/about-hero.jpg"
             alt="Studio SP_ACE"
             fill
-            sizes="55vw"
+            sizes="(max-width: 767px) 100vw, 55vw"
             className="object-cover grayscale"
           />
         </div>
-        <div className="w-[45%]">
+        <div className="w-full md:w-[45%]">
           <AboutCopy />
         </div>
       </section>
@@ -253,19 +231,33 @@ export default function About() {
       ref={outerRef}
       className="relative w-full"
       style={{
-        height: "200vh",
+        // svh (not vh) throughout this section's geometry -- vh resolves to
+        // the LARGEST possible mobile-Safari viewport (address bar
+        // collapsed), taller than what's actually on screen whenever the
+        // bar is showing. That mismatch between the sticky box's CSS height
+        // and ScrollTrigger's own window.innerHeight-based measurement is
+        // what let the "About Us" link land outside the reachable/tappable
+        // area on real mobile devices, even though the <Link> itself was
+        // always correctly wired to /about -- headless/devtools mobile
+        // emulation doesn't reproduce the dynamic toolbar, which is why
+        // that particular failure mode didn't show up in automated testing.
+        // Hero.jsx already solved this identical class of bug with
+        // h-[100svh]; mixing vh and svh across this section's own
+        // height/marginTop/sticky-child trio would just relocate the same
+        // desync, so all three switch together.
+        height: "160svh",
         // Quote's sticky reveal above (Quote.jsx) fully finishes its own
         // scrub well before its sticky child naturally scrolls itself out
-        // of view — CSS `sticky` requires a full extra 100vh of scroll for
-        // that, and Quote's text is done and gone roughly 35vh into it,
+        // of view — CSS `sticky` requires a full extra 100svh of scroll for
+        // that, and Quote's text is done and gone roughly 35svh into it,
         // leaving the remainder as blank cream. Pulling this section up to
         // start there removes that gap without touching Quote's own
         // (working) sticky mechanics.
-        marginTop: "-35vh",
+        marginTop: "-35svh",
       }}
     >
       <div
-        className="sticky top-0 h-screen w-full overflow-hidden"
+        className="sticky top-0 h-[100svh] w-full overflow-hidden"
         style={{ backgroundColor: CREAM }}
       >
         <div
