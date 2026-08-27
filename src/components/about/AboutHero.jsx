@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -351,15 +352,7 @@ export default function AboutHero() {
   const pLetterDisplayRef = useRef(null);
   const studioWordRef = useRef(null);
   const aceWordRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
+  const reduceMotion = useReducedMotion();
 
   // Runs the same pinned/scrubbed sequence at every viewport width -- only
   // prefers-reduced-motion opts out, matching every other section's rule.

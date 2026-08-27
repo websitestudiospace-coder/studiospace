@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -27,7 +29,7 @@ function AboutCopy() {
     <>
       <p
         className="uppercase tracking-[0.2em] text-xs md:text-sm"
-        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.6 }}
+        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
       >
         About Studio SP_ACE
       </p>
@@ -72,43 +74,31 @@ export default function About() {
   const outerRef = useRef(null);
   const imageRef = useRef(null);
   const textRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(motionMql.matches);
-    update();
-    motionMql.addEventListener("change", update);
-    return () => motionMql.removeEventListener("change", update);
-  }, []);
+  const reduceMotion = useReducedMotion();
 
   // The pinned/scrubbed sequence below now runs at every viewport width --
   // only prefers-reduced-motion opts out, not device/screen size.
   const enhanced = !reduceMotion;
 
-  useEffect(() => {
-    if (!enhanced) return;
-
-    // HeroQuoteTransition's hero pin and Quote's own scroll triggers default
-    // to their unpinned/simple layout on first render and only upgrade to
-    // the pinned/complex layout a commit later, once their own matchMedia
-    // checks resolve. If this section's ScrollTrigger is created immediately
-    // on mount (same as previous attempts here), it measures its position
-    // against that pre-upgrade layout, and calling ScrollTrigger.refresh()
-    // afterward does not correct it — confirmed by direct testing: even a
-    // native "resize" event (which ScrollTrigger listens to for its own
-    // auto-refresh) left `start` locked at the stale value. The reliable
-    // fix is to not create the trigger until layout has already settled,
-    // rather than trying to patch a wrong initial measurement after the
-    // fact. Preloader.jsx dispatches "preloader:complete" (and sets
-    // window.__preloaderDone) once its own ~3.8s intro finishes and unlocks
-    // body scroll — by then every other component's mount-time layout
-    // change has long since happened, so it's a reliable point to measure
-    // from for the first time.
-    let ctx;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+  // HeroQuoteTransition's hero pin and Quote's own scroll triggers default
+  // to their unpinned/simple layout on first render and only upgrade to
+  // the pinned/complex layout a commit later, once their own matchMedia
+  // checks resolve. If this section's ScrollTrigger is created immediately
+  // on mount (same as previous attempts here), it measures its position
+  // against that pre-upgrade layout, and calling ScrollTrigger.refresh()
+  // afterward does not correct it — confirmed by direct testing: even a
+  // native "resize" event (which ScrollTrigger listens to for its own
+  // auto-refresh) left `start` locked at the stale value. The reliable
+  // fix is to not create the trigger until layout has already settled,
+  // rather than trying to patch a wrong initial measurement after the
+  // fact. Preloader.jsx dispatches "preloader:complete" (and sets
+  // window.__preloaderDone) once its own ~3.8s intro finishes and unlocks
+  // body scroll — by then every other component's mount-time layout
+  // change has long since happened, so it's a reliable point to measure
+  // from for the first time.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
         // Single ScrollTrigger owns this whole section's timeline: every
         // phase below is a tween on this one scrub, positioned at an
         // absolute fraction of the timeline, so the choreography can't
@@ -187,19 +177,12 @@ export default function About() {
         // tweens needed, just the scroll distance reserved by the anchor
         // above.
       }, outerRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [enhanced]);
+      return () => ctx.revert();
+    },
+    [],
+    enhanced
+  );
 
   if (reduceMotion) {
     // Single fallback for the reduced-motion opt-out at every viewport

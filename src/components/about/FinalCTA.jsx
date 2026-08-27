@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -18,25 +20,13 @@ export default function FinalCTA() {
   const headingRef = useRef(null);
   const bodyRef = useRef(null);
   const buttonRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
-    // Press/Footer.
-    let ctx;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+  // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
+  // Press/Footer.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
         gsap.set(headingRef.current, { opacity: 0, y: 24 });
         gsap.set(bodyRef.current, { opacity: 0, y: 24 });
         gsap.set(buttonRef.current, { opacity: 0, y: 24 });
@@ -53,19 +43,12 @@ export default function FinalCTA() {
         tl.to(bodyRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.15);
         tl.to(buttonRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.3);
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     // Ink background -- deliberately matches Footer.jsx immediately below

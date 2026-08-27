@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -56,16 +58,8 @@ export default function ProjectsHero() {
   const shrinkRef = useRef(null);
   const imageRef = useRef(null);
   const headingRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(motionMql.matches);
-    update();
-    motionMql.addEventListener("change", update);
-    return () => motionMql.removeEventListener("change", update);
-  }, []);
 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 768px)");
@@ -77,25 +71,21 @@ export default function ProjectsHero() {
 
   const enhanced = !reduceMotion;
 
-  useEffect(() => {
-    if (!enhanced) return;
+  // Same reasoning as the homepage's pinned sections (About.jsx etc.):
+  // this is a "top top" -> "bottom bottom" pinned ScrollTrigger, so its
+  // measured start/end depend on layout having already settled. Wait for
+  // "preloader:complete" (Preloader lives in the root layout, so it
+  // mounts on every route, including this one) before measuring.
+  usePreloaderGate(
+    () => {
+      const settledHeight = isDesktop ? SETTLED_HEIGHT_DESKTOP : SETTLED_HEIGHT_MOBILE;
+      const headingStart = isDesktop
+        ? HEADING_START_DESKTOP
+        : Math.min(HEADING_START_MOBILE_CAP, window.innerWidth * 0.11);
+      const headingEnd = isDesktop ? HEADING_END_DESKTOP : HEADING_END_MOBILE;
+      const headingInset = computeHeadingInset(isDesktop);
 
-    // Same reasoning as the homepage's pinned sections (About.jsx etc.):
-    // this is a "top top" -> "bottom bottom" pinned ScrollTrigger, so its
-    // measured start/end depend on layout having already settled. Wait for
-    // "preloader:complete" (Preloader lives in the root layout, so it
-    // mounts on every route, including this one) before measuring.
-    let ctx;
-
-    const settledHeight = isDesktop ? SETTLED_HEIGHT_DESKTOP : SETTLED_HEIGHT_MOBILE;
-    const headingStart = isDesktop
-      ? HEADING_START_DESKTOP
-      : Math.min(HEADING_START_MOBILE_CAP, window.innerWidth * 0.11);
-    const headingEnd = isDesktop ? HEADING_END_DESKTOP : HEADING_END_MOBILE;
-    const headingInset = computeHeadingInset(isDesktop);
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+      const ctx = gsap.context(() => {
         // ONE consolidated timeline: the shrink wrapper's own height, the
         // image's fade, and the heading's position/size all tween against
         // the same scrub -- never separate triggers. Note this animates
@@ -164,19 +154,12 @@ export default function ProjectsHero() {
         // 75%-100%: hold the settled state so it registers before the pin
         // releases into the grid below.
       }, outerRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [enhanced, isDesktop]);
+      return () => ctx.revert();
+    },
+    [isDesktop],
+    enhanced
+  );
 
   if (reduceMotion) {
     return (

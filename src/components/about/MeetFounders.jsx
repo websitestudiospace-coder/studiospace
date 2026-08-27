@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -26,14 +28,14 @@ const FOUNDERS = [
     role: "Co-Founder",
     photo: "/images/about/S.png",
     alt: "Shubham, co-founder of Studio SP_ACE",
-    bio: "Placeholder bio for Shubham goes here -- pending final copy from the client about his background, design philosophy, and role at the studio.",
+    bio: "Shubham's full bio is on its way — background, design philosophy, and role at the studio to follow.",
   },
   {
     name: "Priyanka",
     role: "Co-Founder",
     photo: "/images/about/P.png",
     alt: "Priyanka, co-founder of Studio SP_ACE",
-    bio: "Placeholder bio for Priyanka goes here -- pending final copy from the client about her background, design philosophy, and role at the studio.",
+    bio: "Priyanka's full bio is on its way — background, design philosophy, and role at the studio to follow.",
   },
 ];
 
@@ -60,7 +62,7 @@ function FounderCard({ founder, cardRef }) {
       </h3>
       <p
         className="mt-1 text-xs uppercase tracking-[0.15em] md:text-sm"
-        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.55 }}
+        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
       >
         {founder.role}
       </p>
@@ -78,26 +80,14 @@ export default function MeetFounders() {
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
   const cardRefs = useRef([]);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
-    // Press/Footer: heading first, then the two founder cards staggered in
-    // behind it, all on one timeline against one trigger.
-    let ctx;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+  // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
+  // Press/Footer: heading first, then the two founder cards staggered in
+  // behind it, all on one timeline against one trigger.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
         const cards = cardRefs.current.filter(Boolean);
         gsap.set(headingRef.current, { opacity: 0, y: 24 });
         gsap.set(cards, { opacity: 0, y: 24 });
@@ -117,19 +107,12 @@ export default function MeetFounders() {
           0.15
         );
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     <section

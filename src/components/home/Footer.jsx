@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Button from "@/components/ui/Button";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -69,7 +72,7 @@ function FormField({ label, ...inputProps }) {
     <label className="block">
       <span
         className="block text-[10px] uppercase tracking-[0.15em]"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         {label} *
       </span>
@@ -88,6 +91,18 @@ function FormField({ label, ...inputProps }) {
 }
 
 function SignupBlock({ blockRef }) {
+  const [submitted, setSubmitted] = useState(false);
+
+  // No backend or email service is wired up yet -- this just flips local
+  // state instead of letting the browser fall back to a native GET submit
+  // (which would reload the page with every field appended to the URL as a
+  // query string). Same placeholder pattern as ContactContent's form; before
+  // launch, replace this handler with a real submission.
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
   return (
     <div ref={blockRef} className="col-span-2 md:col-span-1">
       <h3 style={{ fontFamily: "var(--font-agatho)", color: CREAM }} className="leading-none">
@@ -101,39 +116,44 @@ function SignupBlock({ blockRef }) {
       </h3>
       <p
         className="mt-4 max-w-xs text-sm"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.6 }}
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         Subscribe to join our community and stay up to date with the studio.
       </p>
 
-      <form className="mt-8 w-full max-w-sm">
-        <div className="grid grid-cols-2 gap-6">
-          <FormField label="First Name" type="text" name="firstName" autoComplete="given-name" />
-          <FormField label="Last Name" type="text" name="lastName" autoComplete="family-name" />
-        </div>
-
-        <div className="relative mt-6 max-w-xs">
-          <FormField label="Email" type="email" name="email" autoComplete="email" />
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="none"
-            aria-hidden="true"
-            className="pointer-events-none absolute right-0 bottom-3"
-          >
-            <path d="M1 1L11 6L1 11V1Z" fill={CREAM} />
-          </svg>
-        </div>
-
-        <button
-          type="submit"
-          className="mt-8 inline-block border-b pb-1 text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70"
-          style={{ borderColor: CREAM, color: CREAM, fontFamily: "var(--font-manrope)" }}
+      {submitted ? (
+        <p
+          className="mt-8 max-w-xs text-sm"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.8 }}
         >
-          Submit Form
-        </button>
-      </form>
+          Thanks for subscribing — we&apos;ll keep you posted.
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit} className="mt-8 w-full max-w-sm">
+          <div className="grid grid-cols-2 gap-6">
+            <FormField label="First Name" type="text" name="firstName" autoComplete="given-name" />
+            <FormField label="Last Name" type="text" name="lastName" autoComplete="family-name" />
+          </div>
+
+          <div className="relative mt-6 max-w-xs">
+            <FormField label="Email" type="email" name="email" autoComplete="email" />
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              aria-hidden="true"
+              className="pointer-events-none absolute right-0 bottom-3"
+            >
+              <path d="M1 1L11 6L1 11V1Z" fill={CREAM} />
+            </svg>
+          </div>
+
+          <Button type="submit" variant="text" className="mt-8">
+            Submit Form
+          </Button>
+        </form>
+      )}
     </div>
   );
 }
@@ -202,20 +222,20 @@ function LegalRow() {
       <Link
         href="/terms"
         className="justify-self-center md:justify-self-start"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         Terms of Service
       </Link>
       <Link
         href="/privacy"
         className="justify-self-center"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         Privacy Policy
       </Link>
       <span
         className="justify-self-center md:justify-self-end md:text-right"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         © 2026 Studio SP_ACE. All rights reserved.
       </span>
@@ -229,28 +249,16 @@ export default function Footer() {
   const navRef = useRef(null);
   const socialRef = useRef(null);
   const wordmarkRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(motionMql.matches);
-    update();
-    motionMql.addEventListener("change", update);
-    return () => motionMql.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    // One-shot reveal (not scroll-scrubbed): Footer doesn't need to feel
-    // scroll-locked, so it just plays once as it enters the viewport. Still
-    // waits for "preloader:complete" since "top 80%" is calculated against
-    // this section's own position, which depends on every section above it
-    // already being in its final, settled layout.
-    let ctx;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+  // One-shot reveal (not scroll-scrubbed): Footer doesn't need to feel
+  // scroll-locked, so it just plays once as it enters the viewport. Still
+  // waits for "preloader:complete" since "top 80%" is calculated against
+  // this section's own position, which depends on every section above it
+  // already being in its final, settled layout.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
         // ONE consolidated timeline: signup block first, then the nav/social
         // link columns together, then the wordmark wipes in -- same
         // single-timeline rule as every other section (no separate triggers
@@ -282,19 +290,12 @@ export default function Footer() {
           0.35
         );
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     <footer id="footer" ref={sectionRef} className="w-full" style={{ backgroundColor: INK }}>

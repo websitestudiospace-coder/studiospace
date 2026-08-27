@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import Button from "@/components/ui/Button";
+import useReducedMotion from "@/hooks/useReducedMotion";
 
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
-const MAROON = "#6E1F24";
 
 const LINKS = [
   { label: "Home", href: "/" },
@@ -20,16 +21,8 @@ export default function Nav({ lightHero = false }) {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const lastScrollY = useRef(0);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
 
   // Lock page scroll behind the full-screen overlay while it's open --
   // same pattern as Preloader.jsx.
@@ -139,17 +132,9 @@ export default function Nav({ lightHero = false }) {
           </nav>
 
           <div className="hidden md:block">
-            <Link
-              href="/contact"
-              className="inline-block px-6 py-2.5 text-[14px] uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-90"
-              style={{
-                backgroundColor: MAROON,
-                color: CREAM,
-                fontFamily: "var(--font-manrope)",
-              }}
-            >
+            <Button href="/contact" variant="primary">
               Inquire
-            </Link>
+            </Button>
           </div>
 
           <button
@@ -225,19 +210,16 @@ export default function Nav({ lightHero = false }) {
             </Link>
           ))}
         </nav>
-        <Link
+        <Button
           href="/contact"
+          variant="primary"
+          size="lg"
           onClick={() => setMenuOpen(false)}
           tabIndex={menuOpen ? 0 : -1}
-          className="mt-4 inline-block px-8 py-4 text-sm uppercase tracking-[0.15em]"
-          style={{
-            backgroundColor: MAROON,
-            color: CREAM,
-            fontFamily: "var(--font-manrope)",
-          }}
+          className="mt-4"
         >
           Inquire
-        </Link>
+        </Button>
       </div>
     </>
   );

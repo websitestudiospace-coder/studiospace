@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -17,19 +19,19 @@ const MAROON = "#6E1F24";
 const BELIEFS = [
   {
     title: "Honest Materials",
-    body: "Placeholder text -- pending final copy about the studio's approach to material selection.",
+    body: "More on our approach to material selection is on its way.",
   },
   {
     title: "Considered Detail",
-    body: "Placeholder text -- pending final copy about the studio's attention to detail.",
+    body: "More on our attention to detail is on its way.",
   },
   {
     title: "Timeless Design",
-    body: "Placeholder text -- pending final copy about the studio's design philosophy.",
+    body: "More on our design philosophy is on its way.",
   },
   {
     title: "Client-Centered Process",
-    body: "Placeholder text -- pending final copy about the studio's collaborative process.",
+    body: "More on our collaborative process is on its way.",
   },
 ];
 
@@ -66,26 +68,14 @@ export default function WhatWeBelieve() {
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
   const itemRefs = useRef([]);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
-    // Press/Footer: heading first, then the 4 belief items staggered in
-    // behind it, all on one timeline against one trigger.
-    let ctx;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+  // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
+  // Press/Footer: heading first, then the 4 belief items staggered in
+  // behind it, all on one timeline against one trigger.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
         const items = itemRefs.current.filter(Boolean);
         gsap.set(headingRef.current, { opacity: 0, y: 24 });
         gsap.set(items, { opacity: 0, y: 24 });
@@ -105,19 +95,12 @@ export default function WhatWeBelieve() {
           0.15
         );
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     <section

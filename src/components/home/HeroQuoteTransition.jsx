@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Hero from "./Hero";
+import useReducedMotion from "@/hooks/useReducedMotion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -17,17 +18,22 @@ const PIN_EXTRA_VH = 60;
 export default function HeroQuoteTransition() {
   const heroPinRef = useRef(null);
   const heroInnerRef = useRef(null);
-  const [parallax, setParallax] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    const mql = window.matchMedia(
-      "(min-width: 768px) and (prefers-reduced-motion: no-preference)"
-    );
-    const update = () => setParallax(mql.matches);
+    const mql = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mql.matches);
     update();
     mql.addEventListener("change", update);
     return () => mql.removeEventListener("change", update);
   }, []);
+
+  // Equivalent to the single compound query this used to run
+  // ("(min-width: 768px) and (prefers-reduced-motion: no-preference)") --
+  // split into the two matchMedia checks every other pinned section already
+  // keeps separate, combined here the same way they combine `enhanced`.
+  const parallax = isDesktop && !reduceMotion;
 
   useEffect(() => {
     if (!parallax) return;

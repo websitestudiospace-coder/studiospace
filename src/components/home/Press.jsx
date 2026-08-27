@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Button from "@/components/ui/Button";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -22,25 +25,25 @@ const PRESS_ITEMS = [
   {
     publication: "Publication Name",
     date: "Month Year",
-    headline: "Placeholder headline text goes here about the studio's latest work.",
+    headline: "More about the studio's latest work — coming soon.",
     url: "#",
   },
   {
     publication: "Publication Name",
     date: "Month Year",
-    headline: "Placeholder headline text describing a featured project in more detail.",
+    headline: "A closer look at one of the studio's featured projects — coming soon.",
     url: "#",
   },
   {
     publication: "Publication Name",
     date: "Month Year",
-    headline: "Placeholder headline text goes here for the third press mention.",
+    headline: "Studio SP_ACE in the press — details coming soon.",
     url: "#",
   },
   {
     publication: "Publication Name",
     date: "Month Year",
-    headline: "Placeholder headline text goes here for the fourth press mention.",
+    headline: "More press coverage for the studio — coming soon.",
     url: "#",
   },
 ];
@@ -133,20 +136,19 @@ function PressCarousel({
                     </p>
                     <p
                       className="mt-0.5 text-xs md:text-sm"
-                      style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.5 }}
+                      style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
                     >
                       {item.date}
                     </p>
                   </div>
                 </div>
-                <a
+                <Button
                   href={item.url}
+                  variant="icon"
                   aria-label={`Read the ${item.publication} article`}
-                  className="shrink-0 rounded-full p-2.5 transition-opacity duration-200 ease-out hover:opacity-60"
-                  style={{ border: "1px solid rgba(43,38,34,0.15)" }}
                 >
                   <ArrowIcon />
-                </a>
+                </Button>
               </div>
 
               <p
@@ -190,15 +192,7 @@ export default function Press() {
   const indexRef = useRef(0);
   const dragRef = useRef({ dragging: false, startX: 0, baseX: 0, moved: false });
   const [index, setIndex] = useState(0);
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
+  const reduceMotion = useReducedMotion();
 
   const goTo = useCallback((i, animate) => {
     const track = trackRef.current;
@@ -290,18 +284,14 @@ export default function Press() {
     };
   }, [goTo]);
 
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    // One-shot reveal (not scroll-scrubbed): this section doesn't need to
-    // feel scroll-locked, so it just plays once as it enters the viewport.
-    // Still waits for "preloader:complete" since "top 80%" is calculated
-    // against this section's own position, which depends on every section
-    // above it already being in its final, settled layout.
-    let ctx;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+  // One-shot reveal (not scroll-scrubbed): this section doesn't need to
+  // feel scroll-locked, so it just plays once as it enters the viewport.
+  // Still waits for "preloader:complete" since "top 80%" is calculated
+  // against this section's own position, which depends on every section
+  // above it already being in its final, settled layout.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
         gsap.set(headingRef.current, { opacity: 0, y: 24 });
         gsap.set(revealRef.current, { opacity: 0, y: 24 });
 
@@ -316,19 +306,12 @@ export default function Press() {
         tl.to(headingRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
         tl.to(revealRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.15);
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     <section

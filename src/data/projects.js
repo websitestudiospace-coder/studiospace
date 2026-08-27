@@ -7,7 +7,7 @@
 // ALL PLACEHOLDER copy pending real project details from the client -- see
 // each project's `description` field, which is flagged inline. Swapping them
 // is a one-line text change once real copy lands.
-const PLACEHOLDER_LONG_DESCRIPTION = `This is placeholder project copy pending the final write-up from the client. It will eventually describe the brief, the site conditions, and the material and spatial decisions that shaped the design.
+const PLACEHOLDER_LONG_DESCRIPTION = `A full write-up for this project is on its way and will describe the brief, the site conditions, and the material and spatial decisions that shaped the design.
 
 Expect a short narrative here -- how the family lives, what the site asked for, and how the plan and material palette responded to both. Structural and material specifics (stone, timber, metalwork) will be named directly once confirmed.
 
@@ -17,7 +17,7 @@ export const PROJECTS = [
   {
     slug: "the-modern-eclectic-home",
     name: "The Modern Eclectic Home",
-    description: "The Modern Eclectic Home is located in Bangalore — PLACEHOLDER pending real copy from client.",
+    description: "The Modern Eclectic Home is a Bangalore-based project — full project details are on their way.",
     longDescription: PLACEHOLDER_LONG_DESCRIPTION,
     typology: "Residential",
     location: "Bangalore",
@@ -27,7 +27,7 @@ export const PROJECTS = [
   {
     slug: "the-modern-neo-classical-home",
     name: "The Modern Neo Classical Home",
-    description: "The Modern Neo Classical Home is located in Bangalore — PLACEHOLDER pending real copy from client.",
+    description: "The Modern Neo Classical Home is a Bangalore-based project — full project details are on their way.",
     longDescription: PLACEHOLDER_LONG_DESCRIPTION,
     typology: "Residential",
     location: "Bangalore",
@@ -37,7 +37,7 @@ export const PROJECTS = [
   {
     slug: "the-modern-transitional-home",
     name: "The Modern Transitional Home",
-    description: "The Modern Transitional Home is located in Bangalore — PLACEHOLDER pending real copy from client.",
+    description: "The Modern Transitional Home is a Bangalore-based project — full project details are on their way.",
     longDescription: PLACEHOLDER_LONG_DESCRIPTION,
     typology: "Residential",
     location: "Bangalore",
@@ -47,7 +47,7 @@ export const PROJECTS = [
   {
     slug: "the-modern-classical-home",
     name: "The Modern Classical Home",
-    description: "The Modern Classical Home is located in Bangalore — PLACEHOLDER pending real copy from client.",
+    description: "The Modern Classical Home is a Bangalore-based project — full project details are on their way.",
     longDescription: PLACEHOLDER_LONG_DESCRIPTION,
     typology: "Residential",
     location: "Bangalore",
@@ -57,7 +57,7 @@ export const PROJECTS = [
   {
     slug: "the-modern-organic-home",
     name: "The Modern Organic Home",
-    description: "The Modern Organic Home is located in Bangalore — PLACEHOLDER pending real copy from client.",
+    description: "The Modern Organic Home is a Bangalore-based project — full project details are on their way.",
     longDescription: PLACEHOLDER_LONG_DESCRIPTION,
     typology: "Residential",
     location: "Bangalore",
@@ -67,7 +67,7 @@ export const PROJECTS = [
   {
     slug: "the-neo-colonial-home",
     name: "The Neo Colonial Home",
-    description: "The Neo Colonial Home is located in Bangalore — PLACEHOLDER pending real copy from client.",
+    description: "The Neo Colonial Home is a Bangalore-based project — full project details are on their way.",
     longDescription: PLACEHOLDER_LONG_DESCRIPTION,
     typology: "Residential",
     location: "Bangalore",
@@ -80,7 +80,7 @@ export const PROJECTS = [
   {
     slug: "the-shraddhas-thinkpad",
     name: "Shraddha's Thinkpad",
-    description: "Shraddha's Thinkpad is located in Bangalore — PLACEHOLDER pending real copy from client.",
+    description: "Shraddha's Thinkpad is a Bangalore-based project — full project details are on their way.",
     longDescription: PLACEHOLDER_LONG_DESCRIPTION,
     typology: "Residential",
     location: "Bangalore",

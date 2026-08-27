@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Button from "@/components/ui/Button";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -10,7 +13,6 @@ if (typeof window !== "undefined") {
 
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
-const MAROON = "#6E1F24";
 
 // Matches the standardized section-heading scale from the Phase 3 pass
 // (About/Projects/Press all share this).
@@ -40,7 +42,7 @@ function FieldLabel({ children, optional }) {
   return (
     <span
       className="block text-[10px] uppercase tracking-[0.15em]"
-      style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+      style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
     >
       {children} {optional ? "(optional)" : "*"}
     </span>
@@ -68,6 +70,10 @@ function SelectField({ label, options, ...selectProps }) {
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
+      {/* Callers must pass defaultValue="" (or a controlled value) -- without
+          it, browsers skip the disabled placeholder option and auto-select
+          the first real option instead, which silently satisfies `required`
+          before the user has chosen anything. */}
       <select {...selectProps} required className={fieldClass} style={fieldStyle}>
         <option value="" disabled hidden>
           Select one
@@ -121,7 +127,7 @@ function ContactForm({ formRef }) {
         </p>
         <p
           className="mt-3 text-sm"
-          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.6 }}
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
         >
           We&apos;ve received your message and will get back to you shortly.
         </p>
@@ -144,20 +150,21 @@ function ContactForm({ formRef }) {
           name="phone"
           autoComplete="tel"
         />
-        <SelectField label="Project Type" name="projectType" options={PROJECT_TYPES} />
+        <SelectField
+          label="Project Type"
+          name="projectType"
+          options={PROJECT_TYPES}
+          defaultValue=""
+        />
       </div>
 
       <div className="mt-6">
         <TextareaField label="Message" name="message" />
       </div>
 
-      <button
-        type="submit"
-        className="mt-8 inline-block px-6 py-2.5 text-[14px] uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-90"
-        style={{ backgroundColor: MAROON, color: CREAM, fontFamily: "var(--font-manrope)" }}
-      >
+      <Button type="submit" variant="primary" className="mt-8">
         Submit Form
-      </button>
+      </Button>
     </form>
   );
 }
@@ -169,7 +176,7 @@ function StudioInfo({ infoRef }) {
         <div key={item.label}>
           <span
             className="block text-[10px] uppercase tracking-[0.15em]"
-            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
           >
             {item.label}
           </span>
@@ -195,7 +202,7 @@ function StudioInfo({ infoRef }) {
       <div>
         <span
           className="block text-[10px] uppercase tracking-[0.15em]"
-          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
         >
           Instagram
         </span>
@@ -218,7 +225,7 @@ function StudioMap({ mapRef }) {
     <div ref={mapRef} className="mt-16 md:mt-20">
       <span
         className="block text-[10px] uppercase tracking-[0.15em]"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         Find Us
       </span>
@@ -234,14 +241,8 @@ function StudioMap({ mapRef }) {
       </div>
       {/* Centered on Bangalore generally, not a pin on the studio's exact
           office address -- swap MAP_EMBED_SRC for a precise-address embed
-          once the client provides one. */}
-      <p
-        className="mt-3 text-xs"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.45 }}
-      >
-        Showing Bangalore generally — a precise office pin can be added once
-        the exact address is confirmed.
-      </p>
+          once the client provides one. Intentionally not called out to
+          visitors; the map itself doesn't claim to be a precise pin. */}
     </div>
   );
 }
@@ -252,29 +253,17 @@ export default function ContactContent() {
   const formRef = useRef(null);
   const infoRef = useRef(null);
   const mapRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    // One-shot reveal, not scroll-scrubbed -- this is a simple content
-    // page, not a cinematic section, so it just fades/settles once as it
-    // enters the viewport (same pattern as Instagram/Press/Footer after
-    // the Phase 3 pass). Still waits for "preloader:complete" since
-    // "top 80%" is calculated against this section's own position, which
-    // depends on Nav/Preloader having already settled.
-    let ctx;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+  // One-shot reveal, not scroll-scrubbed -- this is a simple content
+  // page, not a cinematic section, so it just fades/settles once as it
+  // enters the viewport (same pattern as Instagram/Press/Footer after
+  // the Phase 3 pass). Still waits for "preloader:complete" since
+  // "top 80%" is calculated against this section's own position, which
+  // depends on Nav/Preloader having already settled.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
         gsap.set(headingRef.current, { opacity: 0, y: 24 });
         gsap.set([formRef.current, infoRef.current, mapRef.current], { opacity: 0, y: 24 });
 
@@ -294,19 +283,12 @@ export default function ContactContent() {
         );
         tl.to(mapRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.3);
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     <section

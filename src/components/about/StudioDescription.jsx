@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -18,29 +20,17 @@ export default function StudioDescription() {
   const sectionRef = useRef(null);
   const eyebrowRef = useRef(null);
   const bodyRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
-    // Press/Footer: this section doesn't need to feel scroll-locked, it
-    // just plays once as it enters the viewport. Still waits for
-    // "preloader:complete" since "top 80%" is measured against this
-    // section's own position, which depends on AboutHero above it already
-    // being in its final, settled (pinned) layout.
-    let ctx;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+  // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
+  // Press/Footer: this section doesn't need to feel scroll-locked, it
+  // just plays once as it enters the viewport. Still waits for
+  // "preloader:complete" since "top 80%" is measured against this
+  // section's own position, which depends on AboutHero above it already
+  // being in its final, settled (pinned) layout.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
         gsap.set(eyebrowRef.current, { opacity: 0, y: 24 });
         gsap.set(bodyRef.current, { opacity: 0, y: 24 });
 
@@ -55,19 +45,12 @@ export default function StudioDescription() {
         tl.to(eyebrowRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
         tl.to(bodyRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.15);
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     <section
@@ -79,7 +62,7 @@ export default function StudioDescription() {
         <p
           ref={eyebrowRef}
           className="text-xs uppercase tracking-[0.2em] md:text-sm"
-          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.6 }}
+          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
         >
           Our Studio
         </p>

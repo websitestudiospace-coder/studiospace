@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -49,25 +51,13 @@ export default function IndiaMap() {
   const headingRef = useRef(null);
   const markRef = useRef(null);
   const captionRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
-    // Press/Footer.
-    let ctx;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+  // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as
+  // Press/Footer.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
         gsap.set(headingRef.current, { opacity: 0, y: 24 });
         gsap.set(markRef.current, { opacity: 0, scale: 0.85 });
         gsap.set(captionRef.current, { opacity: 0, y: 24 });
@@ -92,19 +82,12 @@ export default function IndiaMap() {
           0.3
         );
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     <section
@@ -136,7 +119,7 @@ export default function IndiaMap() {
               cities/regions to list once provided. */}
           <p
             className="mt-2 text-sm md:text-base"
-            style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.6 }}
+            style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
           >
             Serving clients across India for architecture and interior
             design projects.

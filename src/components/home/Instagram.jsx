@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -210,17 +212,14 @@ export default function Instagram() {
   const colorLayerRefs = useRef([]);
   const radiusRef = useRef(260);
   const [avatarFailed, setAvatarFailed] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [canHover, setCanHover] = useState(false);
   const [entranceDone, setEntranceDone] = useState(false);
-
-  useEffect(() => {
-    const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(motionMql.matches);
-    update();
-    motionMql.addEventListener("change", update);
-    return () => motionMql.removeEventListener("change", update);
-  }, []);
+  // Spotlight/Follow-button transition should be live once either the GSAP
+  // entrance timeline has actually finished, or (under reduced motion, where
+  // no timeline ever runs) unconditionally -- derived at render time instead
+  // of mirrored into state via an effect.
+  const spotlightReady = entranceDone || reduceMotion;
 
   useEffect(() => {
     const hoverMql = window.matchMedia("(hover: hover)");
@@ -244,7 +243,7 @@ export default function Instagram() {
     // No entrance timeline plays in the reduced-motion fallback (items are
     // rendered already-settled), so there's nothing for the spotlight to
     // wait on there.
-    if (!canHover || !(entranceDone || reduceMotion)) return;
+    if (!canHover || !spotlightReady) return;
     const wrap = gridWrapRef.current;
     const layers = colorLayerRefs.current.filter(Boolean);
     if (!wrap || layers.length === 0) return;
@@ -325,29 +324,18 @@ export default function Instagram() {
       wrap.removeEventListener("pointerleave", handleLeave);
       gsap.killTweensOf(layers);
     };
-  }, [canHover, entranceDone, reduceMotion]);
+  }, [canHover, spotlightReady]);
 
-  // No GSAP entrance runs under reduced motion, so nothing else will ever
-  // flip this -- flip it immediately so the Follow button still gets its
-  // hover transition (see FollowButton's transitionReady prop).
-  useEffect(() => {
-    if (reduceMotion) setEntranceDone(true);
-  }, [reduceMotion]);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    // One-shot reveal (not scroll-scrubbed): this section doesn't need to
-    // feel scroll-locked, so it just plays once as it enters the viewport.
-    // Still waits for "preloader:complete" since "top 80%" is calculated
-    // against this section's own position, which depends on every section
-    // above it already being in its final, settled layout.
-    let ctx;
-
-    const setup = () => {
+  // One-shot reveal (not scroll-scrubbed): this section doesn't need to
+  // feel scroll-locked, so it just plays once as it enters the viewport.
+  // Still waits for "preloader:complete" since "top 80%" is calculated
+  // against this section's own position, which depends on every section
+  // above it already being in its final, settled layout.
+  usePreloaderGate(
+    () => {
       const items = gridRefs.current.filter(Boolean);
 
-      ctx = gsap.context(() => {
+      const ctx = gsap.context(() => {
         gsap.set(profileRef.current, { opacity: 0, y: 24, willChange: "opacity, transform" });
         gsap.set(items, { opacity: 0, y: 24, willChange: "opacity, transform" });
         gsap.set(followRef.current, { opacity: 0, y: 24, willChange: "opacity, transform" });
@@ -384,19 +372,12 @@ export default function Instagram() {
           0.1 + items.length * 0.06
         );
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     <section
@@ -416,7 +397,7 @@ export default function Instagram() {
           colorLayerRefs={colorLayerRefs}
           canHover={canHover}
         />
-        <FollowButton followRef={followRef} transitionReady={entranceDone} />
+        <FollowButton followRef={followRef} transitionReady={spotlightReady} />
       </div>
     </section>
   );

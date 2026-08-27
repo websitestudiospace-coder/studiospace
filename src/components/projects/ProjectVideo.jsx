@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -17,16 +19,8 @@ const SECTION_HEIGHT_VH = 300;
 export default function ProjectVideo({ video }) {
   const outerRef = useRef(null);
   const videoRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 768px)");
@@ -45,15 +39,14 @@ export default function ProjectVideo({ video }) {
   // approach, since this section additionally needs to skip the pin.
   const scrubEnabled = !reduceMotion && isDesktop;
 
-  useEffect(() => {
-    if (!scrubEnabled) return;
-    const videoEl = videoRef.current;
-    if (!videoEl) return;
+  usePreloaderGate(
+    () => {
+      const videoEl = videoRef.current;
+      if (!videoEl) return;
 
-    let ctx;
-    let scrollTriggerInstance;
+      let ctx;
+      let scrollTriggerInstance;
 
-    const setup = () => {
       const bindScrub = () => {
         videoEl.pause();
         ctx = gsap.context(() => {
@@ -76,20 +69,15 @@ export default function ProjectVideo({ video }) {
       } else {
         videoEl.addEventListener("loadedmetadata", bindScrub, { once: true });
       }
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      scrollTriggerInstance?.kill();
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [scrubEnabled]);
+      return () => {
+        scrollTriggerInstance?.kill();
+        ctx?.revert();
+      };
+    },
+    [],
+    scrubEnabled
+  );
 
   if (!scrubEnabled) {
     return (

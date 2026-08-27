@@ -6,6 +6,14 @@ import gsap from "gsap";
 
 const CREAM = "#F7EFE4";
 
+// Root layout (src/app/layout.js) persists across client-side <Link>
+// navigations in the App Router, so this only genuinely mounts once per
+// document load anyway -- this flag is the belt-and-suspenders guarantee:
+// it survives a hard refresh mid-session (sessionStorage, not state), so if
+// anything ever forces a remount (an error boundary reset, a future
+// template.js, a non-Link navigation) the full ~3s intro doesn't replay.
+const SESSION_KEY = "sp_ace_preloader_played";
+
 export default function Preloader() {
   const [visible, setVisible] = useState(true);
   const overlayRef = useRef(null);
@@ -15,14 +23,32 @@ export default function Preloader() {
   const progressRef = useRef(0);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    let alreadyPlayed = false;
+    try {
+      alreadyPlayed = window.sessionStorage.getItem(SESSION_KEY) === "1";
+    } catch {
+      // Privacy modes / locked-down browsers can throw on sessionStorage
+      // access -- fall back to always playing rather than crashing.
+    }
 
     const finish = () => {
       document.body.style.overflow = "";
       window.__preloaderDone = true;
+      try {
+        window.sessionStorage.setItem(SESSION_KEY, "1");
+      } catch {
+        // Same fallback as above -- non-fatal if storage is unavailable.
+      }
       window.dispatchEvent(new Event("preloader:complete"));
       setVisible(false);
     };
+
+    if (alreadyPlayed) {
+      finish();
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
 
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"

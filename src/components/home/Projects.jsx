@@ -5,6 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { PROJECTS as PROJECT_DATA } from "@/data/projects";
+import Button from "@/components/ui/Button";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -13,11 +17,18 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
+// Curated cover images for these 3 featured cards (distinct from each
+// project's own gallery cover) -- slug is looked up from @/data/projects by
+// name so each card links to its real /projects/[slug] page instead of
+// duplicating slugs here by hand.
 const PROJECTS = [
   { name: "The Modern Organic Home", image: "/images/projects/project-2.jpg" },
   { name: "The Neo Colonial Home", image: "/images/projects/project-3.jpg" },
   { name: "The Modern Classical Home", image: "/images/projects/project-1.jpg" },
-];
+].map((project) => ({
+  ...project,
+  slug: PROJECT_DATA.find((p) => p.name === project.name)?.slug ?? "",
+}));
 
 // Heading + "See All" row. Part of the same pinned/scrubbed sequence as the
 // cards and CTA -- it's the first two steps of that single timeline (see
@@ -57,17 +68,17 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
 
   return (
     <>
-      {/* grid-cols-2 (not -1) at mobile: the pinned/enhanced render below
-          holds this inside a fixed h-screen sticky viewport with
-          overflow-hidden -- three cards single-column-stacked would be
-          taller than one screen and get clipped, since there's no room to
-          scroll within the pin itself. Two columns keeps the whole grid to
-          two rows, which fits. */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-8">
+      {/* grid-cols-1 at mobile, matching /projects index's ProjectsGrid --
+          the enhanced/pinned sequence below is desktop-only (see the
+          isDesktop check in Projects()), so on mobile this always renders
+          through the plain, non-pinned "!enhanced" branch with normal
+          document flow. No fixed-height sticky container to overflow, so
+          full-width single-column cards are safe here. */}
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-8">
         {PROJECTS.map((project, i) => (
           <Link
             key={project.name}
-            href="/projects"
+            href={project.slug ? `/projects/${project.slug}` : "/projects"}
             ref={(el) => {
               if (el && cardRefs) cardRefs.current[i] = el;
             }}
@@ -109,18 +120,10 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
 
       <div ref={ctaRef} className="mt-14 flex justify-start md:mt-20">
         {/* TODO: replace with popup form once fields are finalized */}
-        <Link
-          href="/contact"
-          className="inline-block rounded-full px-4 py-2 text-xs transition-opacity duration-200 ease-out hover:opacity-70"
-          style={{
-            fontFamily: "var(--font-manrope)",
-            color: INK,
-            backgroundColor: "rgba(43, 38, 34, 0.06)",
-          }}
-        >
+        <Button href="/contact" variant="secondary">
           Let&apos;s create a space that feels like you! Start your project
           here
-        </Link>
+        </Button>
       </div>
     </>
   );
@@ -132,36 +135,37 @@ export default function Projects() {
   const seeAllRef = useRef(null);
   const cardRefs = useRef([]);
   const ctaRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(motionMql.matches);
+    const mql = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mql.matches);
     update();
-    motionMql.addEventListener("change", update);
-    return () => motionMql.removeEventListener("change", update);
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
   }, []);
 
-  // The pinned/scrubbed sequence below now runs at every viewport width --
-  // only prefers-reduced-motion opts out, not device/screen size.
-  const enhanced = !reduceMotion;
+  // Desktop-only: the pinned/scrubbed sequence holds its grid inside a fixed
+  // h-screen sticky viewport with overflow-hidden, which only has room for
+  // the 3-column desktop layout. Mobile's single-column stacked cards would
+  // be taller than one screen and get clipped, so mobile always falls
+  // through to the plain "!enhanced" branch below (normal document flow,
+  // same as /projects index).
+  const enhanced = !reduceMotion && isDesktop;
 
-  useEffect(() => {
-    if (!enhanced) return;
-
-    // Same reasoning as About.jsx: this section is now pinned (sticky) with
-    // a "top top" -> "bottom bottom" ScrollTrigger, so its measured start/end
-    // depend on every section above it already being in its final, settled
-    // layout. Creating the trigger before Preloader's intro finishes (and
-    // before Hero/Quote/About's own mount-time layout upgrades have landed)
-    // bakes in stale positions that a later ScrollTrigger.refresh() won't
-    // fix. Wait for "preloader:complete" the same way About.jsx does.
-    let ctx;
-
-    const setup = () => {
+  // Same reasoning as About.jsx: this section is now pinned (sticky) with
+  // a "top top" -> "bottom bottom" ScrollTrigger, so its measured start/end
+  // depend on every section above it already being in its final, settled
+  // layout. Creating the trigger before Preloader's intro finishes (and
+  // before Hero/Quote/About's own mount-time layout upgrades have landed)
+  // bakes in stale positions that a later ScrollTrigger.refresh() won't
+  // fix. Wait for "preloader:complete" the same way About.jsx does.
+  usePreloaderGate(
+    () => {
       const cards = cardRefs.current.filter(Boolean);
 
-      ctx = gsap.context(() => {
+      const ctx = gsap.context(() => {
         // ONE timeline, ONE ScrollTrigger on the section's own root. Every
         // phase below is a tween positioned at an absolute fraction of this
         // single scrub -- heading, "See All", cards, and the CTA never get
@@ -235,19 +239,12 @@ export default function Projects() {
           5 * STEP
         );
       }, sectionRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [enhanced]);
+      return () => ctx.revert();
+    },
+    [],
+    enhanced
+  );
 
   if (!enhanced) {
     return (

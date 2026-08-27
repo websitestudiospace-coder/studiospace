@@ -1,8 +1,9 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -41,20 +42,14 @@ export default function Quote() {
   const quote2Ref = useRef(null);
   const q1WordsRef = useRef([]);
   const q2CharsRef = useRef([]);
-  const [simple, setSimple] = useState(true);
+  // The pinned/scrubbed sequence below now runs at every viewport width --
+  // only prefers-reduced-motion opts out, not device/screen size. Starts
+  // `true` (the fallback render) before the matchMedia check resolves, to
+  // avoid a first-paint flash of the heavier pinned/scrubbed sequence.
+  const simple = useReducedMotion(true);
 
   const q1Words = QUOTE_1.split(" ");
   const q2Words = QUOTE_2.split(" ");
-
-  useEffect(() => {
-    // The pinned/scrubbed sequence below now runs at every viewport width --
-    // only prefers-reduced-motion opts out, not device/screen size.
-    const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setSimple(motionMql.matches);
-    update();
-    motionMql.addEventListener("change", update);
-    return () => motionMql.removeEventListener("change", update);
-  }, []);
 
   useEffect(() => {
     if (simple) return;
