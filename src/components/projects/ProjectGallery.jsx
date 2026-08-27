@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { CldImage } from "next-cloudinary";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -17,7 +18,7 @@ function GalleryImage({ photo, alt, sizes }) {
       className="relative w-full overflow-hidden rounded-[8px]"
       style={{ aspectRatio: photo.width && photo.height ? `${photo.width} / ${photo.height}` : "4 / 5" }}
     >
-      <Image src={photo.src} alt={alt} fill sizes={sizes} className="object-cover" />
+      <CldImage src={photo.src} alt={alt} fill sizes={sizes} className="object-cover" />
     </div>
   );
 }
@@ -29,11 +30,12 @@ function GalleryImage({ photo, alt, sizes }) {
 export default function ProjectGallery({ name, rows }) {
   const sectionRef = useRef(null);
   const rowRefs = useRef([]);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
+    const mql = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mql.matches);
     update();
     mql.addEventListener("change", update);
     return () => mql.removeEventListener("change", update);
@@ -84,18 +86,27 @@ export default function ProjectGallery({ name, rows }) {
                 sizes="(max-width: 768px) 100vw, 1100px"
               />
             ) : (
+              // Portrait rows group up to 3 photos side by side on desktop,
+              // but that renders each image at ~1/3 of a 390px viewport
+              // (~101px wide) on mobile -- cap at 2 columns there instead,
+              // wrapping a 3-photo row onto a second line.
               <div
                 className="grid gap-3 md:gap-6"
-                style={{ gridTemplateColumns: `repeat(${row.photos.length}, minmax(0, 1fr))` }}
+                style={{
+                  gridTemplateColumns: `repeat(${isDesktop ? row.photos.length : Math.min(row.photos.length, 2)}, minmax(0, 1fr))`,
+                }}
               >
-                {row.photos.map((photo) => (
-                  <GalleryImage
-                    key={photo.src}
-                    photo={photo}
-                    alt={`${name} — photo`}
-                    sizes={`(max-width: 768px) ${Math.round(100 / row.photos.length)}vw, ${Math.round(1100 / row.photos.length)}px`}
-                  />
-                ))}
+                {row.photos.map((photo) => {
+                  const mobileCols = Math.min(row.photos.length, 2);
+                  return (
+                    <GalleryImage
+                      key={photo.src}
+                      photo={photo}
+                      alt={`${name} — photo`}
+                      sizes={`(max-width: 768px) ${Math.round(100 / mobileCols)}vw, ${Math.round(1100 / row.photos.length)}px`}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>

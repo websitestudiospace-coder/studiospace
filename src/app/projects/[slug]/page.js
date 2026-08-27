@@ -13,7 +13,12 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
   const project = getProjectBySlug(slug);
   if (!project) return {};
-  return { title: `${project.name} — Studio SP_ACE` };
+  const title = `${project.name} — Studio SP_ACE`;
+  return {
+    title,
+    openGraph: { title, description: project.description },
+    twitter: { title, description: project.description },
+  };
 }
 
 export default async function ProjectDetailPage({ params }) {

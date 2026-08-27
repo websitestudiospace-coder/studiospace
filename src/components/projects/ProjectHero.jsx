@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { CldImage } from "next-cloudinary";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ProjectDescriptionModal from "./ProjectDescriptionModal";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -61,7 +63,7 @@ function StatBlock({ label, value }) {
     <div>
       <p
         className="text-[11px] uppercase tracking-[0.15em]"
-        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.55 }}
+        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
       >
         {label}
       </p>
@@ -110,17 +112,9 @@ export default function ProjectHero({ project }) {
   const imageFilterRef = useRef(null);
   const nameRef = useRef(null);
   const detailsRef = useRef(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [isDesktop, setIsDesktop] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-
-  useEffect(() => {
-    const motionMql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(motionMql.matches);
-    update();
-    motionMql.addEventListener("change", update);
-    return () => motionMql.removeEventListener("change", update);
-  }, []);
 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 768px)");
@@ -132,20 +126,17 @@ export default function ProjectHero({ project }) {
 
   const enhanced = !reduceMotion;
 
-  useEffect(() => {
-    if (!enhanced) return;
+  usePreloaderGate(
+    () => {
+      const imageEnd = isDesktop ? IMAGE_END_DESKTOP : IMAGE_END_MOBILE;
+      const nameStartFont = fitNameFontSize(
+        project.name,
+        window.innerWidth * (isDesktop ? 0.82 : 0.86),
+        isDesktop ? NAME_START_FONT_DESKTOP_CAP : NAME_START_FONT_MOBILE_CAP
+      );
+      const nameEndFont = isDesktop ? NAME_END_FONT_DESKTOP : NAME_END_FONT_MOBILE;
 
-    let ctx;
-    const imageEnd = isDesktop ? IMAGE_END_DESKTOP : IMAGE_END_MOBILE;
-    const nameStartFont = fitNameFontSize(
-      project.name,
-      window.innerWidth * (isDesktop ? 0.82 : 0.86),
-      isDesktop ? NAME_START_FONT_DESKTOP_CAP : NAME_START_FONT_MOBILE_CAP
-    );
-    const nameEndFont = isDesktop ? NAME_END_FONT_DESKTOP : NAME_END_FONT_MOBILE;
-
-    const setup = () => {
-      ctx = gsap.context(() => {
+      const ctx = gsap.context(() => {
         gsap.set(imageBoxRef.current, { top: "0%", left: "0%", width: "100%", height: "100%" });
         gsap.set(imageFilterRef.current, { filter: "grayscale(0%)" });
         gsap.set(nameRef.current, {
@@ -205,19 +196,12 @@ export default function ProjectHero({ project }) {
 
         // 85%-100%: hold the settled state before the pin releases.
       }, outerRef);
-    };
 
-    if (window.__preloaderDone) {
-      setup();
-    } else {
-      window.addEventListener("preloader:complete", setup, { once: true });
-    }
-
-    return () => {
-      ctx?.revert();
-      window.removeEventListener("preloader:complete", setup);
-    };
-  }, [enhanced, isDesktop, project.name]);
+      return () => ctx.revert();
+    },
+    [isDesktop, project.name],
+    enhanced
+  );
 
   if (reduceMotion) {
     return (
@@ -228,7 +212,7 @@ export default function ProjectHero({ project }) {
         >
           <div className="relative h-[50vh] w-full overflow-hidden md:h-[85vh] md:w-[46%]">
             {project.cover ? (
-              <Image
+              <CldImage
                 src={project.cover}
                 alt={project.name}
                 fill
@@ -273,7 +257,7 @@ export default function ProjectHero({ project }) {
           >
             <div ref={imageFilterRef} className="absolute inset-0">
               {project.cover ? (
-                <Image
+                <CldImage
                   src={project.cover}
                   alt={project.name}
                   fill

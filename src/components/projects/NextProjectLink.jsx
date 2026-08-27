@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { CldImage } from "next-cloudinary";
 import Link from "next/link";
 
 const CREAM = "#F7EFE4";
@@ -15,14 +15,14 @@ export default function NextProjectLink({ project }) {
       >
         <p
           className="text-xs uppercase tracking-[0.15em]"
-          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.55 }}
+          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
         >
           Next Project
         </p>
 
         <div className="relative h-[220px] w-full max-w-[420px] overflow-hidden rounded-[8px] md:h-[280px]">
           {project.cover ? (
-            <Image
+            <CldImage
               src={project.cover}
               alt={project.name}
               fill

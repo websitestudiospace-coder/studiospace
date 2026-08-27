@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useRef, useState } from "react";
+import { CldImage } from "next-cloudinary";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -17,39 +19,38 @@ export default function ProjectsGrid({ projects }) {
   const gridRef = useRef(null);
   const cardRefs = useRef([]);
   const [failedImages, setFailedImages] = useState(() => new Set());
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
+  // Gated behind "preloader:complete" like every other scroll-triggered
+  // reveal in the app -- this grid sits directly below ProjectsHero's own
+  // pinned 160vh sequence, so its "top 85%" measurement is subject to the
+  // same pre-settle layout staleness that motivated the gate everywhere
+  // else (see ProjectsHero.jsx).
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
+        const cards = cardRefs.current.filter(Boolean);
+        gsap.set(cards, { opacity: 0, y: 32 });
 
-  useEffect(() => {
-    if (reduceMotion) return;
+        gsap.to(cards, {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          ease: "power2.out",
+          stagger: 0.12,
+          scrollTrigger: {
+            trigger: gridRef.current,
+            start: "top 85%",
+            toggleActions: "play none none none",
+          },
+        });
+      }, gridRef);
 
-    const ctx = gsap.context(() => {
-      const cards = cardRefs.current.filter(Boolean);
-      gsap.set(cards, { opacity: 0, y: 32 });
-
-      gsap.to(cards, {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: "power2.out",
-        stagger: 0.12,
-        scrollTrigger: {
-          trigger: gridRef.current,
-          start: "top 85%",
-          toggleActions: "play none none none",
-        },
-      });
-    }, gridRef);
-
-    return () => ctx.revert();
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   return (
     <section
@@ -76,7 +77,7 @@ export default function ProjectsGrid({ projects }) {
                 }}
               />
             ) : (
-              <Image
+              <CldImage
                 src={project.cover}
                 alt={project.name}
                 fill
