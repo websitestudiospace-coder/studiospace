@@ -191,51 +191,54 @@ export default function Projects() {
 
         // Anchor the timeline to exactly 1 "unit" so every position below
         // reads as a literal fraction of the pinned scroll range. Six steps
-        // now share that range in equal sixths: heading, "See All", the
-        // three cards, then the CTA.
+        // share the first 85% of that range in equal sixths (heading,
+        // "See All", the three cards, then the CTA), leaving a ~15% settle
+        // buffer before the pin releases -- previously all six steps
+        // divided the full range with the CTA landing exactly at 100%,
+        // leaving no buffer at all.
         tl.to({}, { duration: 1 }, 0);
 
-        const STEP = 1 / 6;
+        const STEP = 0.85 / 6;
 
         // 0%-16.7%: "Our Projects" heading reveals.
         tl.to(
           headingRef.current,
-          { opacity: 1, y: 0, ease: "power2.out", duration: STEP },
+          { opacity: 1, y: 0, ease: "none", duration: STEP },
           0 * STEP
         );
 
         // 16.7%-33.3%: "See All" link reveals.
         tl.to(
           seeAllRef.current,
-          { opacity: 1, y: 0, ease: "power2.out", duration: STEP },
+          { opacity: 1, y: 0, ease: "none", duration: STEP },
           1 * STEP
         );
 
         // 33.3%-50%: Card 1 settles.
         tl.to(
           cards[0],
-          { scale: 1, opacity: 1, y: 0, ease: "power2.out", duration: STEP },
+          { scale: 1, opacity: 1, y: 0, ease: "none", duration: STEP },
           2 * STEP
         );
 
         // 50%-66.7%: Card 2 settles.
         tl.to(
           cards[1],
-          { scale: 1, opacity: 1, y: 0, ease: "power2.out", duration: STEP },
+          { scale: 1, opacity: 1, y: 0, ease: "none", duration: STEP },
           3 * STEP
         );
 
         // 66.7%-83.3%: Card 3 settles.
         tl.to(
           cards[2],
-          { scale: 1, opacity: 1, y: 0, ease: "power2.out", duration: STEP },
+          { scale: 1, opacity: 1, y: 0, ease: "none", duration: STEP },
           4 * STEP
         );
 
         // 83.3%-100%: CTA pill reveals.
         tl.to(
           ctaRef.current,
-          { opacity: 1, y: 0, ease: "power2.out", duration: STEP },
+          { opacity: 1, y: 0, ease: "none", duration: STEP },
           5 * STEP
         );
       }, sectionRef);
@@ -249,7 +252,7 @@ export default function Projects() {
   if (!enhanced) {
     return (
       <section
-        className="w-full px-6 py-12 md:px-16 md:py-[100px]"
+        className="w-full px-6 py-12 md:px-16 md:py-24"
         style={{ backgroundColor: CREAM }}
       >
         <div className="mx-auto w-full max-w-[1100px]">
@@ -261,7 +264,7 @@ export default function Projects() {
   }
 
   return (
-    <section ref={sectionRef} className="relative w-full" style={{ height: "200vh" }}>
+    <section ref={sectionRef} className="relative w-full" style={{ height: "150vh" }}>
       <div
         className="sticky top-0 flex h-screen w-full flex-col justify-center overflow-hidden px-6 md:px-16"
         style={{ backgroundColor: CREAM }}

@@ -16,8 +16,9 @@ const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
 // Total pinned scroll distance -- 100vh of that is the natural viewport, the
-// remaining 100vh is the runway the shrink/reposition/reveal scrubs across.
-const SECTION_HEIGHT_VH = 200;
+// remaining 40vh is the runway the shrink/reposition/reveal scrubs across
+// (the timeline itself completes at 85%, leaving a ~15% settle buffer).
+const SECTION_HEIGHT_VH = 140;
 
 // Image box keyframes, as a percentage of the sticky h-screen container.
 // `left` never animates -- staying pinned at 0 while `width`/`height` shrink
@@ -79,7 +80,7 @@ function StatBlock({ label, value }) {
 
 function DetailsPanelContent({ project, onReadMore }) {
   return (
-    <div className="flex h-full w-full flex-col justify-center px-6 py-10 md:px-10 lg:px-14">
+    <div className="flex h-full w-full flex-col justify-center px-6 py-8 md:px-8 lg:px-12">
       <p
         className="text-sm md:text-base"
         style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.75 }}
@@ -96,7 +97,7 @@ function DetailsPanelContent({ project, onReadMore }) {
         Read More
       </button>
 
-      <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-8 md:mt-12">
+      <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-8 md:mt-12">
         <StatBlock label="Typology" value={project.typology} />
         <StatBlock label="Location" value={project.location} />
         <StatBlock label="Square Footage" value={project.squareFootage} />
@@ -172,17 +173,17 @@ export default function ProjectHero({ project }) {
         // 0%-70%: image shrinks + repositions to its settled box while
         // converting to grayscale, name rides along to its settled spot on
         // top of it.
-        tl.to(imageBoxRef.current, { ...imageEnd, ease: "power2.out", duration: 0.7 }, 0);
+        tl.to(imageBoxRef.current, { ...imageEnd, ease: "none", duration: 0.7 }, 0);
         tl.to(
           imageFilterRef.current,
-          { filter: "grayscale(100%)", ease: "power2.out", duration: 0.7 },
+          { filter: "grayscale(100%)", ease: "none", duration: 0.7 },
           0
         );
         tl.to(
           nameRef.current,
           isDesktop
-            ? { top: "84%", left: "6%", xPercent: 0, yPercent: 0, fontSize: nameEndFont, ease: "power2.out", duration: 0.7 }
-            : { top: "34%", fontSize: nameEndFont, ease: "power2.out", duration: 0.7 },
+            ? { top: "84%", left: "6%", xPercent: 0, yPercent: 0, fontSize: nameEndFont, ease: "none", duration: 0.7 }
+            : { top: "34%", fontSize: nameEndFont, ease: "none", duration: 0.7 },
           0
         );
 
@@ -190,7 +191,7 @@ export default function ProjectHero({ project }) {
         // vacated, once the shrink is mostly settled.
         tl.to(
           detailsRef.current,
-          { opacity: 1, x: 0, y: 0, ease: "power2.out", duration: 0.3 },
+          { opacity: 1, x: 0, y: 0, ease: "none", duration: 0.3 },
           0.55
         );
 

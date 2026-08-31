@@ -110,7 +110,7 @@ export default function Nav({ lightHero = false }) {
             />
           </Link>
 
-          <nav className="hidden items-center gap-10 md:flex">
+          <nav className="hidden items-center gap-8 md:flex">
             {LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -139,7 +139,7 @@ export default function Nav({ lightHero = false }) {
 
           <button
             type="button"
-            className="relative z-10 flex h-8 w-8 flex-col items-center justify-center gap-1.5 md:hidden"
+            className="relative z-10 flex h-11 w-11 flex-col items-center justify-center gap-1.5 md:hidden"
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
@@ -180,7 +180,7 @@ export default function Nav({ lightHero = false }) {
           close affordance is the same hamburger button above morphing into
           an X, not a separate icon. */}
       <div
-        className="fixed inset-0 z-[99] flex flex-col items-center justify-center gap-10 px-6 md:hidden"
+        className="fixed inset-0 z-[99] flex flex-col items-center justify-center gap-8 px-6 md:hidden"
         style={{
           backgroundColor: INK,
           opacity: menuOpen ? 1 : 0,

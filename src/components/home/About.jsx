@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
@@ -75,10 +75,24 @@ export default function About() {
   const imageRef = useRef(null);
   const textRef = useRef(null);
   const reduceMotion = useReducedMotion();
+  const [isDesktop, setIsDesktop] = useState(false);
 
-  // The pinned/scrubbed sequence below now runs at every viewport width --
-  // only prefers-reduced-motion opts out, not device/screen size.
-  const enhanced = !reduceMotion;
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+
+  // Desktop-only, same rule as Projects.jsx: the pinned sequence relies on
+  // an absolutely-positioned image/text split (image width tweened as a %,
+  // text box pinned at a fixed left offset) that has no mobile-width
+  // equivalent -- squeezing it into a narrow viewport is what clipped the
+  // heading, cut the body text off mid-paragraph, and pushed the "About Us"
+  // link off-screen. Mobile always falls through to the plain stacked
+  // "!enhanced" branch below instead.
+  const enhanced = !reduceMotion && isDesktop;
 
   // HeroQuoteTransition's hero pin and Quote's own scroll triggers default
   // to their unpinned/simple layout on first render and only upgrade to
@@ -126,7 +140,7 @@ export default function About() {
         // "empty," so it shouldn't consume much scroll distance.
         tl.to(
           imageRef.current,
-          { width: `${IMAGE_PHASE1_WIDTH}%`, ease: "power2.out", duration: 0.08 },
+          { width: `${IMAGE_PHASE1_WIDTH}%`, ease: "none", duration: 0.08 },
           0
         );
 
@@ -135,12 +149,12 @@ export default function About() {
         // image's advancing right edge.
         tl.to(
           imageRef.current,
-          { width: `${IMAGE_SETTLE_WIDTH}%`, ease: "power2.out", duration: 0.27 },
+          { width: `${IMAGE_SETTLE_WIDTH}%`, ease: "none", duration: 0.27 },
           0.08
         );
         tl.to(
           textRef.current,
-          { opacity: 1, x: 0, ease: "power2.out", duration: 0.27 },
+          { opacity: 1, x: 0, ease: "none", duration: 0.27 },
           0.08
         );
 
@@ -149,7 +163,7 @@ export default function About() {
         // Phase 2 end value.
         tl.to(
           imageRef.current,
-          { width: `${IMAGE_HOLD_WIDTH}%`, ease: "power2.out", duration: 0.3 },
+          { width: `${IMAGE_HOLD_WIDTH}%`, ease: "none", duration: 0.3 },
           0.35
         );
 
@@ -162,14 +176,14 @@ export default function About() {
             width: `${IMAGE_FULL_WIDTH}%`,
             height: "100%",
             filter: "grayscale(0%)",
-            ease: "power2.out",
+            ease: "none",
             duration: 0.2,
           },
           0.65
         );
         tl.to(
           textRef.current,
-          { opacity: 0, x: TEXT_SLIDE_X, ease: "power2.out", duration: 0.15 },
+          { opacity: 0, x: TEXT_SLIDE_X, ease: "none", duration: 0.15 },
           0.65
         );
 
@@ -184,10 +198,10 @@ export default function About() {
     enhanced
   );
 
-  if (reduceMotion) {
-    // Single fallback for the reduced-motion opt-out at every viewport
-    // width (no separate mobile variant any more) -- stacks image-over-text
-    // below md, sits side by side at md and up.
+  if (!enhanced) {
+    // Shared fallback for both the reduced-motion opt-out and mobile/narrow
+    // viewports -- stacks image-over-text (full width) below md, sits side
+    // by side at md and up.
     return (
       <section
         className="flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
@@ -228,7 +242,7 @@ export default function About() {
         // h-[100svh]; mixing vh and svh across this section's own
         // height/marginTop/sticky-child trio would just relocate the same
         // desync, so all three switch together.
-        height: "160svh",
+        height: "125svh",
         // Quote's sticky reveal above (Quote.jsx) fully finishes its own
         // scrub well before its sticky child naturally scrolls itself out
         // of view — CSS `sticky` requires a full extra 100svh of scroll for

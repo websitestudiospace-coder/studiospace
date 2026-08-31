@@ -129,7 +129,7 @@ export default function ProjectsHero() {
         // every frame.
         tl.to(
           shrinkRef.current,
-          { height: `${settledHeight}px`, ease: "none", duration: 0.75 },
+          { height: `${settledHeight}px`, ease: "none", duration: 0.85 },
           0
         );
         tl.to(
@@ -139,7 +139,7 @@ export default function ProjectsHero() {
             xPercent: 0,
             fontSize: headingEnd,
             ease: "none",
-            duration: 0.75,
+            duration: 0.85,
           },
           0
         );
@@ -148,11 +148,13 @@ export default function ProjectsHero() {
         // heading lands. The heading's own color crossfades cream -> ink
         // on the same window so it's always legible against whatever is
         // behind it (dark image, then the cream page background).
-        tl.to(imageRef.current, { opacity: 0, ease: "none", duration: 0.35 }, 0.4);
-        tl.to(headingRef.current, { color: INK, ease: "none", duration: 0.35 }, 0.4);
+        tl.to(imageRef.current, { opacity: 0, ease: "none", duration: 0.4 }, 0.45);
+        tl.to(headingRef.current, { color: INK, ease: "none", duration: 0.4 }, 0.45);
 
-        // 75%-100%: hold the settled state so it registers before the pin
-        // releases into the grid below.
+        // 85%-100%: hold the settled state so it registers before the pin
+        // releases into the grid below -- previously a 75%-100% hold left
+        // a ~25% dead tail; trimmed to ~15% to match the site's other
+        // pinned sections.
       }, outerRef);
 
       return () => ctx.revert();

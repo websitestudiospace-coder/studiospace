@@ -5,6 +5,7 @@ import { CldImage } from "next-cloudinary";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useReducedMotion from "@/hooks/useReducedMotion";
+import usePreloaderGate from "@/hooks/usePreloaderGate";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -41,30 +42,40 @@ export default function ProjectGallery({ name, rows }) {
     return () => mql.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    if (reduceMotion) return;
+  const enhanced = !reduceMotion;
 
-    const ctx = gsap.context(() => {
-      const rowEls = rowRefs.current.filter(Boolean);
-      gsap.set(rowEls, { opacity: 0, y: 32 });
+  // Same reasoning as ProjectHero/About/Projects: each row's ScrollTrigger
+  // start ("top 85%") is measured against layout that only settles once
+  // Preloader's intro finishes. Creating these triggers before then bakes
+  // in stale positions, which is what left every row beyond the first
+  // couple permanently stuck at opacity:0 -- their measured trigger
+  // position never lined up with where they actually ended up on screen.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
+        const rowEls = rowRefs.current.filter(Boolean);
+        gsap.set(rowEls, { opacity: 0, y: 32 });
 
-      rowEls.forEach((el) => {
-        gsap.to(el, {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: el,
-            start: "top 85%",
-            toggleActions: "play none none none",
-          },
+        rowEls.forEach((el) => {
+          gsap.to(el, {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: el,
+              start: "top 85%",
+              toggleActions: "play none none none",
+            },
+          });
         });
-      });
-    }, sectionRef);
+      }, sectionRef);
 
-    return () => ctx.revert();
-  }, [reduceMotion]);
+      return () => ctx.revert();
+    },
+    [],
+    enhanced
+  );
 
   if (rows.length === 0) return null;
 

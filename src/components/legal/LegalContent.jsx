@@ -72,7 +72,7 @@ export default function LegalContent({ title, updated, children }) {
   return (
     <section
       ref={sectionRef}
-      className="w-full px-6 pt-32 pb-20 md:px-16 md:pt-44 md:pb-32"
+      className="w-full px-6 pt-24 pb-16 md:px-16 md:pt-32 md:pb-24"
       style={{ backgroundColor: INK }}
     >
       <div className="mx-auto w-full max-w-[900px]">

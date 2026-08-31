@@ -75,7 +75,7 @@ export default function HeroQuoteTransition() {
       gsap.to(heroInnerRef.current, {
         yPercent: -8,
         opacity: 0.7,
-        ease: "power2.out",
+        ease: "none",
         scrollTrigger: {
           trigger: heroPinRef.current,
           start: "top top",

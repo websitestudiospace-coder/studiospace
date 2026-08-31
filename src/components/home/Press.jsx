@@ -170,12 +170,16 @@ function PressCarousel({
             aria-label={`Go to press item ${i + 1}`}
             aria-current={i === index}
             onClick={() => goTo(i, true)}
-            className="h-2.5 rounded-full transition-all duration-300"
-            style={{
-              width: i === index ? "22px" : "10px",
-              backgroundColor: i === index ? MAROON : "rgba(43,38,34,0.2)",
-            }}
-          />
+            className="flex h-11 w-11 items-center justify-center"
+          >
+            <span
+              className="h-2.5 rounded-full transition-all duration-300"
+              style={{
+                width: i === index ? "22px" : "10px",
+                backgroundColor: i === index ? MAROON : "rgba(43,38,34,0.2)",
+              }}
+            />
+          </button>
         ))}
       </div>
     </div>
@@ -317,7 +321,7 @@ export default function Press() {
     <section
       id="press"
       ref={sectionRef}
-      className="w-full px-6 py-12 md:px-16 md:py-[100px]"
+      className="w-full px-6 py-12 md:px-16 md:py-24"
       style={{ backgroundColor: CREAM }}
     >
       <div className="mx-auto w-full max-w-[1100px]">

@@ -57,7 +57,7 @@ export default function FinalCTA() {
     // cream run and the Footer's own ink.
     <section
       ref={sectionRef}
-      className="flex w-full flex-col items-center px-6 py-20 text-center md:px-16 md:py-28"
+      className="flex w-full flex-col items-center px-6 py-16 text-center md:px-16 md:py-24"
       style={{ backgroundColor: INK }}
     >
       <h2

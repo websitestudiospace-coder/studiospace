@@ -11,7 +11,11 @@ if (typeof window !== "undefined") {
 }
 
 const INK = "#2B2622";
-const SECTION_HEIGHT_VH = 300;
+// Video scrub maps linearly across the whole pinned range (progress 0-1 ==
+// video start-to-end, no phase percentages to rescale), so it needs a bit
+// more runway than a pure transform sequence to avoid feeling rushed --
+// kept slightly more generous than the other trimmed pins.
+const SECTION_HEIGHT_VH = 170;
 
 // Scroll-scrubbed video: rendered only when a project actually has a
 // video.mp4 (see @/lib/projects's getProjectVideo -- this component never

@@ -382,7 +382,7 @@ export default function Instagram() {
   return (
     <section
       ref={sectionRef}
-      className="w-full px-6 py-12 md:px-16 md:py-[100px]"
+      className="w-full px-6 py-12 md:px-16 md:py-24"
       style={{ backgroundColor: CREAM }}
     >
       <div className="mx-auto w-full max-w-[1100px]">

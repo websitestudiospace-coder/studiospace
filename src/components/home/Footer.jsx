@@ -71,7 +71,7 @@ function FormField({ label, ...inputProps }) {
   return (
     <label className="block">
       <span
-        className="block text-[10px] uppercase tracking-[0.15em]"
+        className="block text-xs uppercase tracking-[0.15em]"
         style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         {label} *
@@ -158,15 +158,23 @@ function SignupBlock({ blockRef }) {
   );
 }
 
+// `contents` on mobile keeps nav/social as two independent grid items (the
+// existing side-by-side half-width columns below the signup block);
+// md:flex stacks them into ONE grid column instead of two at desktop --
+// previously Instagram had its own full-height column matching nav's
+// 5-item height, leaving ~370px of empty space beneath its single link.
+// Stacking them removes that column entirely rather than inventing filler
+// content (no second confirmed social account or studio address/hours
+// exists yet to legitimately fill a real third column).
 function LinksColumns({ navRef, socialRef }) {
   return (
-    <>
-      <nav ref={navRef} className="flex flex-col items-start gap-3">
+    <div className="contents md:flex md:flex-col md:items-start md:gap-8">
+      <nav ref={navRef} className="flex flex-col items-start">
         {NAV_LINKS.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className="text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
+            className="flex items-center py-3.5 text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
           >
             {link.label}
@@ -174,21 +182,21 @@ function LinksColumns({ navRef, socialRef }) {
         ))}
       </nav>
 
-      <div ref={socialRef} className="flex flex-col items-start gap-3">
+      <div ref={socialRef} className="flex flex-col items-start">
         {SOCIAL_LINKS.map((link) => (
           <a
             key={link.href}
             href={link.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
+            className="flex items-center py-3.5 text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
           >
             {link.label}
           </a>
         ))}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -216,19 +224,19 @@ function Wordmark({ wordmarkRef }) {
 function LegalRow() {
   return (
     <div
-      className="mt-6 grid grid-cols-1 gap-3 border-t py-4 text-center text-[11px] uppercase tracking-[0.15em] md:mt-10 md:grid-cols-3 md:gap-4 md:py-6 md:text-left"
+      className="mt-6 grid grid-cols-1 gap-3 border-t py-4 text-center text-xs uppercase tracking-[0.15em] md:mt-8 md:grid-cols-3 md:gap-4 md:py-6 md:text-left"
       style={{ borderColor: "rgba(247, 239, 228, 0.15)" }}
     >
       <Link
         href="/terms"
-        className="justify-self-center md:justify-self-start"
+        className="flex items-center justify-center py-3.5 justify-self-center md:justify-self-start"
         style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         Terms of Service
       </Link>
       <Link
         href="/privacy"
-        className="justify-self-center"
+        className="flex items-center justify-center py-3.5 justify-self-center"
         style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         Privacy Policy
@@ -302,8 +310,11 @@ export default function Footer() {
       <div className="mx-auto w-full max-w-[1600px] px-6 pt-16 md:px-16 md:pt-24">
         {/* grid-cols-2 (not -1) at mobile, with the signup block spanning
             both columns, so the nav/social columns share a row instead of
-            each getting their own full-width stack. */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-3 md:gap-8">
+            each getting their own full-width stack. Desktop is also
+            grid-cols-2 (not -3) -- LinksColumns collapses nav+social into
+            one column there (see its own comment), so signup and links are
+            the only two real columns. */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-2 md:gap-16">
           <SignupBlock blockRef={signupRef} />
           <LinksColumns navRef={navRef} socialRef={socialRef} />
         </div>

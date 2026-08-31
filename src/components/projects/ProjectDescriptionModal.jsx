@@ -48,7 +48,7 @@ export default function ProjectDescriptionModal({ name, longDescription, onClose
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200 ease-out hover:bg-black/5"
+          className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-200 ease-out hover:bg-black/5"
           style={{ color: INK }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">

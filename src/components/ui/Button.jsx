@@ -38,7 +38,7 @@ const SIZE_CLASSES = {
     md: "text-xs",
   },
   icon: {
-    md: "p-2.5",
+    md: "p-3.5",
   },
 };
 

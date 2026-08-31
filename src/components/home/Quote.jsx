@@ -19,23 +19,6 @@ const QUOTE_1 =
   "Thoughtfully designed architecture and interiors, crafted around your story.";
 const QUOTE_2 = "Where timeless design meets the way you truly live.";
 
-function shuffleGroups(count) {
-  const idx = Array.from({ length: count }, (_, i) => i);
-  for (let i = idx.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [idx[i], idx[j]] = [idx[j], idx[i]];
-  }
-
-  const groups = [];
-  let i = 0;
-  while (i < idx.length) {
-    const size = Math.min(2 + Math.round(Math.random()), idx.length - i);
-    groups.push(idx.slice(i, i + size));
-    i += size;
-  }
-  return groups;
-}
-
 export default function Quote() {
   const wrapperRef = useRef(null);
   const quote1Ref = useRef(null);
@@ -82,7 +65,7 @@ export default function Quote() {
       gsap.to(wrapperRef.current, {
         opacity: 1,
         scale: 1,
-        ease: "power2.out",
+        ease: "none",
         scrollTrigger: {
           trigger: wrapperRef.current,
           start: "top bottom",
@@ -91,7 +74,7 @@ export default function Quote() {
         },
       });
 
-      const q1Groups = shuffleGroups(q1WordsRef.current.length);
+      const q1WordEls = q1WordsRef.current.filter(Boolean);
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -102,36 +85,41 @@ export default function Quote() {
         },
       });
 
-      // Phase A — reveal Quote 1 in randomized word-groups (gray -> dark)
-      q1Groups.forEach((group) => {
-        const targets = group.map((i) => q1WordsRef.current[i]).filter(Boolean);
-        tl.to(targets, {
-          opacity: 1,
-          color: INK,
-          duration: 0.6,
-          stagger: 0.05,
-          ease: "power2.out",
-        });
+      // Phase A — reveal Quote 1 left-to-right, in actual reading order
+      // (gray -> dark). Staggering the words array directly (DOM order),
+      // rather than shuffling them into randomized groups the way this used
+      // to work, is what guarantees words light up in the same order the
+      // sentence is read instead of scrambling mid-sentence.
+      tl.to(q1WordEls, {
+        opacity: 1,
+        color: INK,
+        duration: 1,
+        stagger: 0.08,
+        ease: "none",
       });
 
-      // Phase A — reverse the same random word-groups (dark -> gray), while
-      // Quote 1 drifts upward slightly so it reads as receding, not just
+      // Hold — the fully revealed sentence stays legible for a real stretch
+      // of scroll before receding, instead of the reveal and recede meeting
+      // with no gap (previously the recede began the instant the last word
+      // finished lighting up, so the sentence was never legible as a whole
+      // for more than a flash).
+      tl.to({}, { duration: 1.5 });
+
+      // Phase A — recede Quote 1 (dark -> gray), same left-to-right order,
+      // while it drifts upward slightly so it reads as receding, not just
       // dissolving in place.
       const recedeStart = tl.duration();
-      q1Groups.forEach((group) => {
-        const targets = group.map((i) => q1WordsRef.current[i]).filter(Boolean);
-        tl.to(targets, {
-          opacity: MUTED_OPACITY,
-          color: INK,
-          duration: 0.6,
-          stagger: 0.05,
-          ease: "power2.out",
-        });
+      tl.to(q1WordEls, {
+        opacity: MUTED_OPACITY,
+        color: INK,
+        duration: 0.6,
+        stagger: 0.05,
+        ease: "none",
       });
       const recedeDuration = tl.duration() - recedeStart;
       tl.to(
         quote1Ref.current,
-        { yPercent: -15, ease: "power2.out", duration: recedeDuration },
+        { yPercent: -15, ease: "none", duration: recedeDuration },
         recedeStart
       );
 
@@ -160,12 +148,12 @@ export default function Quote() {
         scaleX: 1,
         duration: 4.5,
         stagger: 0.03,
-        ease: "power2.out",
+        ease: "none",
       });
       const riseDuration = tl.duration() - riseStart;
       tl.to(
         quote2Ref.current,
-        { yPercent: 0, ease: "power2.out", duration: riseDuration },
+        { yPercent: 0, ease: "none", duration: riseDuration },
         riseStart
       );
 
@@ -211,7 +199,7 @@ export default function Quote() {
   }
 
   return (
-    <section ref={wrapperRef} className="relative w-full h-[165vh]">
+    <section ref={wrapperRef} className="relative w-full h-[135vh]">
       <div
         className="sticky top-0 flex h-[100vh] w-full flex-col items-center justify-center overflow-hidden px-6 md:px-16"
         style={{ backgroundColor: CREAM }}

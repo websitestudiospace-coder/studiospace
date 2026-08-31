@@ -41,7 +41,7 @@ const MAP_EMBED_SRC =
 function FieldLabel({ children, optional }) {
   return (
     <span
-      className="block text-[10px] uppercase tracking-[0.15em]"
+      className="block text-xs uppercase tracking-[0.15em]"
       style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
     >
       {children} {optional ? "(optional)" : "*"}
@@ -137,12 +137,12 @@ function ContactForm({ formRef }) {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="w-full max-w-lg">
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <TextField label="Name" type="text" name="name" autoComplete="name" />
         <TextField label="Email" type="email" name="email" autoComplete="email" />
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
         <TextField
           label="Phone"
           optional
@@ -175,7 +175,7 @@ function StudioInfo({ infoRef }) {
       {STUDIO_INFO.map((item) => (
         <div key={item.label}>
           <span
-            className="block text-[10px] uppercase tracking-[0.15em]"
+            className="block text-xs uppercase tracking-[0.15em]"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
           >
             {item.label}
@@ -201,7 +201,7 @@ function StudioInfo({ infoRef }) {
 
       <div>
         <span
-          className="block text-[10px] uppercase tracking-[0.15em]"
+          className="block text-xs uppercase tracking-[0.15em]"
           style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
         >
           Instagram
@@ -224,7 +224,7 @@ function StudioMap({ mapRef }) {
   return (
     <div ref={mapRef} className="mt-16 md:mt-20">
       <span
-        className="block text-[10px] uppercase tracking-[0.15em]"
+        className="block text-xs uppercase tracking-[0.15em]"
         style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
         Find Us
@@ -293,7 +293,7 @@ export default function ContactContent() {
   return (
     <section
       ref={sectionRef}
-      className="w-full px-6 pt-32 pb-20 md:px-16 md:pt-44 md:pb-32"
+      className="w-full px-6 pt-24 pb-16 md:px-16 md:pt-32 md:pb-24"
       style={{ backgroundColor: INK }}
     >
       <div className="mx-auto w-full max-w-[1100px]">

@@ -55,7 +55,7 @@ export default function ProjectsGrid({ projects }) {
   return (
     <section
       ref={gridRef}
-      className="w-full px-6 pb-20 md:px-16 md:pb-32"
+      className="w-full px-6 pb-24 md:px-16 md:pb-32"
       style={{ backgroundColor: CREAM }}
     >
       <div className="mx-auto grid w-full max-w-[1100px] grid-cols-1 gap-8 md:grid-cols-3 md:gap-8">
