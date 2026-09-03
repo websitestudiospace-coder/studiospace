@@ -90,11 +90,22 @@ export default function Quote() {
       // rather than shuffling them into randomized groups the way this used
       // to work, is what guarantees words light up in the same order the
       // sentence is read instead of scrambling mid-sentence.
+      //
+      // Reveal/hold/recede below are sized as fractions of this section's
+      // existing, unchanged pin distance (135vh section, 35vh of actual
+      // scroll) -- not lengthened, reallocated: the reveal and recede are
+      // just the transition (quick), the hold is the actual reading moment
+      // (long). Previously reveal/hold/recede/buffer/rise/hold split
+      // roughly 14/13/9/3/49/13% of the scroll range, leaving each quote
+      // only ~13% of the pin fully legible and static -- not enough scroll
+      // distance to read a full sentence at a normal pace before it moved
+      // again. Now ~9/27/5/2/30/27%: each hold is more than doubled, at the
+      // reveal/recede's expense.
       tl.to(q1WordEls, {
         opacity: 1,
         color: INK,
-        duration: 1,
-        stagger: 0.08,
+        duration: 0.7,
+        stagger: 0.06,
         ease: "none",
       });
 
@@ -103,7 +114,7 @@ export default function Quote() {
       // with no gap (previously the recede began the instant the last word
       // finished lighting up, so the sentence was never legible as a whole
       // for more than a flash).
-      tl.to({}, { duration: 1.5 });
+      tl.to({}, { duration: 3.5 });
 
       // Phase A — recede Quote 1 (dark -> gray), same left-to-right order,
       // while it drifts upward slightly so it reads as receding, not just
@@ -112,8 +123,8 @@ export default function Quote() {
       tl.to(q1WordEls, {
         opacity: MUTED_OPACITY,
         color: INK,
-        duration: 0.6,
-        stagger: 0.05,
+        duration: 0.4,
+        stagger: 0.035,
         ease: "none",
       });
       const recedeDuration = tl.duration() - recedeStart;
@@ -131,7 +142,7 @@ export default function Quote() {
 
       // Buffer — brief pause between Quote 1 fading out and Quote 2 arriving.
       // Kept short so this doesn't read as dead scroll space.
-      tl.to({}, { duration: 0.3 });
+      tl.to({}, { duration: 0.2 });
 
       // Phase B — Quote 2 becomes visible and floats in character by
       // character, while the container itself rises slightly for a matching
@@ -146,8 +157,8 @@ export default function Quote() {
         yPercent: 0,
         scaleY: 1,
         scaleX: 1,
-        duration: 4.5,
-        stagger: 0.03,
+        duration: 3,
+        stagger: 0.02,
         ease: "none",
       });
       const riseDuration = tl.duration() - riseStart;
@@ -163,7 +174,7 @@ export default function Quote() {
       // centered for a single frame before it started scrolling away like
       // ordinary content -- reading as "stuck" near the top edge with empty
       // space beneath rather than as an intentionally placed statement.
-      tl.to({}, { duration: 1.5 });
+      tl.to({}, { duration: 3.5 });
     }, wrapperRef);
 
     return () => ctx.revert();

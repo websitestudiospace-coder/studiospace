@@ -98,7 +98,19 @@ export default function HeroQuoteTransition() {
       className="relative z-0 w-full"
       style={{ height: `${100 + PIN_EXTRA_VH}vh` }}
     >
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
+      <div
+        className="sticky top-0 h-screen w-full overflow-hidden"
+        // Opaque backdrop for the parallax fade below: heroInnerRef's own
+        // opacity dips to 0.7 as this pin scrolls, and neither this div nor
+        // its ancestors otherwise paint anything -- with no backdrop, that
+        // partial transparency blended straight through to <body>'s cream
+        // background (globals.css --background), reading as a whitish haze
+        // washing over the video during the Hero->Quote handoff. Matching
+        // the dark tone Hero's own top gradient already darkens toward
+        // keeps the fade reading as "video dims slightly," not "page
+        // bleeds through."
+        style={{ backgroundColor: "#2B2622" }}
+      >
         <div ref={heroInnerRef} className="h-full w-full">
           <Hero />
         </div>

@@ -16,11 +16,22 @@ const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
 // Image width keyframes (percent of the pinned viewport) across the five
-// choreographed phases of the scroll timeline.
-const IMAGE_PHASE1_WIDTH = 28; // 0%-20%: grows from nothing
-const IMAGE_SETTLE_WIDTH = 46; // 20%-45%: grows toward the settled layout
-const IMAGE_HOLD_WIDTH = 48; // 45%-70%: settled, barely creeps
-const IMAGE_FULL_WIDTH = 100; // 70%-90%: resumes growth to full-bleed
+// choreographed phases of the scroll timeline -- percentages below are the
+// ACTUAL tween positions/durations from the timeline further down (the
+// original values here had drifted out of sync with those; corrected
+// alongside the Phase 4 retiming below).
+const IMAGE_PHASE1_WIDTH = 28; // 0%-8%: grows from nothing
+const IMAGE_SETTLE_WIDTH = 46; // 8%-35%: grows toward the settled layout
+// Also doubles as the text panel's fixed left offset/width (see the
+// `textRef` style below) -- that's a layout position, not an image-growth
+// keyframe, and must NOT change independently of a deliberate text-column
+// reflow decision. The image itself barely reaches this value (46->48,
+// see Phase 3 below) and isn't allowed to grow past it until Phase 4,
+// since the text panel sits fully opaque and static at exactly this left
+// edge until then -- letting the image cross earlier would visibly creep
+// a grayscale image behind fully-legible text.
+const IMAGE_HOLD_WIDTH = 48; // 35%-65%: settled, barely creeps (this window is a text-reading hold, not an image animation -- same role as Quote.jsx's holds)
+const IMAGE_FULL_WIDTH = 100; // 65%-95%: resumes growth to full-bleed, gradually
 
 const TEXT_SLIDE_X = 40; // px slide distance used on both the in and out tweens
 
@@ -167,9 +178,21 @@ export default function About() {
           0.35
         );
 
-        // Phase 4 (65%-85%): image resumes growing to full-bleed; text
-        // fades and slides out, finishing at 0.8 so it's fully gone
-        // before the image reaches 100% width at 0.85.
+        // Phase 4 (65%-95%): image resumes growing to full-bleed; text
+        // fades and slides out, finishing at 0.8, well before the image
+        // reaches 100% width at 0.95.
+        //
+        // This is the phase that used to read as an abrupt jump: it was
+        // previously only 20% of the scroll range (0.65-0.85) carrying 52
+        // of the image's 100 total width points -- over half the image's
+        // entire growth compressed into a fifth of the scroll, right after
+        // Phase 3's plateau. Extending it to 30% (duration 0.2 -> 0.3)
+        // reclaims scroll distance from Phase 5 below, which was pure dead
+        // weight (full-bleed already reached, nothing left to animate) --
+        // Phases 1-3 and the text fade timing are untouched, so the
+        // text-reading hold (Phase 3) and the no-overlap-before-fade-out
+        // guarantee (see IMAGE_HOLD_WIDTH above) both still hold exactly
+        // as before.
         tl.to(
           imageRef.current,
           {
@@ -177,7 +200,7 @@ export default function About() {
             height: "100%",
             filter: "grayscale(0%)",
             ease: "none",
-            duration: 0.2,
+            duration: 0.3,
           },
           0.65
         );
@@ -187,9 +210,12 @@ export default function About() {
           0.65
         );
 
-        // Phase 5 (85%-100%): full-bleed image holds, text long gone — no
+        // Phase 5 (95%-100%): full-bleed image holds, text long gone — no
         // tweens needed, just the scroll distance reserved by the anchor
-        // above.
+        // above. Kept short but non-zero (not 0%) so the settled full-bleed
+        // state gets a real, if brief, dwell before the pin releases,
+        // rather than reading as "stuck" for a single frame -- same
+        // reasoning as Quote.jsx's own closing hold.
       }, outerRef);
 
       return () => ctx.revert();

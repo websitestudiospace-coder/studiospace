@@ -8,6 +8,11 @@ export default function Hero() {
         muted
         playsInline
         preload="none"
+        // The poster is the single most prominent above-the-fold image on
+        // the site (first paint of the homepage) -- fetchPriority hints the
+        // browser to fetch it with the same urgency `priority` gives an
+        // <Image>, since <video poster> has no equivalent prop of its own.
+        fetchPriority="high"
         className="absolute inset-0 h-full w-full object-cover"
       >
         <source src="/videos/hero-video-hevc.mp4" type="video/mp4; codecs=hvc1" />

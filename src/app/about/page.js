@@ -1,7 +1,6 @@
 import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import AboutHero from "@/components/about/AboutHero";
-import StudioDescription from "@/components/about/StudioDescription";
 import MeetFounders from "@/components/about/MeetFounders";
 import WhatWeBelieve from "@/components/about/WhatWeBelieve";
 import IndiaMap from "@/components/about/IndiaMap";
@@ -37,9 +36,11 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <>
-      <Nav />
+      <Nav lightHero />
+      {/* StudioDescription's copy now lives inside AboutHero's own scroll
+          sequence (see that component) -- the section itself is retired but
+          its file is kept around in case its content needs referencing back. */}
       <AboutHero />
-      <StudioDescription />
       <MeetFounders />
       <WhatWeBelieve />
       <IndiaMap />

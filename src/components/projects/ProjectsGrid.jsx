@@ -52,10 +52,32 @@ export default function ProjectsGrid({ projects }) {
     !reduceMotion
   );
 
+  // ProjectsHero's sticky wrapper stays a fixed 100vh (needed for its native
+  // `position: sticky` release to line up with the scrub, see that file's own
+  // comment) even though its content shrinks to a much smaller settled row
+  // -- that mismatch leaves blank cream inside the pin, which reads as an
+  // oversized gap once the grid appears below it. Pulling this section up
+  // (same idea as Quote -> About on the homepage) fixes the gap at rest, but
+  // unlike Quote's case the blank space here isn't a one-time dead scroll
+  // tail -- it's present for nearly the whole pin, growing as the hero
+  // shrinks. A margin sized to close the gap completely at rest (e.g.
+  // calc(256px-100vh), tried first) has to be so large it pulls the grid
+  // into view while the heading is still huge and centered, well before the
+  // shrink finishes -- cards visibly overlapping the headline mid-scroll.
+  // -50vh is deliberately much smaller and was tuned against the actual
+  // transition (checked every ~10% of the pin's scroll, at both 1440px and
+  // 390px): the grid only starts entering the viewport once the heading is
+  // already legibly small and on its way to the corner, well after the
+  // "huge, centered" phase, so nothing ever collides, at the cost of a
+  // moderate (not minimal) gap at rest -- still roughly half the original,
+  // uncorrected void. Only applies when the pin animation is actually
+  // running (matches ProjectsHero's `enhanced` = `!reduceMotion`).
+  const pullUpClass = reduceMotion ? "" : "mt-[-50vh]";
+
   return (
     <section
       ref={gridRef}
-      className="w-full px-6 pb-24 md:px-16 md:pb-32"
+      className={`w-full px-6 pb-24 md:px-16 md:pb-32 ${pullUpClass}`}
       style={{ backgroundColor: CREAM }}
     >
       <div className="mx-auto grid w-full max-w-[1100px] grid-cols-1 gap-8 md:grid-cols-3 md:gap-8">

@@ -97,6 +97,10 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
                 alt={project.name}
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
+                // Only the first card is above-the-fold-adjacent priority
+                // content -- cards 2/3 fall through to next/image's default
+                // native lazy loading like every other below-fold image.
+                priority={i === 0}
                 className="object-cover transition-transform duration-200 ease-out group-hover:scale-[1.03]"
                 onError={() =>
                   setFailedImages((prev) => new Set(prev).add(i))
