@@ -119,15 +119,19 @@ function NumberBadge({ index }) {
 // One card in the sticky stack (or the reduced-motion plain list). Visual
 // style is unchanged from the old horizontal-row version -- light cream
 // tint (distinct from the section's own CREAM) plus a hairline border and
-// soft shadow, same radius/padding/badge/type. Only the width changed: the
-// old 260/300/320px widths were sized to sit three-across in a row: a
-// single focal card reads better wider now that it's the only thing on
-// screen at a time.
+// soft shadow, same radius/padding/badge/type. Width now spans the section's
+// established content width (the same max-w-[1100px] container IndiaMap and
+// StudioDescription also use, and that this section's own wrapper already
+// applies below) instead of the old 260/300/320px-then-560px values, all of
+// which were sized for a narrower focal element (three-across in the old
+// horizontal row, then a single centered card) and left an unstyled-looking
+// gap of bare section background beside the stack once cards stopped
+// sitting edge-to-edge with each other or the viewport.
 function BeliefCard({ index, belief, cardRef }) {
   return (
     <div
       ref={cardRef}
-      className="w-full max-w-[560px] rounded-2xl border p-7 md:p-8"
+      className="w-full rounded-2xl border p-7 md:p-8"
       style={{
         backgroundColor: "#FBF6EE",
         borderColor: "rgba(43,38,34,0.1)",
@@ -159,20 +163,56 @@ export default function WhatWeBelieve() {
   const containerRefs = useRef([]);
   const reduceMotion = useReducedMotion();
 
-  // Independent, scroll-SCRUBBED character-by-character reveal for the
-  // heading only -- adapted from a reference component's word-by-word
-  // effect (same distortion idea: chars start dropped/squashed and settle
-  // into place) but with that reference's bouncy back.inOut ease replaced
-  // by ease: "none", matching this project's standard for every scrub:true
-  // animation (a bounce would visibly stutter/reverse against scroll
-  // instead of tracking it 1:1). Deliberately its own usePreloaderGate call
-  // and its own ScrollTrigger, trigger'd on headingRef directly -- not
-  // nested inside sectionRef's own transformed content (the stack effect
-  // below never transforms headingRef, and this effect's own gsap.context
-  // is scoped to headingRef, not sectionRef), so the two triggers measure
-  // against stable, untransformed ancestors and never fight over the same
-  // element (the golden rule every scroll-tied effect on this site
-  // follows).
+  // Scroll-SCRUBBED character-by-character heading reveal, rebuilt from the
+  // React Bits "ScrollFloat" pattern (chars start dropped/squashed via
+  // yPercent/scaleY/scaleX and settle into place on scroll) but adapted
+  // rather than dropped in verbatim -- ScrollFloat is a standalone
+  // component with its own CSS file and several defaults that don't fit
+  // this codebase:
+  //   - ease: "none" here, not the reference's bouncy "back.inOut(2)" --
+  //     every scrub: true animation on this site uses ease: "none" (Quote,
+  //     About, Projects, HeroQuoteTransition, AboutHero) so scroll position
+  //     maps to progress 1:1; a bounce would visibly stutter/reverse against
+  //     scroll instead of tracking it, and would be the one inconsistent
+  //     scrub on the whole site.
+  //   - This heading's own existing type treatment (Agatho, INK, the
+  //     text-[36px]/md:text-[64px] scale already on the <h2> below) carries
+  //     over as-is -- not ScrollFloat's own demo styling
+  //     (font-weight: 900 at a clamp(1.6rem, 8vw, 10rem) scale), which was
+  //     that library's own CSS file, not a real requirement of the effect.
+  //   - No `scroller` is passed to scrollTrigger -- grepped the rest of
+  //     this codebase (including SmoothScroll.jsx's own Lenis wiring) and
+  //     nothing here ever sets ScrollTrigger's scroller or a scrollerProxy;
+  //     Lenis just keeps the native window scroll position in sync and
+  //     pokes ScrollTrigger.update() on each tick, so every trigger project-
+  //     wide (this one included) defaults to window like normal. Passing a
+  //     scrollContainerRef the way the reference's own API expects would
+  //     have pointed this at a scroller nothing else in the project uses.
+  //   - Gated through usePreloaderGate, which the reference's plain
+  //     useEffect has no equivalent of -- every other ScrollTrigger-driven
+  //     component on this site waits for "preloader:complete" because
+  //     trigger start/end are measured against layout that only settles
+  //     once the preloader's intro finishes; skipping that gate is a
+  //     plausible reason a previous pass at this heading never fired
+  //     correctly on the real page even though it measured fine in
+  //     isolated testing.
+  //   - start/end are this heading's own values (not the reference's own
+  //     'center bottom+=50%'/'bottom bottom-=40%', tuned for its own demo
+  //     layout), picked and scroll-tested against this heading's actual
+  //     position: "top 85%" fires as it enters the lower part of the
+  //     viewport, "top 40%" finishes with it still comfortably on screen
+  //     rather than exiting off the top mid-reveal.
+  //   - reduceMotion (below, in the JSX) renders the plain heading string
+  //     immediately with no animation, same as ScrollFloat has no
+  //     equivalent for and every other animated element on this site does
+  //     handle.
+  // Deliberately its own usePreloaderGate call and its own ScrollTrigger,
+  // trigger'd on headingRef directly -- not nested inside sectionRef's own
+  // transformed content (the stack effect below never transforms
+  // headingRef, and this effect's own gsap.context is scoped to headingRef,
+  // not sectionRef), so the two triggers measure against stable,
+  // untransformed ancestors and never fight over the same element (the
+  // golden rule every scroll-tied effect on this site follows).
   usePreloaderGate(
     () => {
       const chars = headingCharRefs.current.filter(Boolean);
@@ -351,7 +391,7 @@ export default function WhatWeBelieve() {
                   }}
                 >
                   <div
-                    className="wwb-stack-sticky sticky flex justify-center"
+                    className="wwb-stack-sticky sticky"
                     style={{
                       "--top-mobile": `${topMobile}px`,
                       "--top-desktop": `${topDesktop}px`,
