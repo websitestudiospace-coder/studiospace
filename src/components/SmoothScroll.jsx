@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { setLenis } from "@/lib/lenis";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -18,6 +19,12 @@ export default function SmoothScroll({ children }) {
       wheelMultiplier: 1,
       touchMultiplier: 1.5,
     });
+
+    // The one and only Lenis instance for the whole page -- registered here
+    // so other components (e.g. WhatWeBelieve's scroll-stack) can subscribe
+    // to its scroll events via src/lib/lenis.js instead of ever creating
+    // their own instance.
+    setLenis(lenis);
 
     lenis.on("scroll", ScrollTrigger.update);
 
@@ -36,6 +43,7 @@ export default function SmoothScroll({ children }) {
     return () => {
       gsap.ticker.remove(syncLenis);
       lenis.destroy();
+      setLenis(null);
     };
   }, []);
 

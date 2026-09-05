@@ -121,6 +121,17 @@ function getProjectVideo(slug) {
   return null;
 }
 
+// Resolves one specific photo (by its manifest filename) from a project's
+// gallery to its Cloudinary URL -- for callers that want a particular real
+// photo (not the cover, not the full gallery) to use elsewhere on the site,
+// e.g. WhatWeBelieve's belief-illustration images on the About page. `file`
+// must match the manifest's own `file` value exactly, subfolder prefix
+// included where the project has one (e.g. "Photos/3.webp").
+export function getProjectPhoto(slug, file) {
+  const match = getManifestEntry(slug).photos.find((photo) => photo.file === file);
+  return match ? toCloudinaryUrl(`/images/projects/${slug}/${file}`) : null;
+}
+
 export function getAllProjects() {
   return PROJECTS.map((project) => {
     const [firstFile] = listProjectPhotoFilenames(project.slug);

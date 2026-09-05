@@ -1,14 +1,9 @@
 "use client";
 
-import { useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useEffect, useRef, useState } from "react";
+import { getLenis } from "@/lib/lenis";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 const CREAM = "#F7EFE4";
 const CARD_SURFACE = "#FBF6EE";
@@ -38,366 +33,345 @@ const BELIEFS = [
   },
 ];
 
-// Third rebuild: client approved a specific reference structure (a project-
-// roadmap-style layout with pill cards, a rotated-text tab plugged into
-// each card's left edge, an icon+title row, and dashed curved connectors in
-// a descending staircase arrangement) and asked for it reproduced
-// precisely, not loosely approximated. Adapted, not copied verbatim: the
-// reference's colored icon chips/date-range chips/"Project Details" badge
-// don't apply here (no project-timeline data), so those are dropped
-// entirely rather than filled with invented placeholder data -- the tab,
-// icon+title row, and card anatomy are what actually translate, restyled
-// in this project's own cream/ink/maroon + Agatho/Manrope.
+// Fourth rebuild: a scroll-pinned image+text card stack (React Bits'
+// "ScrollStack" pattern), adapted rather than ported verbatim -- the
+// reference creates its own Lenis instance for window-scroll mode, which
+// this project can't do (one shared Lenis instance for the whole page,
+// created in SmoothScroll.jsx; a second instance would fight it for the
+// same window scroll). Instead this subscribes to that shared instance via
+// src/lib/lenis.js. The reference's own transform math (translateY/scale
+// from scroll position, applied as direct style writes, not GSAP tweens)
+// is reimplemented here rather than copied blind, tuned for 4 cards at
+// this page's own content width -- rotationAmount and blurAmount are both
+// omitted entirely (not just zeroed): this site's motion vocabulary
+// doesn't use rotation or blur anywhere, and the reference's own defaults
+// for a demo with many more cards didn't fit 4.
 //
-// Desktop staircase positions are absolute (%x/%y within one relative
-// container) because the reference's staggered rhythm -- each card offset
-// both horizontally AND vertically from the last -- can't be produced by
-// normal document flow the way the previous (looser) zigzag rebuild was.
-// Mobile drops the whole absolute-position system for a plain centered
-// flow stack (see the responsive note below).
+// Cards pin via `position: sticky` (this site's locked convention -- never
+// GSAP's `pin: true`, and this pattern doesn't use GSAP's pin either), and
+// nothing here is also an independent ScrollTrigger target elsewhere on
+// the page, so the golden rule holds even though the stacking transforms
+// themselves are manual scroll math rather than GSAP.
 //
-// Reveal is still the same low-risk per-element one-shot ScrollTrigger
-// idiom as ProjectGallery.jsx/ProjectsGrid.jsx (gsap.set hidden -> gsap.to
-// on enter, power3.out, toggleActions "play none none none") -- explicitly
-// NOT a shared scroll-progress value driving multiple things (that was the
-// first rebuild, also rejected), and explicitly NOT an animated line-draw
-// on the connectors (this section has a documented history of animation
-// bugs; the connectors are static paths that just fade in with their card).
+// Real project photography now illustrates each belief (passed down as
+// `beliefImages` from about/page.js, a server component -- getProjectPhoto()
+// in src/lib/projects.js reads the filesystem via Node's `fs`, which can't
+// run inside this "use client" component, so the resolved Cloudinary URLs
+// arrive as a plain prop instead).
 
-const ARROW_MARKER_ID = "wwb-connector-arrow";
+// Desktop scroll budget per card (vh) before the next one takes over, plus
+// a trailing hold on the last card so it doesn't release the instant it
+// settles. Shorter on mobile, matching every other pinned sequence on this
+// site (Quote/MeetFounders/the old WhatWeBelieve stack all shorten their
+// scroll distance on mobile) so the mechanic doesn't feel endless on a
+// small screen.
+const ITEM_DISTANCE_VH_DESKTOP = 85;
+const ITEM_DISTANCE_VH_MOBILE = 60;
+const TRAILING_HOLD_VH_DESKTOP = 45;
+const TRAILING_HOLD_VH_MOBILE = 25;
 
-// left/top are % positions of each card's own top-left corner within the
-// desktop staircase container -- a close start on the reference's
-// proportions, tuned by rendering and eyeballing (see comment on the
-// container below), not treated as exact.
-const STAIRCASE = [
-  { left: 5, top: 0 },
-  { left: 45, top: 25 },
-  { left: 5, top: 50 },
-  { left: 45, top: 75 },
-];
+// A card enters from this far below (px) and this much smaller, settling
+// to y:0/scale:1 as it becomes current.
+const ENTER_OFFSET_PX = 80;
+const ENTER_SCALE = 0.92;
+// Once superseded, a card recedes into the stack behind newer ones: each
+// further card that arrives pushes it up (itemStackDistance) and shrinks
+// it a little more (itemScale), capped so old cards don't vanish.
+const STACK_OFFSET_PX = 26;
+const ITEM_SCALE_STEP = 0.05;
+const MAX_STACK_DEPTH = BELIEFS.length - 1;
 
-function LeafIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 20c0-9 5-15 15-16-1 10-6 15-15 16Z" />
-      <path d="M6 18c3-4 7-8 12-13" />
-    </svg>
-  );
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+
+// Pure function of the continuous progress value `x` (0..BELIEFS.length)
+// and a card's own index -- returns the opacity/y/scale/zIndex to apply.
+// Kept as one function (not scattered across the update loop) so the
+// desktop and mobile card sets below can share the exact same math.
+function getCardStyle(x, index) {
+  const local = x - index;
+
+  if (local <= 0) {
+    return { opacity: 0, y: ENTER_OFFSET_PX, scale: ENTER_SCALE, zIndex: index };
+  }
+  if (local <= 1) {
+    const t = local;
+    return {
+      opacity: t,
+      y: ENTER_OFFSET_PX * (1 - t),
+      scale: ENTER_SCALE + (1 - ENTER_SCALE) * t,
+      zIndex: index,
+    };
+  }
+  const depth = Math.min(local - 1, MAX_STACK_DEPTH);
+  // Opacity has to collapse much faster than position/scale here. A first
+  // pass faded all three together (opacity 1 - depth*0.06) and, confirmed
+  // via screenshot, produced a sustained garbled overlap: `depth` and the
+  // NEXT card's own arrival-`local` are numerically identical during the
+  // handoff (both equal x - index - 1), so a slow opacity falloff meant
+  // this card stayed near-fully-opaque for this card's ENTIRE arrival --
+  // two cards' text legible on top of each other for a full unit of
+  // scroll, not a brief blend. Collapsing to 0 by depth 0.2 (a fifth of
+  // that same distance) keeps the crossfade brief enough that only a
+  // short blend is ever visible, while position/scale keep easing across
+  // the full stack depth so receded cards still read as a visible pile.
+  // A 0.08 floor (tried first) still let 2-3 stacked-behind cards'
+  // ghosted text combine into a genuinely readable palimpsest once several
+  // had accumulated -- confirmed via screenshot at a settled scroll
+  // position, not just the transitional blend this was meant to allow.
+  // Full 0 instead, same as how Quote.jsx sets `visibility: hidden` on its
+  // own receded quote before the next one appears -- this codebase's own
+  // established way of guaranteeing zero overlap risk rather than a faint
+  // trace that can still stack up. The visible "pile" cue comes from the
+  // position/scale easing below instead (still applied over the full
+  // depth), not from lingering ghost text.
+  const textOpacity = depth >= 0.2 ? 0 : 1 - depth / 0.2;
+  return {
+    opacity: textOpacity,
+    y: -depth * STACK_OFFSET_PX,
+    scale: 1 - depth * ITEM_SCALE_STEP,
+    zIndex: index,
+  };
 }
 
-function RulerIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="9" width="18" height="6" rx="1" />
-      <path d="M7 9v3M11 9v3M15 9v3" />
-    </svg>
-  );
-}
-
-function HourglassIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 4h12c0 5-4 6-6 8-2-2-6-3-6-8Z" />
-      <path d="M6 20h12c0-5-4-6-6-8-2 2-6 3-6 8Z" />
-    </svg>
-  );
-}
-
-function PartnershipIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="9" cy="12" r="6" />
-      <circle cx="15" cy="12" r="6" />
-    </svg>
-  );
-}
-
-const ICONS = [LeafIcon, RulerIcon, HourglassIcon, PartnershipIcon];
-
-// The reference's rotated-text tab, "plugged into" the card's left edge --
-// half outside (the negative left offset), half overlapping into the
-// card's own padding. No project-timeline data to show here, so this
-// carries the step number instead of a duration ("1 Week" etc. in the
-// reference) -- same visual device, content that actually fits.
-function TabCapsule({ index }) {
+function NumberBadge({ index }) {
   return (
     <div
-      className="absolute -left-5 top-7 flex h-24 w-10 items-center justify-center rounded-full md:-left-6 md:top-8 md:h-28 md:w-11"
-      style={{ backgroundColor: MAROON }}
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm"
+      style={{ backgroundColor: MAROON, color: CREAM, fontFamily: "var(--font-manrope)" }}
     >
-      <span
-        className="whitespace-nowrap text-xs tracking-[0.15em] md:text-sm"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, transform: "rotate(-90deg)" }}
-      >
-        {String(index + 1).padStart(2, "0")}
-      </span>
+      {String(index + 1).padStart(2, "0")}
     </div>
   );
 }
 
-function IconChip({ Icon }) {
-  return (
-    <div
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-      style={{ backgroundColor: "rgba(43,38,34,0.06)" }}
-    >
-      <Icon />
-    </div>
-  );
-}
-
-function StepCard({ index, belief, cardRef, reduceMotion, className = "" }) {
-  const Icon = ICONS[index];
+function StackCard({ index, belief, image, cardRef }) {
   return (
     <div
       ref={cardRef}
-      className={`relative rounded-[30px] border py-7 pl-10 pr-7 md:py-8 md:pl-12 md:pr-8 ${className}`}
+      className="[grid-area:1/1] flex w-full flex-col overflow-hidden rounded-[28px] border md:h-[420px] md:flex-row"
       style={{
         backgroundColor: CARD_SURFACE,
         borderColor: "rgba(43,38,34,0.1)",
-        boxShadow: "0 4px 20px rgba(43,38,34,0.05)",
-        ...(reduceMotion ? null : { opacity: 0 }),
+        boxShadow: "0 20px 50px rgba(43,38,34,0.14)",
+        willChange: "transform, opacity",
       }}
     >
-      <TabCapsule index={index} />
-      <div className="flex items-center gap-3">
-        <IconChip Icon={Icon} />
+      <div className="relative h-56 w-full shrink-0 md:h-full md:w-1/2">
+        {image?.src && (
+          // Plain <img>, not next/image -- the resolved Cloudinary URL
+          // arrives fully-formed as a prop from about/page.js (see the
+          // file-level comment above), and next/image would additionally
+          // require res.cloudinary.com in next.config.js's remotePatterns
+          // (confirmed via a live "Invalid src prop" crash) -- a config
+          // change outside this task's scoped file list. Every other
+          // Cloudinary image on this site goes through CldImage instead,
+          // which sidesteps that requirement; this component intentionally
+          // doesn't need CldImage's own server-side resolution since the
+          // URL is already resolved by the time it gets here.
+          <img
+            src={image.src}
+            alt={image.alt || belief.title}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+      </div>
+      <div className="flex flex-1 flex-col justify-center p-7 md:p-10">
+        <NumberBadge index={index} />
         <h3
-          className="text-xl md:text-2xl"
+          className="mt-5 text-xl md:text-2xl"
           style={{ fontFamily: "var(--font-agatho)", color: INK }}
         >
           {belief.title}
         </h3>
+        <p
+          className="mt-3 text-sm md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
+        >
+          {belief.body}
+        </p>
       </div>
-      <p
-        className="mt-4 text-sm md:text-base"
-        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
-      >
-        {belief.body}
-      </p>
     </div>
   );
 }
 
-// Desktop-only curved dashed connector, absolutely boxed into the gap
-// between two consecutive staircase cards. `mirror` flips the curve
-// horizontally for the legs that run right-to-left instead of left-to-
-// right, reusing one path rather than authoring two.
-function StaircaseConnector({ box, mirror, arrowRef, reduceMotion }) {
+function StaticCard({ index, belief, image }) {
   return (
     <div
-      ref={arrowRef}
-      className="absolute hidden md:block"
-      style={{ ...box, ...(reduceMotion ? null : { opacity: 0 }) }}
+      className="flex w-full flex-col overflow-hidden rounded-[28px] border md:flex-row"
+      style={{
+        backgroundColor: CARD_SURFACE,
+        borderColor: "rgba(43,38,34,0.1)",
+        boxShadow: "0 4px 20px rgba(43,38,34,0.05)",
+      }}
     >
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-        <g transform={mirror ? "translate(100,0) scale(-1,1)" : undefined}>
-          <path
-            d="M0,0 C45,15 55,60 100,100"
-            fill="none"
-            stroke={INK}
-            strokeOpacity="0.35"
-            strokeWidth="1.5"
-            strokeDasharray="5 5"
-            vectorEffect="non-scaling-stroke"
-            markerEnd={`url(#${ARROW_MARKER_ID})`}
+      <div className="relative h-56 w-full shrink-0 md:h-auto md:w-1/2">
+        {image?.src && (
+          // Plain <img>, not next/image -- the resolved Cloudinary URL
+          // arrives fully-formed as a prop from about/page.js (see the
+          // file-level comment above), and next/image would additionally
+          // require res.cloudinary.com in next.config.js's remotePatterns
+          // (confirmed via a live "Invalid src prop" crash) -- a config
+          // change outside this task's scoped file list. Every other
+          // Cloudinary image on this site goes through CldImage instead,
+          // which sidesteps that requirement; this component intentionally
+          // doesn't need CldImage's own server-side resolution since the
+          // URL is already resolved by the time it gets here.
+          <img
+            src={image.src}
+            alt={image.alt || belief.title}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
           />
-        </g>
-      </svg>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col justify-center p-7 md:p-10">
+        <NumberBadge index={index} />
+        <h3
+          className="mt-5 text-xl md:text-2xl"
+          style={{ fontFamily: "var(--font-agatho)", color: INK }}
+        >
+          {belief.title}
+        </h3>
+        <p
+          className="mt-3 text-sm md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
+        >
+          {belief.body}
+        </p>
+      </div>
     </div>
   );
 }
 
-// Mobile-only straight vertical connector between stacked cards -- the
-// staircase's diagonal geometry doesn't translate to a single narrow
-// column, so this drops to the simplest possible link instead of forcing
-// the curve.
-function MobileConnector({ arrowRef, reduceMotion }) {
-  return (
-    <div
-      ref={arrowRef}
-      className="h-14 w-full md:hidden"
-      style={reduceMotion ? null : { opacity: 0 }}
-    >
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-        <path
-          d="M50,0 L50,100"
-          fill="none"
-          stroke={INK}
-          strokeOpacity="0.35"
-          strokeWidth="1.5"
-          strokeDasharray="5 5"
-          vectorEffect="non-scaling-stroke"
-          markerEnd={`url(#${ARROW_MARKER_ID})`}
-        />
-      </svg>
-    </div>
-  );
-}
-
-export default function WhatWeBelieve() {
+export default function WhatWeBelieve({ beliefImages = [] }) {
   const sectionRef = useRef(null);
-  const desktopCardRefs = useRef([]);
-  const desktopArrowRefs = useRef([]);
-  const mobileCardRefs = useRef([]);
-  const mobileArrowRefs = useRef([]);
-  // `initial = true` -- confirmed via live testing (not just reasoning)
-  // that starting `false` causes a real bug: the gated effect briefly runs
-  // with stale reduceMotion=false before the hook resolves, gsap.set()s
-  // cards to opacity 0, and when reduceMotion then flips true,
-  // gsap.context's revert() restores its own pre-recorded snapshot --
-  // which was ALSO 0 -- leaving cards permanently invisible under reduced
-  // motion instead of clearing the override. Starting `true` means the
-  // gated effect never runs in that scenario at all.
+  const cardRefs = useRef([]);
+  // `initial = true` -- the same fix documented at length in
+  // PROJECT_STATUS.md for the prior WhatWeBelieve rebuilds: starting
+  // `false` lets the gated effect below briefly run with a stale value
+  // before matchMedia resolves, which (for a GSAP-based effect) leaves
+  // content permanently invisible under reduced motion. This effect isn't
+  // GSAP, but starting `true` is still correct here for the same first-
+  // paint-flash reason Quote.jsx originally adopted it for.
   const reduceMotion = useReducedMotion(true);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
 
   usePreloaderGate(
     () => {
-      const ctx = gsap.context(() => {
-        const cards = [...desktopCardRefs.current, ...mobileCardRefs.current].filter(Boolean);
-        const arrows = [...desktopArrowRefs.current, ...mobileArrowRefs.current].filter(Boolean);
+      const cards = cardRefs.current.filter(Boolean);
+      if (cards.length !== BELIEFS.length) return undefined;
 
-        cards.forEach((card) => {
-          gsap.set(card, { opacity: 0, y: 32 });
-          gsap.to(card, {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 85%",
-              toggleActions: "play none none none",
-            },
-          });
+      const itemDistanceVh = isDesktop ? ITEM_DISTANCE_VH_DESKTOP : ITEM_DISTANCE_VH_MOBILE;
+      const trailingHoldVh = isDesktop ? TRAILING_HOLD_VH_DESKTOP : TRAILING_HOLD_VH_MOBILE;
+      const activeVh = BELIEFS.length * itemDistanceVh;
+      const totalVh = activeVh + trailingHoldVh;
+      const activeFraction = activeVh / totalVh;
+
+      const update = () => {
+        const section = sectionRef.current;
+        if (!section) return;
+
+        const rect = section.getBoundingClientRect();
+        const scrollableHeight = rect.height - window.innerHeight;
+        const scrolled = clamp01(scrollableHeight > 0 ? -rect.top / scrollableHeight : 0);
+        const x = Math.min(scrolled / activeFraction, 1) * BELIEFS.length;
+
+        cards.forEach((card, i) => {
+          const { opacity, y, scale, zIndex } = getCardStyle(x, i);
+          card.style.opacity = String(opacity);
+          card.style.transform = `translateY(${y}px) scale(${scale})`;
+          card.style.zIndex = String(zIndex);
+          card.style.pointerEvents = opacity > 0.5 ? "auto" : "none";
         });
+      };
 
-        arrows.forEach((arrow) => {
-          gsap.set(arrow, { opacity: 0, y: 16 });
-          gsap.to(arrow, {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: arrow,
-              start: "top 90%",
-              toggleActions: "play none none none",
-            },
-          });
-        });
-      }, sectionRef);
+      update();
 
-      return () => ctx.revert();
+      const lenis = getLenis();
+      if (lenis) {
+        lenis.on("scroll", update);
+      } else {
+        // Defensive fallback only -- in normal operation SmoothScroll's
+        // effect has already registered the shared instance by the time
+        // this gated effect runs (usePreloaderGate waits for
+        // "preloader:complete", which fires well after mount). Never
+        // creates a second Lenis instance either way.
+        window.addEventListener("scroll", update, { passive: true });
+      }
+      window.addEventListener("resize", update);
+
+      return () => {
+        if (lenis) {
+          lenis.off("scroll", update);
+        } else {
+          window.removeEventListener("scroll", update);
+        }
+        window.removeEventListener("resize", update);
+      };
     },
-    [],
+    [isDesktop],
     !reduceMotion
   );
+
+  if (reduceMotion) {
+    return (
+      <section
+        className="w-full px-6 py-16 md:px-16 md:py-24"
+        style={{ backgroundColor: CREAM }}
+      >
+        <div className="mx-auto w-full max-w-[1100px]">
+          <h2
+            className="text-center text-[36px] md:text-[64px]"
+            style={{ fontFamily: "var(--font-agatho)", color: INK }}
+          >
+            {HEADING}
+          </h2>
+          <div className="mt-14 flex flex-col gap-8 md:mt-20">
+            {BELIEFS.map((belief, i) => (
+              <StaticCard key={belief.title} index={i} belief={belief} image={beliefImages[i]} />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const itemDistanceVh = isDesktop ? ITEM_DISTANCE_VH_DESKTOP : ITEM_DISTANCE_VH_MOBILE;
+  const trailingHoldVh = isDesktop ? TRAILING_HOLD_VH_DESKTOP : TRAILING_HOLD_VH_MOBILE;
+  const totalVh = BELIEFS.length * itemDistanceVh + trailingHoldVh;
 
   return (
     <section
       ref={sectionRef}
-      className="w-full overflow-hidden px-6 py-16 md:px-16 md:py-24"
-      style={{ backgroundColor: CREAM }}
+      className="relative w-full"
+      style={{ backgroundColor: CREAM, height: `${totalVh}vh` }}
     >
-      {/* Shared arrowhead marker, referenced by every connector below --
-          defined once so it isn't duplicated per SVG. */}
-      <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
-        <defs>
-          <marker
-            id={ARROW_MARKER_ID}
-            viewBox="0 0 10 10"
-            refX="8"
-            refY="5"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto-start-reverse"
-          >
-            <path d="M0,0 L10,5 L0,10 Z" fill={INK} fillOpacity="0.35" />
-          </marker>
-        </defs>
-      </svg>
-
-      <div className="mx-auto w-full max-w-[1100px]">
+      <div className="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden px-6 md:px-16">
         <h2
-          className="text-center text-[36px] md:text-[64px]"
+          className="mb-10 text-center text-[32px] md:mb-14 md:text-[48px]"
           style={{ fontFamily: "var(--font-agatho)", color: INK }}
         >
           {HEADING}
         </h2>
 
-        {/* Desktop staircase -- one relative container tall enough to hold
-            all 4 cards at their staggered top offsets (see STAIRCASE)
-            without the last one overflowing the bottom. Height is a fixed
-            px value tuned by rendering, not derived, since the cards'
-            own content height (title/body line-wrapping) isn't something
-            CSS percentage math can account for automatically. */}
-        <div className="relative mt-16 hidden md:block" style={{ height: "1100px" }}>
+        <div className="grid w-full max-w-[820px]">
           {BELIEFS.map((belief, i) => (
-            <div
+            <StackCard
               key={belief.title}
-              className="absolute"
-              style={{ left: `${STAIRCASE[i].left}%`, top: `${STAIRCASE[i].top}%`, width: "380px" }}
-            >
-              <StepCard
-                index={i}
-                belief={belief}
-                reduceMotion={reduceMotion}
-                cardRef={(el) => (desktopCardRefs.current[i] = el)}
-              />
-            </div>
-          ))}
-
-          {/* Boxes below are sized to sit strictly in the gap BETWEEN each
-              pair of cards (never overlapping either card's own box) --
-              measured against actual rendered card positions (each card is
-              ~15% of the container's height at STAIRCASE's top offsets),
-              not the container's raw top/gap percentages. A first pass
-              used the raw gap between STAIRCASE entries directly and the
-              curve visibly cut through both cards' body text -- confirmed
-              via screenshot, not just math -- because a card's real height
-              eats well into the *next* card's nominal top offset. */}
-          <StaircaseConnector
-            box={{ left: "28%", top: "15.5%", width: "22%", height: "9%" }}
-            mirror={false}
-            reduceMotion={reduceMotion}
-            arrowRef={(el) => (desktopArrowRefs.current[0] = el)}
-          />
-          <StaircaseConnector
-            box={{ left: "32%", top: "40.5%", width: "20%", height: "9%" }}
-            mirror={true}
-            reduceMotion={reduceMotion}
-            arrowRef={(el) => (desktopArrowRefs.current[1] = el)}
-          />
-          <StaircaseConnector
-            box={{ left: "28%", top: "65.5%", width: "22%", height: "9%" }}
-            mirror={false}
-            reduceMotion={reduceMotion}
-            arrowRef={(el) => (desktopArrowRefs.current[2] = el)}
-          />
-        </div>
-
-        {/* Mobile: the staircase's diagonal offsets don't translate to a
-            narrow viewport -- plain centered column instead, straight
-            vertical connectors between stacked cards. */}
-        <div className="mt-14 flex flex-col items-center md:hidden">
-          {BELIEFS.map((belief, i) => (
-            <div key={belief.title} className="w-full max-w-[420px]">
-              {i > 0 && (
-                <MobileConnector
-                  reduceMotion={reduceMotion}
-                  arrowRef={(el) => (mobileArrowRefs.current[i - 1] = el)}
-                />
-              )}
-              <StepCard
-                index={i}
-                belief={belief}
-                reduceMotion={reduceMotion}
-                className="w-full"
-                cardRef={(el) => (mobileCardRefs.current[i] = el)}
-              />
-            </div>
+              index={i}
+              belief={belief}
+              image={beliefImages[i]}
+              cardRef={(el) => (cardRefs.current[i] = el)}
+            />
           ))}
         </div>
       </div>

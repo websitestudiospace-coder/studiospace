@@ -4,6 +4,32 @@ import AboutHero from "@/components/about/AboutHero";
 import MeetFounders from "@/components/about/MeetFounders";
 import WhatWeBelieve from "@/components/about/WhatWeBelieve";
 import IndiaMap from "@/components/about/IndiaMap";
+import { getProjectPhoto } from "@/lib/projects";
+
+// WhatWeBelieve's scroll-stack needs a real photo per belief, but it's a
+// "use client" component (GSAP/Lenis/DOM refs) and getProjectPhoto() reads
+// the filesystem (via Node's fs, see src/lib/projects.js) -- server-only,
+// can't run inside a client component. Resolved here instead (this page is
+// a server component) and passed down as plain prop URLs, same pattern
+// src/app/projects/[slug]/page.js already uses for ProjectDetail.
+const BELIEF_IMAGES = [
+  {
+    src: getProjectPhoto("the-modern-organic-home", "3.webp"),
+    alt: "Textural materials and natural finishes in a Studio SP_ACE living space",
+  },
+  {
+    src: getProjectPhoto("the-modern-eclectic-home", "3H4A2309.webp"),
+    alt: "Ornate hardware detail on a vintage-styled dresser",
+  },
+  {
+    src: getProjectPhoto("the-modern-classical-home", "3.webp"),
+    alt: "A clean, balanced living room composition",
+  },
+  {
+    src: getProjectPhoto("the-neo-colonial-home", "Photos/3.webp"),
+    alt: "A warm, layered living room styled for everyday living",
+  },
+];
 
 // TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
 // doesn't deep-merge nested `openGraph`/`twitter` objects, so a page that
@@ -41,7 +67,7 @@ export default function AboutPage() {
           its file is kept around in case its content needs referencing back. */}
       <AboutHero />
       <MeetFounders />
-      <WhatWeBelieve />
+      <WhatWeBelieve beliefImages={BELIEF_IMAGES} />
       <IndiaMap />
       <Footer />
     </>
