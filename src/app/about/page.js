@@ -4,7 +4,6 @@ import AboutHero from "@/components/about/AboutHero";
 import MeetFounders from "@/components/about/MeetFounders";
 import WhatWeBelieve from "@/components/about/WhatWeBelieve";
 import IndiaMap from "@/components/about/IndiaMap";
-import FinalCTA from "@/components/about/FinalCTA";
 
 // TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
 // doesn't deep-merge nested `openGraph`/`twitter` objects, so a page that
@@ -44,7 +43,6 @@ export default function AboutPage() {
       <MeetFounders />
       <WhatWeBelieve />
       <IndiaMap />
-      <FinalCTA />
       <Footer />
     </>
   );
