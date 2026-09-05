@@ -126,16 +126,16 @@ export default function Preloader() {
     >
       <div
         ref={logoRef}
-        className="w-[clamp(220px,30vw,400px)]"
+        className="w-[clamp(300px,45vw,900px)]"
         style={{ opacity: 0 }}
       >
         <Image
           src="/logos/logo.png"
           alt="Studio SP_ACE — Architecture | Interiors"
-          width={1536}
-          height={1024}
+          width={1600}
+          height={716}
           priority
-          sizes="(max-width: 640px) 220px, 400px"
+          sizes="(max-width: 480px) 300px, (max-width: 1920px) 45vw, 900px"
           className="w-full h-auto"
         />
       </div>
