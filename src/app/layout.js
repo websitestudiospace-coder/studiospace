@@ -2,6 +2,7 @@ import { Manrope } from "next/font/google";
 import localFont from "next/font/local";
 import Preloader from "@/components/Preloader";
 import SmoothScroll from "@/components/SmoothScroll";
+import ScrollProgress from "@/components/ScrollProgress";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -55,6 +56,7 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col font-manrope">
         <Preloader />
+        <ScrollProgress />
         <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>
