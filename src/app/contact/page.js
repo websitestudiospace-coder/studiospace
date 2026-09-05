@@ -1,7 +1,7 @@
 import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import ContactContent from "@/components/contact/ContactContent";
-import LocationsMap from "@/components/shared/LocationsMap";
+import ContactLocationMap from "@/components/contact/ContactLocationMap";
 
 // TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
 // doesn't deep-merge nested `openGraph`/`twitter` objects, so a page that
@@ -32,11 +32,7 @@ export default function ContactPage() {
     <>
       <Nav />
       <ContactContent />
-      {/* No CTA here (unlike the About page's use of this same component)
-          -- "View All Projects" doesn't fit naturally right after the
-          contact form/map, and the brief calls that out as configurable
-          per page rather than forced onto every usage. */}
-      <LocationsMap />
+      <ContactLocationMap />
       <Footer />
     </>
   );

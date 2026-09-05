@@ -4,6 +4,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Button from "@/components/ui/Button";
+import IndiaMapEmbed from "@/components/shared/IndiaMapEmbed";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
 
@@ -14,16 +15,11 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
-// Real embedded Google Maps, not a custom-built map/label layout --
-// replaces the earlier minimalist label-position version (which lives on,
-// unchanged, as the shared LocationsMap component used by the Contact
-// page; this file intentionally no longer shares implementation with it,
-// since only the About page's "Where We Work" section was asked to move
-// to a real map embed). This is the keyless "q=<place>&z=<zoom>&output=
-// embed" pattern -- no API key, no Google My Maps account -- which drops
-// Google's own marker pin exactly on Bangalore while the zoom level keeps
-// the rest of India visible around it.
-const MAP_EMBED_SRC = "https://www.google.com/maps?q=Bangalore,India&z=4&output=embed";
+// Real embedded Google Maps, not a custom-built map/label layout -- the
+// map itself now lives in the shared IndiaMapEmbed component (also used
+// map-only, no heading/caption/CTA, on the Contact page); this file wires
+// in the About page's own heading/caption/CTA and reveal animation around
+// it.
 
 export default function IndiaMap() {
   const sectionRef = useRef(null);
@@ -85,18 +81,7 @@ export default function IndiaMap() {
           map reads clearly without dominating the page, shorter on mobile
           where there's less room to spare. */}
       <div ref={mapWrapRef} className="mt-10 w-full md:mt-12">
-        <div className="relative h-[55vh] w-full overflow-hidden md:h-[75vh]">
-          <iframe
-            src={MAP_EMBED_SRC}
-            title="Studio SP_ACE location — Bangalore, India"
-            width="100%"
-            height="100%"
-            style={{ border: 0, filter: "sepia(0.15) grayscale(1) contrast(1.05) brightness(1.02)" }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
-        </div>
+        <IndiaMapEmbed />
       </div>
 
       <div className="mx-auto flex w-full flex-col items-center px-6 text-center md:px-16">
