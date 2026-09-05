@@ -38,46 +38,121 @@ const BELIEFS = [
   },
 ];
 
-// Second rebuild: the split-screen scroll-progress track (previous version)
-// was also rejected by the client -- they want a project-roadmap-style
-// zigzag of step cards linked by dashed connector arrows instead. Adapted
-// structure only; colors/fonts/copy stay this project's own (cream/ink/
-// maroon, Agatho/Manrope, the real belief copy) rather than the reference's
-// own palette and content shape (no date chips, no colored icon tiles).
+// Third rebuild: client approved a specific reference structure (a project-
+// roadmap-style layout with pill cards, a rotated-text tab plugged into
+// each card's left edge, an icon+title row, and dashed curved connectors in
+// a descending staircase arrangement) and asked for it reproduced
+// precisely, not loosely approximated. Adapted, not copied verbatim: the
+// reference's colored icon chips/date-range chips/"Project Details" badge
+// don't apply here (no project-timeline data), so those are dropped
+// entirely rather than filled with invented placeholder data -- the tab,
+// icon+title row, and card anatomy are what actually translate, restyled
+// in this project's own cream/ink/maroon + Agatho/Manrope.
 //
-// Each card is a plain one-shot ScrollTrigger reveal (same idiom as
-// ProjectGallery.jsx's per-row stagger and ProjectsGrid.jsx's card-grid
-// reveal: gsap.set hidden -> gsap.to on enter, power3.out, scrub: false,
-// toggleActions "play none none none") -- there's no shared scroll-progress
-// value driving multiple things here the way the previous version needed,
-// so there's no golden-rule concern: every element is both the trigger and
-// the sole target of its own independent one-shot tween.
+// Desktop staircase positions are absolute (%x/%y within one relative
+// container) because the reference's staggered rhythm -- each card offset
+// both horizontally AND vertically from the last -- can't be produced by
+// normal document flow the way the previous (looser) zigzag rebuild was.
+// Mobile drops the whole absolute-position system for a plain centered
+// flow stack (see the responsive note below).
 //
-// The zigzag alignment and the desktop-curved-vs-mobile-straight connector
-// shape are both pure CSS/responsive-markup decisions (alternating
-// justify-start/justify-end, and two connector SVGs toggled with
-// hidden/md:hidden) -- no JS matchMedia/isDesktop hook, same preference the
-// previous version of this file already noted: nothing here needs to *know*
-// the breakpoint in JS, only the rendered layout needs to differ.
+// Reveal is still the same low-risk per-element one-shot ScrollTrigger
+// idiom as ProjectGallery.jsx/ProjectsGrid.jsx (gsap.set hidden -> gsap.to
+// on enter, power3.out, toggleActions "play none none none") -- explicitly
+// NOT a shared scroll-progress value driving multiple things (that was the
+// first rebuild, also rejected), and explicitly NOT an animated line-draw
+// on the connectors (this section has a documented history of animation
+// bugs; the connectors are static paths that just fade in with their card).
 
 const ARROW_MARKER_ID = "wwb-connector-arrow";
 
-function NumberBadge({ index }) {
+// left/top are % positions of each card's own top-left corner within the
+// desktop staircase container -- a close start on the reference's
+// proportions, tuned by rendering and eyeballing (see comment on the
+// container below), not treated as exact.
+const STAIRCASE = [
+  { left: 5, top: 0 },
+  { left: 45, top: 25 },
+  { left: 5, top: 50 },
+  { left: 45, top: 75 },
+];
+
+function LeafIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20c0-9 5-15 15-16-1 10-6 15-15 16Z" />
+      <path d="M6 18c3-4 7-8 12-13" />
+    </svg>
+  );
+}
+
+function RulerIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="9" width="18" height="6" rx="1" />
+      <path d="M7 9v3M11 9v3M15 9v3" />
+    </svg>
+  );
+}
+
+function HourglassIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 4h12c0 5-4 6-6 8-2-2-6-3-6-8Z" />
+      <path d="M6 20h12c0-5-4-6-6-8-2 2-6 3-6 8Z" />
+    </svg>
+  );
+}
+
+function PartnershipIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="12" r="6" />
+      <circle cx="15" cy="12" r="6" />
+    </svg>
+  );
+}
+
+const ICONS = [LeafIcon, RulerIcon, HourglassIcon, PartnershipIcon];
+
+// The reference's rotated-text tab, "plugged into" the card's left edge --
+// half outside (the negative left offset), half overlapping into the
+// card's own padding. No project-timeline data to show here, so this
+// carries the step number instead of a duration ("1 Week" etc. in the
+// reference) -- same visual device, content that actually fits.
+function TabCapsule({ index }) {
   return (
     <div
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm md:h-12 md:w-12 md:text-base"
-      style={{ backgroundColor: MAROON, color: CREAM, fontFamily: "var(--font-manrope)" }}
+      className="absolute -left-5 top-7 flex h-24 w-10 items-center justify-center rounded-full md:-left-6 md:top-8 md:h-28 md:w-11"
+      style={{ backgroundColor: MAROON }}
     >
-      {String(index + 1).padStart(2, "0")}
+      <span
+        className="whitespace-nowrap text-xs tracking-[0.15em] md:text-sm"
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, transform: "rotate(-90deg)" }}
+      >
+        {String(index + 1).padStart(2, "0")}
+      </span>
     </div>
   );
 }
 
-function StepCard({ index, belief, cardRef, reduceMotion }) {
+function IconChip({ Icon }) {
+  return (
+    <div
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+      style={{ backgroundColor: "rgba(43,38,34,0.06)" }}
+    >
+      <Icon />
+    </div>
+  );
+}
+
+function StepCard({ index, belief, cardRef, reduceMotion, className = "" }) {
+  const Icon = ICONS[index];
   return (
     <div
       ref={cardRef}
-      className="w-full max-w-[480px] rounded-[28px] border p-7 md:p-8"
+      className={`relative rounded-[30px] border py-7 pl-10 pr-7 md:py-8 md:pl-12 md:pr-8 ${className}`}
       style={{
         backgroundColor: CARD_SURFACE,
         borderColor: "rgba(43,38,34,0.1)",
@@ -85,15 +160,18 @@ function StepCard({ index, belief, cardRef, reduceMotion }) {
         ...(reduceMotion ? null : { opacity: 0 }),
       }}
     >
-      <NumberBadge index={index} />
-      <h3
-        className="mt-5 text-xl md:text-2xl"
-        style={{ fontFamily: "var(--font-agatho)", color: INK }}
-      >
-        {belief.title}
-      </h3>
+      <TabCapsule index={index} />
+      <div className="flex items-center gap-3">
+        <IconChip Icon={Icon} />
+        <h3
+          className="text-xl md:text-2xl"
+          style={{ fontFamily: "var(--font-agatho)", color: INK }}
+        >
+          {belief.title}
+        </h3>
+      </div>
       <p
-        className="mt-3 text-sm md:text-base"
+        className="mt-4 text-sm md:text-base"
         style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
       >
         {belief.body}
@@ -102,72 +180,83 @@ function StepCard({ index, belief, cardRef, reduceMotion }) {
   );
 }
 
-// One dashed connector between consecutive cards -- a curved diagonal on
-// desktop (mirrored left<->right depending on which way the zigzag is
-// turning), a plain straight vertical line on mobile where cards stack
-// centered instead. Both live in the DOM at once; CSS (hidden/md:hidden)
-// picks which one paints, so there's no JS breakpoint dependency.
-function Connector({ direction, arrowRef, reduceMotion }) {
-  const hiddenStyle = reduceMotion ? null : { opacity: 0 };
-  const desktopPath = "M20,0 C20,55 80,45 80,100";
-
+// Desktop-only curved dashed connector, absolutely boxed into the gap
+// between two consecutive staircase cards. `mirror` flips the curve
+// horizontally for the legs that run right-to-left instead of left-to-
+// right, reusing one path rather than authoring two.
+function StaircaseConnector({ box, mirror, arrowRef, reduceMotion }) {
   return (
-    <div ref={arrowRef} style={hiddenStyle}>
-      <div className="hidden h-[90px] w-full md:block">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-          <g transform={direction === "rtl" ? "translate(100,0) scale(-1,1)" : undefined}>
-            <path
-              d={desktopPath}
-              fill="none"
-              stroke={INK}
-              strokeOpacity="0.3"
-              strokeWidth="1.5"
-              strokeDasharray="5 5"
-              vectorEffect="non-scaling-stroke"
-              markerEnd={`url(#${ARROW_MARKER_ID})`}
-            />
-          </g>
-        </svg>
-      </div>
-      <div className="h-[56px] w-full md:hidden">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
+    <div
+      ref={arrowRef}
+      className="absolute hidden md:block"
+      style={{ ...box, ...(reduceMotion ? null : { opacity: 0 }) }}
+    >
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
+        <g transform={mirror ? "translate(100,0) scale(-1,1)" : undefined}>
           <path
-            d="M50,0 L50,100"
+            d="M0,0 C45,15 55,60 100,100"
             fill="none"
             stroke={INK}
-            strokeOpacity="0.3"
+            strokeOpacity="0.35"
             strokeWidth="1.5"
             strokeDasharray="5 5"
             vectorEffect="non-scaling-stroke"
             markerEnd={`url(#${ARROW_MARKER_ID})`}
           />
-        </svg>
-      </div>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+// Mobile-only straight vertical connector between stacked cards -- the
+// staircase's diagonal geometry doesn't translate to a single narrow
+// column, so this drops to the simplest possible link instead of forcing
+// the curve.
+function MobileConnector({ arrowRef, reduceMotion }) {
+  return (
+    <div
+      ref={arrowRef}
+      className="h-14 w-full md:hidden"
+      style={reduceMotion ? null : { opacity: 0 }}
+    >
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
+        <path
+          d="M50,0 L50,100"
+          fill="none"
+          stroke={INK}
+          strokeOpacity="0.35"
+          strokeWidth="1.5"
+          strokeDasharray="5 5"
+          vectorEffect="non-scaling-stroke"
+          markerEnd={`url(#${ARROW_MARKER_ID})`}
+        />
+      </svg>
     </div>
   );
 }
 
 export default function WhatWeBelieve() {
   const sectionRef = useRef(null);
-  const cardRefs = useRef([]);
-  const arrowRefs = useRef([]);
-  // `initial = true` (assume reduced until matchMedia resolves), same
-  // reasoning as Quote.jsx's own heavier pinned sequence -- confirmed via
-  // live testing (not just reasoning) that starting `false` causes a real
-  // bug here: the gated effect briefly runs with stale reduceMotion=false
-  // before the hook resolves, gsap.set()s cards to opacity 0, and when
-  // reduceMotion then flips true, gsap.context's revert() restores its own
-  // pre-recorded snapshot -- which was ALSO 0 (React's own initial inline
-  // style) -- leaving cards permanently invisible under reduced motion
-  // instead of clearing the override entirely. Starting `true` means the
+  const desktopCardRefs = useRef([]);
+  const desktopArrowRefs = useRef([]);
+  const mobileCardRefs = useRef([]);
+  const mobileArrowRefs = useRef([]);
+  // `initial = true` -- confirmed via live testing (not just reasoning)
+  // that starting `false` causes a real bug: the gated effect briefly runs
+  // with stale reduceMotion=false before the hook resolves, gsap.set()s
+  // cards to opacity 0, and when reduceMotion then flips true,
+  // gsap.context's revert() restores its own pre-recorded snapshot --
+  // which was ALSO 0 -- leaving cards permanently invisible under reduced
+  // motion instead of clearing the override. Starting `true` means the
   // gated effect never runs in that scenario at all.
   const reduceMotion = useReducedMotion(true);
 
   usePreloaderGate(
     () => {
       const ctx = gsap.context(() => {
-        const cards = cardRefs.current.filter(Boolean);
-        const arrows = arrowRefs.current.filter(Boolean);
+        const cards = [...desktopCardRefs.current, ...mobileCardRefs.current].filter(Boolean);
+        const arrows = [...desktopArrowRefs.current, ...mobileArrowRefs.current].filter(Boolean);
 
         cards.forEach((card) => {
           gsap.set(card, { opacity: 0, y: 32 });
@@ -238,33 +327,78 @@ export default function WhatWeBelieve() {
           {HEADING}
         </h2>
 
-        <div className="mt-14 flex flex-col md:mt-20">
-          {BELIEFS.map((belief, i) => {
-            const alignClass =
-              i % 2 === 0
-                ? "flex justify-center md:justify-start"
-                : "flex justify-center md:justify-end";
+        {/* Desktop staircase -- one relative container tall enough to hold
+            all 4 cards at their staggered top offsets (see STAIRCASE)
+            without the last one overflowing the bottom. Height is a fixed
+            px value tuned by rendering, not derived, since the cards'
+            own content height (title/body line-wrapping) isn't something
+            CSS percentage math can account for automatically. */}
+        <div className="relative mt-16 hidden md:block" style={{ height: "1100px" }}>
+          {BELIEFS.map((belief, i) => (
+            <div
+              key={belief.title}
+              className="absolute"
+              style={{ left: `${STAIRCASE[i].left}%`, top: `${STAIRCASE[i].top}%`, width: "380px" }}
+            >
+              <StepCard
+                index={i}
+                belief={belief}
+                reduceMotion={reduceMotion}
+                cardRef={(el) => (desktopCardRefs.current[i] = el)}
+              />
+            </div>
+          ))}
 
-            return (
-              <div key={belief.title}>
-                {i > 0 && (
-                  <Connector
-                    direction={(i - 1) % 2 === 0 ? "ltr" : "rtl"}
-                    reduceMotion={reduceMotion}
-                    arrowRef={(el) => (arrowRefs.current[i - 1] = el)}
-                  />
-                )}
-                <div className={alignClass}>
-                  <StepCard
-                    index={i}
-                    belief={belief}
-                    reduceMotion={reduceMotion}
-                    cardRef={(el) => (cardRefs.current[i] = el)}
-                  />
-                </div>
-              </div>
-            );
-          })}
+          {/* Boxes below are sized to sit strictly in the gap BETWEEN each
+              pair of cards (never overlapping either card's own box) --
+              measured against actual rendered card positions (each card is
+              ~15% of the container's height at STAIRCASE's top offsets),
+              not the container's raw top/gap percentages. A first pass
+              used the raw gap between STAIRCASE entries directly and the
+              curve visibly cut through both cards' body text -- confirmed
+              via screenshot, not just math -- because a card's real height
+              eats well into the *next* card's nominal top offset. */}
+          <StaircaseConnector
+            box={{ left: "28%", top: "15.5%", width: "22%", height: "9%" }}
+            mirror={false}
+            reduceMotion={reduceMotion}
+            arrowRef={(el) => (desktopArrowRefs.current[0] = el)}
+          />
+          <StaircaseConnector
+            box={{ left: "32%", top: "40.5%", width: "20%", height: "9%" }}
+            mirror={true}
+            reduceMotion={reduceMotion}
+            arrowRef={(el) => (desktopArrowRefs.current[1] = el)}
+          />
+          <StaircaseConnector
+            box={{ left: "28%", top: "65.5%", width: "22%", height: "9%" }}
+            mirror={false}
+            reduceMotion={reduceMotion}
+            arrowRef={(el) => (desktopArrowRefs.current[2] = el)}
+          />
+        </div>
+
+        {/* Mobile: the staircase's diagonal offsets don't translate to a
+            narrow viewport -- plain centered column instead, straight
+            vertical connectors between stacked cards. */}
+        <div className="mt-14 flex flex-col items-center md:hidden">
+          {BELIEFS.map((belief, i) => (
+            <div key={belief.title} className="w-full max-w-[420px]">
+              {i > 0 && (
+                <MobileConnector
+                  reduceMotion={reduceMotion}
+                  arrowRef={(el) => (mobileArrowRefs.current[i - 1] = el)}
+                />
+              )}
+              <StepCard
+                index={i}
+                belief={belief}
+                reduceMotion={reduceMotion}
+                className="w-full"
+                cardRef={(el) => (mobileCardRefs.current[i] = el)}
+              />
+            </div>
+          ))}
         </div>
       </div>
     </section>
