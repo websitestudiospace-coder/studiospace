@@ -17,7 +17,7 @@ const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
 const WORDMARK = "SP_ACE";
-const LOGO_ASPECT_RATIO = "1104 / 268"; // logo.png's natural pixel dimensions
+const LOGO_ASPECT_RATIO = "6154 / 2752"; // logo.png's real natural pixel dimensions (previous value was stale)
 
 // Solved (via a search against the browser's actual canvas 2D filter
 // implementation, not hand-derived matrices, to land on an exact match)
