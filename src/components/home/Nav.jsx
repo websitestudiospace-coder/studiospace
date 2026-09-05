@@ -102,15 +102,15 @@ export default function Nav({ lightHero = false }) {
             <Image
               src="/logos/logo.png"
               alt="Studio SP_ACE"
-              width={165}
-              height={40}
-              className="h-10 w-auto"
+              width={284}
+              height={127}
+              className="h-16 w-auto md:h-[72px]"
               style={{ width: "auto" }}
               priority
             />
           </Link>
 
-          <nav className="hidden items-center gap-8 md:flex">
+          <nav className="hidden items-center gap-8 lg:flex">
             {LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -131,7 +131,7 @@ export default function Nav({ lightHero = false }) {
             ))}
           </nav>
 
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <Button href="/contact" variant="primary">
               Inquire
             </Button>
@@ -139,7 +139,7 @@ export default function Nav({ lightHero = false }) {
 
           <button
             type="button"
-            className="relative z-10 flex h-11 w-11 flex-col items-center justify-center gap-1.5 md:hidden"
+            className="relative z-10 flex h-11 w-11 flex-col items-center justify-center gap-1.5 lg:hidden"
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
@@ -180,7 +180,7 @@ export default function Nav({ lightHero = false }) {
           close affordance is the same hamburger button above morphing into
           an X, not a separate icon. */}
       <div
-        className="fixed inset-0 z-[99] flex flex-col items-center justify-center gap-8 px-6 md:hidden"
+        className="fixed inset-0 z-[99] flex flex-col items-center justify-center gap-8 px-6 lg:hidden"
         style={{
           backgroundColor: INK,
           opacity: menuOpen ? 1 : 0,
@@ -196,14 +196,14 @@ export default function Nav({ lightHero = false }) {
         }}
         aria-hidden={!menuOpen}
       >
-        <nav className="flex flex-col items-center gap-7">
+        <nav className="flex flex-col items-center gap-5">
           {LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
               tabIndex={menuOpen ? 0 : -1}
-              className="text-3xl uppercase tracking-[0.1em]"
+              className="py-1 text-3xl uppercase tracking-[0.1em]"
               style={{ color: CREAM, fontFamily: "var(--font-manrope)" }}
             >
               {link.label}
