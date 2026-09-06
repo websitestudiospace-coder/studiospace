@@ -12,24 +12,35 @@ const MAROON = "#6E1F24";
 
 const HEADING = "What We Believe";
 
-// TODO: placeholder principles -- swap in the client's real 4 belief
-// statements once provided. Structure/styling below is final.
+// The client's real "SP_ACE Way" -- 6 points, replacing the 4 placeholder
+// titles/bodies this section shipped with. Every downstream calculation in
+// this file (stack depth, scroll length, card count) already derives from
+// BELIEFS.length rather than a hardcoded 4, so this array is the only thing
+// that needed to change.
 const BELIEFS = [
   {
-    title: "Honest Materials",
-    body: "More on our approach to material selection is on its way.",
+    title: "Personal, Always",
+    body: "We start by getting to know the people and purpose behind a project. Their stories, habits, interests, and needs become part of the design from the very beginning.",
   },
   {
-    title: "Considered Detail",
-    body: "More on our attention to detail is on its way.",
+    title: "Design Meets Detail",
+    body: "We look at a project from the big picture down to the smallest detail. Every material, proportion, finish, and detail is considered as part of the whole.",
   },
   {
-    title: "Timeless Design",
-    body: "More on our design philosophy is on its way.",
+    title: "No One-Size-Fits-All",
+    body: "We approach every project with a fresh perspective. Different people, places, and requirements call for different ideas, rather than a fixed SP_ACE formula.",
   },
   {
-    title: "Client-Centered Process",
-    body: "More on our collaborative process is on its way.",
+    title: "A Little Unexpected",
+    body: "We like to bring in something unexpected — a colour, material, detail, or idea that gives a project its own personality without feeling forced.",
+  },
+  {
+    title: "Making Ideas Work",
+    body: "We enjoy the process of taking an idea from paper to reality. When something gets complicated on site, we look for creative ways to make the original thought work.",
+  },
+  {
+    title: "Enough, Not Too Much",
+    body: "We believe in knowing when to stop. We layer spaces thoughtfully, giving every element room to work without letting too many things compete for attention.",
   },
 ];
 
@@ -41,11 +52,11 @@ const BELIEFS = [
 // same window scroll). Instead this subscribes to that shared instance via
 // src/lib/lenis.js. The reference's own transform math (translateY/scale
 // from scroll position, applied as direct style writes, not GSAP tweens)
-// is reimplemented here rather than copied blind, tuned for 4 cards at
-// this page's own content width -- rotationAmount and blurAmount are both
-// omitted entirely (not just zeroed): this site's motion vocabulary
-// doesn't use rotation or blur anywhere, and the reference's own defaults
-// for a demo with many more cards didn't fit 4.
+// is reimplemented here rather than copied blind, tuned for this page's own
+// content width -- rotationAmount and blurAmount are both omitted entirely
+// (not just zeroed): this site's motion vocabulary doesn't use rotation or
+// blur anywhere, and the reference's own defaults for a demo with many more
+// cards didn't fit this page's card count.
 //
 // Cards pin via `position: sticky` (this site's locked convention -- never
 // GSAP's `pin: true`, and this pattern doesn't use GSAP's pin either), and

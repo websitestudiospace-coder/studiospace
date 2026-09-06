@@ -12,10 +12,20 @@ import { getProjectPhoto } from "@/lib/projects";
 // can't run inside a client component. Resolved here instead (this page is
 // a server component) and passed down as plain prop URLs, same pattern
 // src/app/projects/[slug]/page.js already uses for ProjectDetail.
+//
+// 6 beliefs now (the real "SP_ACE Way"), reusing the original 4 photos
+// (reassigned to whichever new belief they pair with best) plus 2 newly
+// picked photos -- viewed via the media-source originals before picking,
+// not guessed from filenames -- for "A Little Unexpected" (the neo-classical
+// bedroom's blush velvet bed and patterned throw against traditional wood
+// paneling -- literally an unexpected colour/detail worked into a more
+// traditional room) and "Making Ideas Work" (the transitional home's
+// arched wood-and-glass door plus lattice screen and built-in cabinetry --
+// custom joinery standing in for the "figuring it out on site" idea).
 const BELIEF_IMAGES = [
   {
-    src: getProjectPhoto("the-modern-organic-home", "3.webp"),
-    alt: "Textural materials and natural finishes in a Studio SP_ACE living space",
+    src: getProjectPhoto("the-neo-colonial-home", "Photos/3.webp"),
+    alt: "A warm, layered living room styled for everyday living",
   },
   {
     src: getProjectPhoto("the-modern-eclectic-home", "3H4A2309.webp"),
@@ -26,8 +36,16 @@ const BELIEF_IMAGES = [
     alt: "A clean, balanced living room composition",
   },
   {
-    src: getProjectPhoto("the-neo-colonial-home", "Photos/3.webp"),
-    alt: "A warm, layered living room styled for everyday living",
+    src: getProjectPhoto("the-modern-neo-classical-home", "IMG_1380.webp"),
+    alt: "A blush velvet bed and patterned throw against traditional wood paneling",
+  },
+  {
+    src: getProjectPhoto("the-modern-transitional-home", "6.webp"),
+    alt: "A custom arched wood-and-glass door and lattice screen",
+  },
+  {
+    src: getProjectPhoto("the-modern-organic-home", "3.webp"),
+    alt: "Textural materials and natural finishes in a Studio SP_ACE living space",
   },
 ];
 
