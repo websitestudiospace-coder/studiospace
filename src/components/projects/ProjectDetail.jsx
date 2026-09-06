@@ -7,7 +7,7 @@ export default function ProjectDetail({ project, nextProject }) {
   return (
     <>
       <ProjectHero project={project} />
-      <ProjectGallery name={project.name} rows={project.galleryRows} />
+      <ProjectGallery name={project.name} photos={project.galleryPhotos} />
       {project.video && <ProjectVideo video={project.video} />}
       {nextProject && <NextProjectLink project={nextProject} />}
     </>

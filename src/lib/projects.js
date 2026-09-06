@@ -55,45 +55,16 @@ function listProjectPhotoFilenames(slug) {
 }
 
 // Returns every photo in a project's folder, natural-sorted, each carrying
-// its own pixel dimensions/orientation so the gallery can lay out mixed
-// portrait/landscape rows without any client-side measuring.
+// its own pixel dimensions so callers (e.g. ProjectGallery's masonry grid)
+// can compute proportional layout from the real aspect ratio without any
+// client-side measuring.
 function listProjectPhotos(slug) {
   return getManifestEntry(slug).photos.map(({ file, width, height }) => ({
     file,
     src: toCloudinaryUrl(`/images/projects/${slug}/${file}`),
     width: width ?? null,
     height: height ?? null,
-    orientation: width && height && width < height ? "portrait" : "landscape",
   }));
-}
-
-// Groups a project's gallery photos (cover already excluded by the caller)
-// into rows matching the mixed layout brief: consecutive portraits cluster
-// side-by-side (up to 3 per row), while each landscape gets its own
-// full-width row -- whatever the actual folder contents produce, no fixed
-// pattern assumed.
-function groupGalleryRows(photos) {
-  const rows = [];
-  let portraitRun = [];
-
-  const flushPortraits = () => {
-    if (portraitRun.length === 0) return;
-    rows.push({ type: "portrait-group", photos: portraitRun });
-    portraitRun = [];
-  };
-
-  for (const photo of photos) {
-    if (photo.orientation === "landscape") {
-      flushPortraits();
-      rows.push({ type: "landscape", photo });
-    } else {
-      portraitRun.push(photo);
-      if (portraitRun.length === 3) flushPortraits();
-    }
-  }
-  flushPortraits();
-
-  return rows;
 }
 
 // A compressed project video is expected at
@@ -152,7 +123,7 @@ export function getProjectBySlug(slug) {
   return {
     ...meta,
     cover: cover?.src ?? null,
-    galleryRows: groupGalleryRows(galleryPhotos),
+    galleryPhotos,
     video: getProjectVideo(slug),
   };
 }
