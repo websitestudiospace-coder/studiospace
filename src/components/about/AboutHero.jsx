@@ -32,11 +32,9 @@ const SETTLED_IMAGE_WIDTH = 50;
 const TEXT_SLIDE_X = 40;
 
 // Studio description copy, moved in from StudioDescription.jsx (now retired
-// as its own section -- see about/page.js). Content unchanged; alignment
-// adapted from that file's centered full-width block to a left-aligned side
-// panel, since it now sits beside the image instead of on its own.
-// TODO: placeholder copy -- swap in the client's real studio description
-// once provided.
+// as its own section -- see about/page.js). Alignment adapted from that
+// file's centered full-width block to a left-aligned side panel, since it
+// now sits beside the image instead of on its own.
 function StudioCopy() {
   return (
     <>
@@ -50,10 +48,18 @@ function StudioCopy() {
         className="mt-6 max-w-2xl text-sm md:text-base"
         style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
       >
-        Studio description content goes here -- pending final copy from the
-        client. This paragraph will introduce the studio&rsquo;s philosophy
-        and approach to architecture and interior design once the real text
-        is provided.
+        Studio SP_ACE is a Bangalore-based interior design studio founded by
+        Shubham and Priyanka in 2022. Working across India, we design and
+        execute homes that are personal, considered, and made around the
+        people who live in them.
+      </p>
+      <p
+        className="mt-4 max-w-2xl text-sm md:text-base"
+        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
+      >
+        We don&rsquo;t really believe in one signature style. Every project
+        starts with the people, their stories, and the way they live — and
+        takes shape from there.
       </p>
     </>
   );

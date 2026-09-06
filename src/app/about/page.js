@@ -1,6 +1,7 @@
 import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import AboutHero from "@/components/about/AboutHero";
+import OurStory from "@/components/about/OurStory";
 import MeetFounders from "@/components/about/MeetFounders";
 import WhatWeBelieve from "@/components/about/WhatWeBelieve";
 import IndiaMap from "@/components/about/IndiaMap";
@@ -84,6 +85,7 @@ export default function AboutPage() {
           sequence (see that component) -- the section itself is retired but
           its file is kept around in case its content needs referencing back. */}
       <AboutHero />
+      <OurStory />
       <MeetFounders />
       <WhatWeBelieve beliefImages={BELIEF_IMAGES} />
       <IndiaMap />
