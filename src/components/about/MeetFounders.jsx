@@ -101,23 +101,17 @@ const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
 // provided by the client.
 const LINKEDIN_URL = "#";
 
-// TODO: placeholder copy -- swap in the client's real founder bios once
-// provided.
-const FOUNDERS = [
-  {
-    name: "Shubham",
-    paragraphs: [
-      "Shubham's background and design philosophy write-up is on its way from the client.",
-      "More on his specific focus areas and role at the studio will follow once confirmed.",
-    ],
-  },
-  {
-    name: "Priyanka",
-    paragraphs: [
-      "Priyanka's background and design philosophy write-up is on its way from the client.",
-      "More on her specific focus areas and role at the studio will follow once confirmed.",
-    ],
-  },
+// The client provided one joint note instead of two individual bios -- see
+// FOUNDERS_NOTE below, rendered once beneath both founders' name/title/social
+// blocks rather than duplicated per founder.
+const FOUNDERS = [{ name: "Shubham" }, { name: "Priyanka" }];
+
+const FOUNDERS_NOTE = [
+  "For us, the best part of design is seeing an idea travel from a thought in our heads to something that actually exists. From the first sketch to the final detail on site, we love being part of that entire journey — especially figuring out how to make an idea work in the real world.",
+  "We naturally bring different things to the table. Shubham is drawn to the technical side — how something will be made, detailed, and executed — while Priyanka gravitates towards the design side, from colours and materials to the overall feeling of a space. Somewhere between the two is where a lot of our favourite ideas come together.",
+  "A space, to us, should tell you something about the people and purpose behind it. Their stories, experiences, interests, and the way they want a space to feel should find their way into the design, alongside a little of our own design language. We love that every project can have its own character.",
+  "Travelling and observing are a big part of how we find inspiration. Spaces, buildings, materials, streets, and even small details stay with us, often finding their way into a project when we least expect them.",
+  "As SP_ACE grows, we hope to take on bigger ideas, more places, and more ambitious projects — without losing what matters to us: creating spaces that feel personal, thoughtful, and true to the people and purpose behind them.",
 ];
 
 function ArrowIcon() {
@@ -184,17 +178,6 @@ function FounderColumn({ founder, colRef, reduceMotion }) {
       >
         {TITLE}
       </p>
-      <div className="mt-5 space-y-4">
-        {founder.paragraphs.map((p, i) => (
-          <p
-            key={i}
-            className="max-w-2xl text-sm md:text-base"
-            style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.7 }}
-          >
-            {p}
-          </p>
-        ))}
-      </div>
       <div className="mt-6 flex gap-3">
         <PillLink href={INSTAGRAM_URL}>Instagram</PillLink>
         <PillLink href={LINKEDIN_URL}>LinkedIn</PillLink>
@@ -212,6 +195,7 @@ export default function MeetFounders() {
   const photoRef = useRef(null);
   const headingRef = useRef(null);
   const founderRefs = useRef([]);
+  const noteRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
   // Real, JS-measured pixel dimensions for the wordmark's SVG, rather than
@@ -271,7 +255,7 @@ export default function MeetFounders() {
     () => {
       const ctx = gsap.context(() => {
         const founders = founderRefs.current.filter(Boolean);
-        const targets = [photoRef.current, headingRef.current, ...founders];
+        const targets = [photoRef.current, headingRef.current, ...founders, noteRef.current];
 
         // Every target gets its start state set in the SAME gsap.set() call
         // that's about to be immediately followed by the tween below --
@@ -298,6 +282,7 @@ export default function MeetFounders() {
           { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.15 },
           0.25
         );
+        tl.to(noteRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.4);
       }, contentRef);
 
       return () => ctx.revert();
@@ -567,14 +552,12 @@ export default function MeetFounders() {
               Two designers, one shared vision for how spaces should feel.
             </p>
 
-            {/* Founder blocks, directly beneath the tagline in this same
-                column -- Shubham's complete block, then Priyanka's complete
-                block stacked below it. Side-by-side (tried first) read as
-                congested at this column's width once both blocks carry a
-                name, role, two paragraphs, and two pill buttons each -- a
-                single stacked column with real vertical breathing room
-                between them reads far more comfortably here. */}
-            <div className="mt-10 flex flex-col gap-14">
+            {/* Founder blocks -- name, role, and social links only now (the
+                client provided one shared note instead of two individual
+                bios, see FOUNDERS_NOTE/noteRef below), so side-by-side reads
+                comfortably at this column's width instead of the stacked
+                layout the old, much longer per-founder bios needed. */}
+            <div className="mt-10 flex flex-col gap-8 sm:flex-row sm:gap-14">
               {FOUNDERS.map((founder, i) => (
                 <FounderColumn
                   key={founder.name}
@@ -585,6 +568,33 @@ export default function MeetFounders() {
                   }}
                 />
               ))}
+            </div>
+
+            {/* Founders' Note -- the one shared block the client provided in
+                place of two separate bios, sitting beneath both founders
+                rather than forced into either individual slot. */}
+            <div
+              ref={noteRef}
+              className="mt-10"
+              style={reduceMotion ? undefined : { opacity: 0 }}
+            >
+              <h3
+                className="text-xl md:text-2xl"
+                style={{ fontFamily: "var(--font-agatho)", color: INK }}
+              >
+                Founders&rsquo; Note
+              </h3>
+              <div className="mt-4 space-y-4">
+                {FOUNDERS_NOTE.map((p, i) => (
+                  <p
+                    key={i}
+                    className="max-w-2xl text-sm md:text-base"
+                    style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.7 }}
+                  >
+                    {p}
+                  </p>
+                ))}
+              </div>
             </div>
           </div>
         </div>
