@@ -1,6 +1,6 @@
 # Studio SP_ACE — Project Status (Session Handoff)
 
-**Reflects state as of 2026-09-06, end of session.** This is a point-in-time snapshot for continuing this project in a fresh chat — it covers CURRENT STATE and IN-PROGRESS work. For architecture, locked conventions, and rules (golden rule, sticky-vs-pin, motion vocabulary, brand tokens, media pipeline), see `brain.md` instead — don't duplicate that here.
+**Reflects state as of 2026-09-06, end of session (updated same-day for a second session's content pass — see §2 top).** This is a point-in-time snapshot for continuing this project in a fresh chat — it covers CURRENT STATE and IN-PROGRESS work. For architecture, locked conventions, and rules (golden rule, sticky-vs-pin, motion vocabulary, brand tokens, media pipeline), see `brain.md` instead — don't duplicate that here.
 
 **Before relying on anything below:** a fresh session should spot-check against the live code, not trust this file blindly. This file went through several rounds of drift earlier in this same session (work landing without the file being updated, then getting reconciled) — everything below was re-verified against actual current code, `git log`, and live Playwright checks at the end of the session, not carried forward from earlier drafts of this file.
 
@@ -9,7 +9,7 @@
 ## 1. Current site structure (verified 2026-09-05)
 
 - `/` — `Nav → HeroQuoteTransition → Quote → About → Projects → Instagram → Press → Footer`
-- `/about` — `Nav(lightHero) → AboutHero → MeetFounders → WhatWeBelieve → IndiaMap → Footer` (no `StudioDescription`, no `FinalCTA` — both removed, see §2)
+- `/about` — `Nav(lightHero) → AboutHero → OurStory → MeetFounders → WhatWeBelieve → IndiaMap → Footer` (no `StudioDescription`, no `FinalCTA` — both removed, see §2; `OurStory` new this session, see §2 top)
 - `/contact` — `Nav → ContactContent → ContactLocationMap → Footer`
 - `/projects` — `Nav → ProjectsHero → ProjectsGrid → Footer`
 - `/projects/[slug]` — `Nav → ProjectHero → ProjectGallery → ProjectVideo (conditional) → NextProjectLink → Footer`
@@ -18,6 +18,21 @@
 ---
 
 ## 2. What was completed this session (2026-09-05 – 2026-09-06), most recent first
+
+### Real client content pass across About/MeetFounders/WhatWeBelieve/projects/Press (2026-09-06, second session)
+Injected real, client-approved copy in place of every placeholder flagged in §3 below (except the items still explicitly noted pending at the end of this entry). Five separate scoped commits, one per section:
+- **WhatWeBelieve** — replaced the 4 placeholder beliefs (Honest Materials/Considered Detail/Timeless Design/Client-Centered Process, all fully retired, not kept alongside the new ones) with the real 6-point "SP_ACE Way" (Personal Always / Design Meets Detail / No One-Size-Fits-All / A Little Unexpected / Making Ideas Work / Enough Not Too Much). Every scroll/stack calculation already derived from `BELIEFS.length` rather than a hardcoded 4, so no math needed to change. Reused the original 4 belief photos (reassigned to whichever new belief pairs best) and picked 2 more — viewed via the `media-source/` raw originals before choosing, not guessed from filenames — for "A Little Unexpected" (`the-modern-neo-classical-home/IMG_1380.webp`, a blush velvet bed against traditional wood paneling) and "Making Ideas Work" (`the-modern-transitional-home/6.webp`, a custom arched wood-and-glass door + lattice screen).
+- **About page copy** — `AboutHero`'s `StudioCopy` now carries the real studio intro (Bangalore-based, founded by Shubham and Priyanka in 2022, no single signature style). New `src/components/about/OurStory.jsx` adds an "Our Story" section between `AboutHero` and `MeetFounders` (the SP_ACE naming story), reusing the same one-shot fade+y `power3.out` reveal already used elsewhere on this page — no new visual pattern.
+- **MeetFounders** — the client provided one joint "Founders' Note" instead of two individual bios. `FOUNDERS` now carries just `name` (bio paragraphs removed); the shared note renders once beneath both founders. Since each founder's own block is now just name/title/social links (much shorter), they sit side by side at `sm:` and up instead of the old stacked column the long individual bios needed room for. Wordmark stroke-draw, social links, and the shared portrait untouched.
+- **`src/data/projects.js`** — real `description`/`longDescription`/`location`/`squareFootage`/`completion` for all 7 existing slugs, matched by name/city/year with zero mismatches. Notably `the-modern-transitional-home` moves Bangalore→Hyderabad and `the-neo-colonial-home` moves Bangalore→Mumbai (2026) — both per the real client data. Cover/gallery photos untouched (client only shared Drive links for those, not files).
+- **Press** — replaced the 4 placeholder entries with 5 real ones (Architecture+Design, 3× Architectural Digest India, Elle Decor), most recent first per the client's brief, each linking to its real URL with `target="_blank" rel="noopener noreferrer"`. The carousel already derived everything from `PRESS_ITEMS.length` (drag bounds, dots, keys), so it handled the 5th item with zero structural changes.
+
+**Still pending / unresolved from this pass:**
+- **4 of 5 press dates unconfirmed** — this environment's `WebFetch` returned "unable to fetch" for both `architectureplusdesign.in` and `architecturaldigest.in`. Those 4 entries show `date: "Date TBC"` in the UI with an inline `// TODO` comment per entry naming exactly which URL's byline needs checking. Only Elle Decor's "December 2023" is confirmed.
+- Contact phone/email, individual founder bios (now moot — replaced by the joint note), ClientsGrid/ScrollFloat, and legal copy were explicitly out of scope for this pass and remain as-is (see below).
+- Project cover/gallery photos remain the existing placeholder/current images — the client only provided Google Drive share links, not actual files, so there's nothing to process yet.
+
+Tested: real Playwright/Chromium (not `fullPage` screenshots for scroll-animated sections), both 390px and 1440px viewports, on `/about` (incl. reduced-motion), all 7 `/projects/[slug]` pages (hero details panel + "Read More" longDescription modal), and the home page's Press carousel (clicked through all 5 dots). Zero horizontal overflow, zero new console errors anywhere (one pre-existing, unrelated 400 on `Instagram.jsx`'s avatar image was observed on the home page — not touched by this pass, not introduced by it).
 
 ### WhatWeBelieve — fourth rebuild: scroll-pinned image+text card stack (2026-09-06)
 Client wanted a "ScrollStack" pattern (React Bits) with real project photography, resolving two blockers flagged in the previous entry of this file:
@@ -88,6 +103,11 @@ Tested at ~375/768/1024/1440/1920px via Playwright (real navigation + real scrol
 ### Logo swap (context for the above — completed in an earlier pass this session)
 New logo file live at `public/logos/logo.png`, 6154×2752px, transparent PNG (multi-color wordmark: maroon "SP", olive "ACE", black type). All three logo-bearing files (Preloader, Nav, Footer) confirmed on the new file with correct color-filter handling for light/dark contexts.
 
+### MeetFounders wordmark rework + a further logo.png update (found uncommitted at the start of the 2026-09-06 second session)
+Both had been made in a prior pass but never committed. Committed as-is (unmodified) before starting this session's content pass, so the content commits stayed scoped to copy only:
+- `public/logos/logo.png` updated again (30KB → 209KB).
+- `MeetFounders.jsx`'s "Founders" wordmark reworked from an ambient scroll-through stroke-draw into a pinned one (a fast scroll could previously skip past the draw before it ever finished), plus the heading/tagline/founder column made `md:sticky` alongside the portrait photo.
+
 ---
 
 ## 3. Known pending / not yet done
@@ -98,8 +118,8 @@ New logo file live at `public/logos/logo.png`, 6154×2752px, transparent PNG (mu
 - **Footer logo treatment** — code-wise resolved (fully on the new logo). What may still need a client look is just whether the cream-recolored wipe-in *reads well*, not a code decision.
 - **Contact form backend** — still UI-only, `handleSubmit` just calls `e.preventDefault()`.
 - **Real phone/email** — still placeholder ("Coming soon — reach us on Instagram for now").
-- **Press section real content** — still 4 placeholder entries.
-- **About page copy** — AboutHero's studio description, both founder bios, and WhatWeBelieve's 4 belief bodies are all still placeholder text (titles are real).
+- ~~Press section real content — still 4 placeholder entries~~ — **done 2026-09-06 (second session), see §2 top.** 4 of 5 publish dates still unconfirmed (shown as "Date TBC").
+- ~~About page copy — AboutHero's studio description, both founder bios, and WhatWeBelieve's 4 belief bodies are all still placeholder text~~ — **done 2026-09-06 (second session), see §2 top.** (Founder bios became one shared "Founders' Note" per the client, not two individual bios.)
 - **ClientsGrid.jsx / ScrollFloat.jsx** — confirmed still don't exist anywhere in the repo, despite duplicate "Add Projects and ClientsGrid sections" commits in history. Still an open question for the team.
 - **"Shraddha's Thinkpad"** — confirmed still fully live (`src/data/projects.js`, 27 photos, no video).
 - **Orphaned about-page image files** (`S.png`, `P.png`, `S-cutout.png`, `P-cutout.png`, `philosophy-1.jpg`, `philosophy-2.jpg`) — zero references anywhere in `src/`, safe-to-delete candidates from a scrapped multi-photo AboutHero concept, left untouched.
