@@ -155,19 +155,35 @@ function NumberBadge({ index }) {
   );
 }
 
-function StackCard({ index, belief, image, cardRef }) {
+// Shared between StackCard and StaticCard -- the two only ever differed in
+// their outer wrapper (ref/grid-area/willChange/shadow depth for the
+// animated stack vs. a plain block with a lighter shadow for the reduced-
+// motion list), never in this inner layout, so duplicating it twice was
+// pure copy-paste risk. Redesigned per client feedback that the original
+// 50/50 split + dead-centered, same-weight text read as flat and generic:
+//
+// - Photo now takes ~58% of the card's width (was 50%) -- 5 of the 6 real
+//   belief photos are portrait-cropped source images (confirmed against
+//   scripts/photo-manifest.json: ratios 0.664-0.745, only IMG_1380.webp is
+//   landscape at 1.499), so a wider, narrower photo panel both reads as
+//   more dominant AND crops those portraits less aggressively than the old
+//   near-square box did. Still `object-cover` (never distorts, only crops)
+//   -- confirmed real ratios before touching this, per the brief.
+// - A soft ink-tinted gradient sits over the photo's seam edge (bottom on
+//   mobile where the panels stack, right on desktop where they sit side by
+//   side -- `isDesktop` is already tracked by the parent for the scroll
+//   math, reused here rather than fighting Tailwind's responsive classes
+//   against an inline style) so the transition into the text panel reads
+//   as a deliberate edge treatment, not a hard crop meeting a flat box.
+// - A short maroon rule sits between the number badge and the heading,
+//   and the heading itself is bumped up a full step relative to the body
+//   (text-xl/2xl -> text-2xl/3xl) with tighter vertical rhythm throughout
+//   -- together these give the text panel a clearer badge -> title -> body
+//   hierarchy instead of three same-weight lines floating in whitespace.
+function CardBody({ index, belief, image, isDesktop }) {
   return (
-    <div
-      ref={cardRef}
-      className="[grid-area:1/1] flex w-full flex-col overflow-hidden rounded-[28px] border md:h-[420px] md:flex-row"
-      style={{
-        backgroundColor: CARD_SURFACE,
-        borderColor: "rgba(43,38,34,0.1)",
-        boxShadow: "0 20px 50px rgba(43,38,34,0.14)",
-        willChange: "transform, opacity",
-      }}
-    >
-      <div className="relative h-56 w-full shrink-0 md:h-full md:w-1/2">
+    <>
+      <div className="relative h-64 w-full shrink-0 md:h-full md:w-[58%]">
         {image?.src && (
           // Plain <img>, not next/image -- the resolved Cloudinary URL
           // arrives fully-formed as a prop from about/page.js (see the
@@ -186,11 +202,25 @@ function StackCard({ index, belief, image, cardRef }) {
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
+        {/* Seam vignette -- a sibling on top of the img (same absolute
+            stacking level, later in DOM order), not an inset box-shadow on
+            this relative parent, which would paint BEHIND the img's own
+            absolutely-positioned box and never actually be visible. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: isDesktop
+              ? "linear-gradient(to right, transparent 60%, rgba(43,38,34,0.22) 100%)"
+              : "linear-gradient(to bottom, transparent 60%, rgba(43,38,34,0.22) 100%)",
+          }}
+        />
       </div>
       <div className="flex flex-1 flex-col justify-center p-7 md:p-10">
         <NumberBadge index={index} />
+        <div className="mt-4 h-[2px] w-10" style={{ backgroundColor: MAROON }} aria-hidden="true" />
         <h3
-          className="mt-5 text-xl md:text-2xl"
+          className="mt-4 text-2xl md:text-3xl"
           style={{ fontFamily: "var(--font-agatho)", color: INK }}
         >
           {belief.title}
@@ -202,55 +232,42 @@ function StackCard({ index, belief, image, cardRef }) {
           {belief.body}
         </p>
       </div>
+    </>
+  );
+}
+
+function StackCard({ index, belief, image, isDesktop, cardRef }) {
+  return (
+    <div
+      ref={cardRef}
+      className="[grid-area:1/1] flex w-full flex-col overflow-hidden rounded-[28px] border md:h-[460px] md:flex-row"
+      style={{
+        backgroundColor: CARD_SURFACE,
+        borderColor: "rgba(43,38,34,0.14)",
+        // Two layers -- a tight, close contact shadow plus a deeper, more
+        // diffuse one -- rather than the original single flat shadow. Reads
+        // as the card actually sitting elevated above the page rather than
+        // just having a blur under it; still soft/diffuse, not heavy.
+        boxShadow: "0 2px 6px rgba(43,38,34,0.08), 0 28px 60px rgba(43,38,34,0.2)",
+        willChange: "transform, opacity",
+      }}
+    >
+      <CardBody index={index} belief={belief} image={image} isDesktop={isDesktop} />
     </div>
   );
 }
 
-function StaticCard({ index, belief, image }) {
+function StaticCard({ index, belief, image, isDesktop }) {
   return (
     <div
-      className="flex w-full flex-col overflow-hidden rounded-[28px] border md:flex-row"
+      className="flex w-full flex-col overflow-hidden rounded-[28px] border md:h-[460px] md:flex-row"
       style={{
         backgroundColor: CARD_SURFACE,
-        borderColor: "rgba(43,38,34,0.1)",
-        boxShadow: "0 4px 20px rgba(43,38,34,0.05)",
+        borderColor: "rgba(43,38,34,0.14)",
+        boxShadow: "0 8px 24px rgba(43,38,34,0.09)",
       }}
     >
-      <div className="relative h-56 w-full shrink-0 md:h-auto md:w-1/2">
-        {image?.src && (
-          // Plain <img>, not next/image -- the resolved Cloudinary URL
-          // arrives fully-formed as a prop from about/page.js (see the
-          // file-level comment above), and next/image would additionally
-          // require res.cloudinary.com in next.config.js's remotePatterns
-          // (confirmed via a live "Invalid src prop" crash) -- a config
-          // change outside this task's scoped file list. Every other
-          // Cloudinary image on this site goes through CldImage instead,
-          // which sidesteps that requirement; this component intentionally
-          // doesn't need CldImage's own server-side resolution since the
-          // URL is already resolved by the time it gets here.
-          <img
-            src={image.src}
-            alt={image.alt || belief.title}
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        )}
-      </div>
-      <div className="flex flex-1 flex-col justify-center p-7 md:p-10">
-        <NumberBadge index={index} />
-        <h3
-          className="mt-5 text-xl md:text-2xl"
-          style={{ fontFamily: "var(--font-agatho)", color: INK }}
-        >
-          {belief.title}
-        </h3>
-        <p
-          className="mt-3 text-sm md:text-base"
-          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
-        >
-          {belief.body}
-        </p>
-      </div>
+      <CardBody index={index} belief={belief} image={image} isDesktop={isDesktop} />
     </div>
   );
 }
@@ -348,7 +365,13 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
           </h2>
           <div className="mt-14 flex flex-col gap-8 md:mt-20">
             {BELIEFS.map((belief, i) => (
-              <StaticCard key={belief.title} index={i} belief={belief} image={beliefImages[i]} />
+              <StaticCard
+                key={belief.title}
+                index={i}
+                belief={belief}
+                image={beliefImages[i]}
+                isDesktop={isDesktop}
+              />
             ))}
           </div>
         </div>
@@ -381,6 +404,7 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
               index={i}
               belief={belief}
               image={beliefImages[i]}
+              isDesktop={isDesktop}
               cardRef={(el) => (cardRefs.current[i] = el)}
             />
           ))}
