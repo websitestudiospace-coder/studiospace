@@ -76,10 +76,16 @@ const BELIEFS = [
 // site (Quote/MeetFounders/the old WhatWeBelieve stack all shorten their
 // scroll distance on mobile) so the mechanic doesn't feel endless on a
 // small screen.
-const ITEM_DISTANCE_VH_DESKTOP = 85;
-const ITEM_DISTANCE_VH_MOBILE = 60;
-const TRAILING_HOLD_VH_DESKTOP = 45;
-const TRAILING_HOLD_VH_MOBILE = 25;
+//
+// Scaled down ~20% alongside the card-size reduction below (85/45/60/25 ->
+// 70/35/50/20): a smaller card is a smaller visual "move" per transition,
+// so the old scroll budget started to feel like it was taking longer than
+// the motion on screen justified. Same ratio between DISTANCE and
+// TRAILING_HOLD preserved in both tiers -- only the absolute pacing changed.
+const ITEM_DISTANCE_VH_DESKTOP = 70;
+const ITEM_DISTANCE_VH_MOBILE = 50;
+const TRAILING_HOLD_VH_DESKTOP = 35;
+const TRAILING_HOLD_VH_MOBILE = 20;
 
 // A card enters from this far below (px) and this much smaller, settling
 // to y:0/scale:1 as it becomes current.
@@ -147,7 +153,7 @@ function getCardStyle(x, index) {
 function NumberBadge({ index }) {
   return (
     <div
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm"
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs"
       style={{ backgroundColor: MAROON, color: CREAM, fontFamily: "var(--font-manrope)" }}
     >
       {String(index + 1).padStart(2, "0")}
@@ -180,10 +186,21 @@ function NumberBadge({ index }) {
 //   (text-xl/2xl -> text-2xl/3xl) with tighter vertical rhythm throughout
 //   -- together these give the text panel a clearer badge -> title -> body
 //   hierarchy instead of three same-weight lines floating in whitespace.
+//
+// Card scaled down ~20% across the board per client feedback that the
+// premium-redesign card read as too large/dominant in the viewport --
+// every internal measurement below (padding, badge, rule, heading, body
+// margins) was scaled down together with the outer card dimensions in
+// StackCard/StaticCard, not just the outer box, so the card reads as
+// genuinely smaller rather than the same content cramped into a smaller
+// frame. Photo panel width stays a `%` (58%) and height stays `md:h-full`,
+// so it scales automatically with the outer card and keeps the exact same
+// aspect ratio -- crop severity on the 5 portrait-cropped belief photos
+// (ratios 0.664-0.745, see the proportion note above) is unchanged.
 function CardBody({ index, belief, image, isDesktop }) {
   return (
     <>
-      <div className="relative h-64 w-full shrink-0 md:h-full md:w-[58%]">
+      <div className="relative h-52 w-full shrink-0 md:h-full md:w-[58%]">
         {image?.src && (
           // Plain <img>, not next/image -- the resolved Cloudinary URL
           // arrives fully-formed as a prop from about/page.js (see the
@@ -216,17 +233,17 @@ function CardBody({ index, belief, image, isDesktop }) {
           }}
         />
       </div>
-      <div className="flex flex-1 flex-col justify-center p-7 md:p-10">
+      <div className="flex flex-1 flex-col justify-center p-5 md:p-8">
         <NumberBadge index={index} />
-        <div className="mt-4 h-[2px] w-10" style={{ backgroundColor: MAROON }} aria-hidden="true" />
+        <div className="mt-3 h-[2px] w-8" style={{ backgroundColor: MAROON }} aria-hidden="true" />
         <h3
-          className="mt-4 text-2xl md:text-3xl"
+          className="mt-3 text-xl md:text-2xl"
           style={{ fontFamily: "var(--font-agatho)", color: INK }}
         >
           {belief.title}
         </h3>
         <p
-          className="mt-3 text-sm md:text-base"
+          className="mt-2 text-sm"
           style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
         >
           {belief.body}
@@ -240,7 +257,7 @@ function StackCard({ index, belief, image, isDesktop, cardRef }) {
   return (
     <div
       ref={cardRef}
-      className="[grid-area:1/1] flex w-full flex-col overflow-hidden rounded-[28px] border md:h-[460px] md:flex-row"
+      className="[grid-area:1/1] flex w-full flex-col overflow-hidden rounded-[22px] border md:h-[360px] md:flex-row"
       style={{
         backgroundColor: CARD_SURFACE,
         borderColor: "rgba(43,38,34,0.14)",
@@ -260,7 +277,7 @@ function StackCard({ index, belief, image, isDesktop, cardRef }) {
 function StaticCard({ index, belief, image, isDesktop }) {
   return (
     <div
-      className="flex w-full flex-col overflow-hidden rounded-[28px] border md:h-[460px] md:flex-row"
+      className="flex w-full flex-col overflow-hidden rounded-[22px] border md:h-[360px] md:flex-row"
       style={{
         backgroundColor: CARD_SURFACE,
         borderColor: "rgba(43,38,34,0.14)",
@@ -363,7 +380,7 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
           >
             {HEADING}
           </h2>
-          <div className="mt-14 flex flex-col gap-8 md:mt-20">
+          <div className="mx-auto mt-14 flex w-full max-w-[640px] flex-col gap-8 md:mt-20">
             {BELIEFS.map((belief, i) => (
               <StaticCard
                 key={belief.title}
@@ -397,7 +414,7 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
           {HEADING}
         </h2>
 
-        <div className="grid w-full max-w-[820px]">
+        <div className="grid w-full max-w-[640px]">
           {BELIEFS.map((belief, i) => (
             <StackCard
               key={belief.title}
