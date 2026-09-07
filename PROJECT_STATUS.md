@@ -1,6 +1,6 @@
 # Studio SP_ACE — Project Status (Session Handoff)
 
-**Reflects state as of 2026-09-07.** Originally a 2026-09-06 end-of-session snapshot, updated twice more same-day (a second session's content pass) and six more times on 2026-09-07 (a third session's ProjectGallery masonry rework, a fourth session's two bug fixes, a fifth session removing the Contact page's map, a sixth session investigating — and dismissing — a hydration-warning report, a seventh session's WhatWeBelieve card visual redesign, and an eighth session adding the Contact page's hero photo). This is a point-in-time snapshot for continuing this project in a fresh chat — it covers CURRENT STATE and IN-PROGRESS work. For architecture, locked conventions, and rules (golden rule, sticky-vs-pin, motion vocabulary, brand tokens, media pipeline), see `brain.md` instead — don't duplicate that here.
+**Reflects state as of 2026-09-07.** Originally a 2026-09-06 end-of-session snapshot, updated twice more same-day (a second session's content pass) and seven more times on 2026-09-07 (a third session's ProjectGallery masonry rework, a fourth session's two bug fixes, a fifth session removing the Contact page's map, a sixth session investigating — and dismissing — a hydration-warning report, a seventh session's WhatWeBelieve card visual redesign, an eighth session adding the Contact page's hero photo, and a ninth session fixing the project display order). This is a point-in-time snapshot for continuing this project in a fresh chat — it covers CURRENT STATE and IN-PROGRESS work. For architecture, locked conventions, and rules (golden rule, sticky-vs-pin, motion vocabulary, brand tokens, media pipeline), see `brain.md` instead — don't duplicate that here.
 
 **Before relying on anything below:** a fresh session should spot-check against the live code, not trust this file blindly. This file went through several rounds of drift earlier in this same session (work landing without the file being updated, then getting reconciled) — everything below was re-verified against actual current code, `git log`, and live Playwright checks at the end of the session, not carried forward from earlier drafts of this file.
 
@@ -18,6 +18,24 @@
 ---
 
 ## 2. What was completed this session (2026-09-05 – 2026-09-07), most recent first
+
+### Project display order fixed to the client's exact spec; content re-verified field-by-field (2026-09-07, ninth session)
+Client reported the project content "wasn't written in as expected." Rather than trust the earlier pass's own summary, re-verified `src/data/projects.js` field-by-field (typology/location/squareFootage/completion/description/longDescription) against the client's spec programmatically — a small script comparing every field for all 7 projects char-for-char, not eyeballing.
+
+**Finding: the copy itself was already exactly correct for all 7 projects, every field, verbatim — that part of the earlier pass (`1ffa2d9`) genuinely landed correctly.** The real, confirmed bug was the array order: `PROJECTS` was in a different order entirely (The Modern Eclectic Home, The Modern Neo Classical Home, The Modern Transitional Home, The Modern Classical Home, The Modern Organic Home, The Neo Colonial Home, Shraddha's Thinkpad — closer to original insertion order than anything the client specified), not the client's required order. Since both `getAllProjects()` (the `/projects` grid, via `ProjectsGrid.jsx`) and `getNextProject()` (the "next project" link on a detail page) walk this same array directly with no separate sort, the wrong order was live in both places at once. Reordered the array to the client's exact required sequence:
+1. The Neo Colonial Home
+2. The Modern Organic Home
+3. The Modern Classical Home
+4. The Modern Transitional Home
+5. Shraddha's Thinkpad
+6. The Modern Neo Classical Home
+7. The Modern Eclectic Home
+
+Also checked the rendering layer itself (`ProjectHero.jsx`'s `DetailsPanelContent`) to rule out a display-layer bug independent of the data — every field (`description`, `typology`, `location`, `squareFootage`, `completion`, `longDescription` via the "Read More" modal) renders straight from the `project` prop with no hardcoded overrides or truncation styling, so there was nothing there to fix either. Most likely explanation for the client's report: seeing projects in a sequence that didn't match what they'd specified read as "the content is wrong," even though every individual project's own text was correct.
+
+**Press links (Part 3 of this task) were also already fully correct** — all 5 `PRESS_ITEMS` entries in `src/components/home/Press.jsx` already carried the exact URLs the client's brief lists (verified against the brief's canonical list, including the query-param-stripped Hyderabad AD URL), in the already-correct latest-first order (Architecture+Design → AD builder-grade-zen → AD wanderlust → AD Hyderabad → Elle Decor), each wired as a real `target="_blank" rel="noopener noreferrer"` external link via the existing `Button` component. No changes needed. Confirmed live (not just eyeballed): all 5 URLs return a real HTTP 200/202 (not 404), and the rendered `href` on each live carousel card matches the brief's URL exactly.
+
+Tested via Playwright: `/projects` grid order confirmed matching the required sequence exactly (extracted the rendered card names, compared to the spec); all 7 project detail pages' "Read More" modal long-description text confirmed matching the spec verbatim (not just spot-checked); Press section hrefs confirmed matching + real HTTP status checked. Zero console errors beyond the same pre-existing, unrelated `Instagram.jsx` avatar 400 already documented earlier in this file. Clean lint, clean `next build`.
 
 ### Contact page hero photo processed and added (2026-09-07, eighth session)
 Client provided the Contact page's first/hero photo, dropped at `public/images/contact/8.jpg` (not under `media-source/`, the usual source location for prior photos — turned out that's fine: `convert-to-webp.js` already expects raw originals to land in `public/images/...` first as its own INPUT, then relocates them to `media-source/` as part of conversion, so this file landing directly in `public/images/contact/` matched the pipeline's own expected starting point, not an anomaly).
