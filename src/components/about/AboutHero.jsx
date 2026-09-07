@@ -35,6 +35,13 @@ const TEXT_SLIDE_X = 40;
 // as its own section -- see about/page.js). Alignment adapted from that
 // file's centered full-width block to a left-aligned side panel, since it
 // now sits beside the image instead of on its own.
+//
+// Third paragraph (the SP_ACE naming story) merged in from the standalone
+// OurStory.jsx section, which used to sit between AboutHero and MeetFounders
+// with its own "Our Story" heading -- the client wants it read as one
+// continuous block under this same "Our Studio" label instead, not a
+// separate beat further down the page. OurStory.jsx itself is deleted (see
+// about/page.js); this is the only place its copy lives now.
 function StudioCopy() {
   return (
     <>
@@ -60,6 +67,17 @@ function StudioCopy() {
         We don&rsquo;t really believe in one signature style. Every project
         starts with the people, their stories, and the way they live — and
         takes shape from there.
+      </p>
+      <p
+        className="mt-4 max-w-2xl text-sm md:text-base"
+        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
+      >
+        The name SP_ACE started with the two of us — Shubham and Priyanka —
+        and a little play on words. SP for us, and ACE for what we set out
+        to do: ace what we love doing. What started in Bangalore in 2022
+        has grown into a studio working across cities, with every project
+        bringing a new story, a new perspective, and a new way of looking
+        at design.
       </p>
     </>
   );

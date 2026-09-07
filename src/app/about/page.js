@@ -1,7 +1,6 @@
 import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import AboutHero from "@/components/about/AboutHero";
-import OurStory from "@/components/about/OurStory";
 import MeetFounders from "@/components/about/MeetFounders";
 import WhatWeBelieve from "@/components/about/WhatWeBelieve";
 import IndiaMap from "@/components/about/IndiaMap";
@@ -83,9 +82,13 @@ export default function AboutPage() {
       <Nav lightHero />
       {/* StudioDescription's copy now lives inside AboutHero's own scroll
           sequence (see that component) -- the section itself is retired but
-          its file is kept around in case its content needs referencing back. */}
+          its file is kept around in case its content needs referencing back.
+          OurStory's copy also now lives inside AboutHero's StudioCopy (a
+          third paragraph, under the same "Our Studio" label) -- unlike
+          StudioDescription, OurStory.jsx itself has been deleted rather than
+          kept around, since the client wants this content consolidated, not
+          just visually adjacent. */}
       <AboutHero />
-      <OurStory />
       <MeetFounders />
       <WhatWeBelieve beliefImages={BELIEF_IMAGES} />
       <IndiaMap />
