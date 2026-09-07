@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { CldImage } from "next-cloudinary";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Button from "@/components/ui/Button";
@@ -213,8 +214,9 @@ function StudioInfo({ infoRef }) {
   );
 }
 
-export default function ContactContent() {
+export default function ContactContent({ heroPhoto }) {
   const sectionRef = useRef(null);
+  const photoRef = useRef(null);
   const headingRef = useRef(null);
   const formRef = useRef(null);
   const infoRef = useRef(null);
@@ -229,6 +231,11 @@ export default function ContactContent() {
   usePreloaderGate(
     () => {
       const ctx = gsap.context(() => {
+        // photoRef only renders when heroPhoto is present (see the JSX
+        // below) -- guarded the same way IndiaMap.jsx guards its own
+        // optional ctaRef, rather than passing a possibly-null entry into
+        // gsap's target arrays.
+        if (photoRef.current) gsap.set(photoRef.current, { opacity: 0, y: 24 });
         gsap.set(headingRef.current, { opacity: 0, y: 24 });
         gsap.set([formRef.current, infoRef.current], { opacity: 0, y: 24 });
 
@@ -240,11 +247,14 @@ export default function ContactContent() {
           },
         });
 
-        tl.to(headingRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
+        if (photoRef.current) {
+          tl.to(photoRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
+        }
+        tl.to(headingRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.1);
         tl.to(
           [formRef.current, infoRef.current],
           { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.1 },
-          0.15
+          0.2
         );
       }, sectionRef);
 
@@ -261,21 +271,46 @@ export default function ContactContent() {
       style={{ backgroundColor: INK }}
     >
       <div className="mx-auto w-full max-w-[1100px]">
-        {/* TODO: placeholder heading + subtext -- pending final copy approval */}
-        <div ref={headingRef}>
-          <h1
-            className={HEADING_CLASS}
-            style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.1 }}
-          >
-            Let&apos;s Talk
-          </h1>
-          <p
-            className="mt-4 max-w-lg text-sm md:text-base"
-            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
-          >
-            Tell us a little about your project and we&apos;ll get back to you
-            to start the conversation.
-          </p>
+        {/* Hero photo, paired with the heading -- the page's first real
+            visual content, stacked above it on mobile and beside it at
+            md+. Fixed box + object-cover (this project's standard photo
+            treatment, see ProjectsGrid/ProjectHero) rather than the
+            photo's own native ~2:3 ratio at full size, so it sits as a
+            considered accent alongside the heading instead of pushing the
+            form far down the page. */}
+        <div className="flex flex-col gap-8 md:flex-row md:items-center md:gap-12">
+          {heroPhoto?.src && (
+            <div
+              ref={photoRef}
+              className="relative h-[280px] w-full shrink-0 overflow-hidden rounded-[8px] md:h-[420px] md:w-[300px]"
+              style={reduceMotion ? undefined : { opacity: 0 }}
+            >
+              <CldImage
+                src={heroPhoto.src}
+                alt={heroPhoto.alt}
+                fill
+                sizes="(max-width: 768px) 100vw, 300px"
+                className="object-cover"
+              />
+            </div>
+          )}
+
+          {/* TODO: placeholder heading + subtext -- pending final copy approval */}
+          <div ref={headingRef} style={reduceMotion ? undefined : { opacity: 0 }}>
+            <h1
+              className={HEADING_CLASS}
+              style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.1 }}
+            >
+              Let&apos;s Talk
+            </h1>
+            <p
+              className="mt-4 max-w-lg text-sm md:text-base"
+              style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
+            >
+              Tell us a little about your project and we&apos;ll get back to you
+              to start the conversation.
+            </p>
+          </div>
         </div>
 
         <div className="mt-14 grid grid-cols-1 gap-16 md:mt-20 md:grid-cols-[1.4fr_1fr]">

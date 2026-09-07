@@ -22,7 +22,13 @@ function loadCloudinaryMap() {
 // path), so this swaps a local path for its Cloudinary URL wherever the
 // upload map has one, falling back to the local path itself if the map has
 // no entry (e.g. a file added after the last upload pass hasn't run yet).
-function toCloudinaryUrl(localSrc) {
+// Exported (not just used internally by the project-photo helpers below) --
+// the map itself is a flat path->URL lookup with nothing project-specific
+// about it, so a non-project caller with its own Cloudinary-mirrored image
+// (e.g. the Contact page's hero photo, uploaded the same way but with no
+// project slug to hang a getProjectPhoto()-style helper off of) can resolve
+// its URL the exact same way rather than duplicating this lookup.
+export function toCloudinaryUrl(localSrc) {
   if (!localSrc) return localSrc;
   const map = loadCloudinaryMap();
   return map[`public${localSrc}`] ?? localSrc;
