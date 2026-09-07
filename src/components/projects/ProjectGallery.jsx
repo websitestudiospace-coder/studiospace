@@ -18,21 +18,30 @@ const CREAM = "#F7EFE4";
 const FALLBACK_HEIGHT_RATIO = 5 / 4;
 
 // Column-count breakpoints, keyed off the actual measured container width
-// (via ResizeObserver on the grid itself), not the raw viewport width the
-// React Bits reference's useMedia checks -- this gallery is capped at
-// max-w-[1100px] and inset by the section's own padding, so a viewport-width
-// breakpoint doesn't map cleanly to how much room columns actually have.
-// Tuned against this site's real inner widths: ~1100px at desktop, ~640px
-// at the md breakpoint, ~327px on a 375px phone.
-const COLUMNS_WIDE = 800;
-const COLUMNS_MEDIUM = 500;
+// (via ResizeObserver on the grid itself). The gallery now renders edge-to-
+// edge of the viewport (see the section markup below), not this site's
+// usual max-w-[1100px] content column, so containerWidth is effectively the
+// real viewport width -- these tiers are tuned against that full range
+// (~327px on a 375px phone up through ultra-wide desktops), not the old
+// ~1100px-capped inner widths. More tiers than before for exactly that
+// reason: a fixed "4 columns and done" cap that was fine capped at 1100px
+// reads as absurdly wide individual photos once the container can be
+// 1920px+, so column count keeps climbing (capped at 6) rather than a
+// handful of images stretching edge to edge.
+const COLUMN_BREAKPOINTS = [
+  { minWidth: 2200, columns: 6 },
+  { minWidth: 1900, columns: 5 },
+  { minWidth: 1024, columns: 4 },
+  { minWidth: 640, columns: 3 },
+  { minWidth: 0, columns: 2 },
+];
 const GAP_WIDE = 24;
 const GAP_NARROW = 12;
+const GAP_BREAKPOINT = 640;
 
 function getColumnCount(containerWidth) {
-  if (containerWidth >= COLUMNS_WIDE) return 4;
-  if (containerWidth >= COLUMNS_MEDIUM) return 3;
-  return 2;
+  const tier = COLUMN_BREAKPOINTS.find((b) => containerWidth >= b.minWidth);
+  return tier.columns;
 }
 
 // Packs `photos` into `columns` using the standard masonry heuristic --
@@ -43,7 +52,7 @@ function getColumnCount(containerWidth) {
 // random or fixed box.
 function computeMasonryLayout(photos, containerWidth) {
   const columns = getColumnCount(containerWidth);
-  const gap = containerWidth >= COLUMNS_MEDIUM ? GAP_WIDE : GAP_NARROW;
+  const gap = containerWidth >= GAP_BREAKPOINT ? GAP_WIDE : GAP_NARROW;
   const columnWidth = columns > 0 ? (containerWidth - (columns - 1) * gap) / columns : 0;
   const colHeights = new Array(columns).fill(0);
 
@@ -280,10 +289,16 @@ export default function ProjectGallery({ name, photos = [] }) {
   if (photos.length === 0) return null;
 
   return (
-    <section className="w-full px-6 py-16 md:px-16 md:py-24" style={{ backgroundColor: CREAM }}>
+    <section className="w-full py-16 md:py-24" style={{ backgroundColor: CREAM }}>
+      {/* Full-width relative to the viewport, not this page's usual
+          max-w-[1100px] content column -- same override IndiaMap.jsx uses
+          for its own full-bleed map (no horizontal padding on the section,
+          no max-w/mx-auto on this grid itself), so photos actually run edge
+          to edge instead of sitting in a narrower centered block with dead
+          cream space on either side. */}
       <div
         ref={containerRef}
-        className="relative mx-auto w-full max-w-[1100px]"
+        className="relative w-full"
         style={{ height: layout.totalHeight }}
       >
         {photos.map((photo, i) => (
