@@ -215,48 +215,41 @@ function StudioInfo({ infoRef }) {
 }
 
 export default function ContactContent({ heroPhoto }) {
-  const sectionRef = useRef(null);
-  const photoRef = useRef(null);
-  const headingRef = useRef(null);
+  const heroRef = useRef(null);
   const formRef = useRef(null);
   const infoRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
   // One-shot reveal, not scroll-scrubbed -- this is a simple content
-  // page, not a cinematic section, so it just fades/settles once as it
-  // enters the viewport (same pattern as Instagram/Press/Footer after
-  // the Phase 3 pass). Still waits for "preloader:complete" since
-  // "top 80%" is calculated against this section's own position, which
-  // depends on Nav/Preloader having already settled.
+  // page, not a cinematic pinned sequence like ProjectHero's, so it just
+  // fades/settles once as it enters the viewport (same Phase 3 pattern
+  // as Instagram/Press/Footer). Trigger is the hero itself, the first
+  // thing on the page -- "top 80%" is already satisfied at scroll
+  // position 0, so this plays essentially immediately on load, same as
+  // it did before this section became the hero. Still waits for
+  // "preloader:complete" since that "top 80%" measurement depends on
+  // Nav/Preloader having already settled.
   usePreloaderGate(
     () => {
       const ctx = gsap.context(() => {
-        // photoRef only renders when heroPhoto is present (see the JSX
-        // below) -- guarded the same way IndiaMap.jsx guards its own
-        // optional ctaRef, rather than passing a possibly-null entry into
-        // gsap's target arrays.
-        if (photoRef.current) gsap.set(photoRef.current, { opacity: 0, y: 24 });
-        gsap.set(headingRef.current, { opacity: 0, y: 24 });
+        gsap.set(heroRef.current, { opacity: 0, y: 24 });
         gsap.set([formRef.current, infoRef.current], { opacity: 0, y: 24 });
 
         const tl = gsap.timeline({
           scrollTrigger: {
-            trigger: sectionRef.current,
+            trigger: heroRef.current,
             start: "top 80%",
             toggleActions: "play none none none",
           },
         });
 
-        if (photoRef.current) {
-          tl.to(photoRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
-        }
-        tl.to(headingRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.1);
+        tl.to(heroRef.current, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0);
         tl.to(
           [formRef.current, infoRef.current],
           { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.1 },
-          0.2
+          0.3
         );
-      }, sectionRef);
+      }, heroRef);
 
       return () => ctx.revert();
     },
@@ -265,59 +258,82 @@ export default function ContactContent({ heroPhoto }) {
   );
 
   return (
-    <section
-      ref={sectionRef}
-      className="w-full px-6 pt-24 pb-16 md:px-16 md:pt-32 md:pb-24"
-      style={{ backgroundColor: INK }}
-    >
-      <div className="mx-auto w-full max-w-[1100px]">
-        {/* Hero photo, paired with the heading -- the page's first real
-            visual content, stacked above it on mobile and beside it at
-            md+. Fixed box + object-cover (this project's standard photo
-            treatment, see ProjectsGrid/ProjectHero) rather than the
-            photo's own native ~2:3 ratio at full size, so it sits as a
-            considered accent alongside the heading instead of pushing the
-            form far down the page. */}
-        <div className="flex flex-col gap-8 md:flex-row md:items-center md:gap-12">
-          {heroPhoto?.src && (
-            <div
-              ref={photoRef}
-              className="relative h-[280px] w-full shrink-0 overflow-hidden rounded-[8px] md:h-[420px] md:w-[300px]"
-              style={reduceMotion ? undefined : { opacity: 0 }}
-            >
-              <CldImage
-                src={heroPhoto.src}
-                alt={heroPhoto.alt}
-                fill
-                sizes="(max-width: 768px) 100vw, 300px"
-                className="object-cover"
-              />
-            </div>
-          )}
+    <>
+      {/* Real hero, matching how single-project pages open (see
+          ProjectHero.jsx's reduced-motion/fallback branch) -- full-bleed
+          photo with a bottom-anchored gradient and the heading/subtext
+          overlaid directly on it, not a small boxed thumbnail beside the
+          text. Deliberately NOT importing ProjectHero itself or copying
+          its pinned scroll-shrink sequence: that mechanic exists
+          specifically to make room for a stats grid (typology/location/
+          sq ft/completion) that Contact has no equivalent of -- its
+          content below is a form, not project stats, so there's nothing
+          for an image-shrink to "reveal". Mirroring the established
+          visual language (full-bleed image, gradient overlay, uppercase
+          Agatho heading with the same text-shadow, bottom-left-ish
+          overlay position) is what the client actually asked to match;
+          the pinned choreography is ProjectHero-specific staging, not
+          part of that visual pattern. No top padding, same reasoning as
+          ProjectHero/ProjectsHero/AboutHero: the image runs from y:0
+          underneath the fixed Nav, which stays in its default
+          transparent/cream-text state (no `lightHero`, same as the
+          project pages) since the image + gradient give it something
+          dark enough to read against without needing the solid-Nav
+          treatment About uses for its all-cream hero. */}
+      <section
+        ref={heroRef}
+        className="relative h-[50vh] w-full overflow-hidden md:h-[70vh]"
+        style={reduceMotion ? undefined : { opacity: 0 }}
+      >
+        {heroPhoto?.src ? (
+          <CldImage
+            src={heroPhoto.src}
+            alt={heroPhoto.alt}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0" style={{ backgroundColor: INK }} />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-black/25" />
 
-          {/* TODO: placeholder heading + subtext -- pending final copy approval */}
-          <div ref={headingRef} style={reduceMotion ? undefined : { opacity: 0 }}>
-            <h1
-              className={HEADING_CLASS}
-              style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.1 }}
-            >
-              Let&apos;s Talk
-            </h1>
-            <p
-              className="mt-4 max-w-lg text-sm md:text-base"
-              style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
-            >
-              Tell us a little about your project and we&apos;ll get back to you
-              to start the conversation.
-            </p>
+        {/* TODO: placeholder heading + subtext -- pending final copy approval */}
+        <div className="absolute inset-x-0 bottom-0 px-6 pb-8 md:px-16 md:pb-12">
+          <h1
+            className={`${HEADING_CLASS} uppercase text-white`}
+            style={{
+              fontFamily: "var(--font-agatho)",
+              lineHeight: 1.1,
+              textShadow: "0 1px 3px rgba(43,38,34,0.7), 0 2px 12px rgba(43,38,34,0.5)",
+            }}
+          >
+            Let&apos;s Talk
+          </h1>
+          <p
+            className="mt-4 max-w-lg text-sm md:text-base"
+            style={{
+              fontFamily: "var(--font-manrope)",
+              color: CREAM,
+              opacity: 0.85,
+              textShadow: "0 1px 3px rgba(43,38,34,0.7)",
+            }}
+          >
+            Tell us a little about your project and we&apos;ll get back to you
+            to start the conversation.
+          </p>
+        </div>
+      </section>
+
+      <section className="w-full px-6 py-16 md:px-16 md:py-24" style={{ backgroundColor: INK }}>
+        <div className="mx-auto w-full max-w-[1100px]">
+          <div className="grid grid-cols-1 gap-16 md:grid-cols-[1.4fr_1fr]">
+            <ContactForm formRef={formRef} />
+            <StudioInfo infoRef={infoRef} />
           </div>
         </div>
-
-        <div className="mt-14 grid grid-cols-1 gap-16 md:mt-20 md:grid-cols-[1.4fr_1fr]">
-          <ContactForm formRef={formRef} />
-          <StudioInfo infoRef={infoRef} />
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
