@@ -1,7 +1,6 @@
 import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import ContactContent from "@/components/contact/ContactContent";
-import ContactLocationMap from "@/components/contact/ContactLocationMap";
 
 // TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
 // doesn't deep-merge nested `openGraph`/`twitter` objects, so a page that
@@ -32,7 +31,6 @@ export default function ContactPage() {
     <>
       <Nav />
       <ContactContent />
-      <ContactLocationMap />
       <Footer />
     </>
   );

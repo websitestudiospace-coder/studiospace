@@ -1,6 +1,6 @@
 # Studio SP_ACE — Project Status (Session Handoff)
 
-**Reflects state as of 2026-09-07.** Originally a 2026-09-06 end-of-session snapshot, updated twice more same-day (a second session's content pass) and twice more on 2026-09-07 (a third session's ProjectGallery masonry rework, and a fourth session's two bug fixes — see §2 top). This is a point-in-time snapshot for continuing this project in a fresh chat — it covers CURRENT STATE and IN-PROGRESS work. For architecture, locked conventions, and rules (golden rule, sticky-vs-pin, motion vocabulary, brand tokens, media pipeline), see `brain.md` instead — don't duplicate that here.
+**Reflects state as of 2026-09-07.** Originally a 2026-09-06 end-of-session snapshot, updated twice more same-day (a second session's content pass) and three more times on 2026-09-07 (a third session's ProjectGallery masonry rework, a fourth session's two bug fixes, and a fifth session removing the Contact page's map — see §2 top). This is a point-in-time snapshot for continuing this project in a fresh chat — it covers CURRENT STATE and IN-PROGRESS work. For architecture, locked conventions, and rules (golden rule, sticky-vs-pin, motion vocabulary, brand tokens, media pipeline), see `brain.md` instead — don't duplicate that here.
 
 **Before relying on anything below:** a fresh session should spot-check against the live code, not trust this file blindly. This file went through several rounds of drift earlier in this same session (work landing without the file being updated, then getting reconciled) — everything below was re-verified against actual current code, `git log`, and live Playwright checks at the end of the session, not carried forward from earlier drafts of this file.
 
@@ -10,7 +10,7 @@
 
 - `/` — `Nav → HeroQuoteTransition → Quote → About → Projects → Instagram → Press → Footer`
 - `/about` — `Nav(lightHero) → AboutHero → OurStory → MeetFounders → WhatWeBelieve → IndiaMap → Footer` (no `StudioDescription`, no `FinalCTA` — both removed, see §2; `OurStory` new this session, see §2 top)
-- `/contact` — `Nav → ContactContent → ContactLocationMap → Footer`
+- `/contact` — `Nav → ContactContent → Footer` (no map section — removed per client request, see §2 top; `ContactLocationMap.jsx` deleted)
 - `/projects` — `Nav → ProjectsHero → ProjectsGrid → Footer`
 - `/projects/[slug]` — `Nav → ProjectHero → ProjectGallery → ProjectVideo (conditional) → NextProjectLink → Footer`
 - Global chrome (in `src/app/layout.js`, outside any page): `Preloader`, `ScrollProgress`, `SmoothScroll` (Lenis wrapper)
@@ -18,6 +18,17 @@
 ---
 
 ## 2. What was completed this session (2026-09-05 – 2026-09-07), most recent first
+
+### Contact page's map section removed entirely, per client request (2026-09-07, fifth session)
+The client wants no map on the Contact page at all — not a reduced/simplified version, gone completely, along with its heading.
+
+Discovered while doing this that the Contact page actually had **two** separate map embeds stacked on top of each other, not one: `ContactContent.jsx`'s own inline `StudioMap` sub-component (a "FIND US" label + its own raw Google Maps iframe, `MAP_EMBED_SRC`) directly above a second, separate `ContactLocationMap.jsx` section (wrapping the shared `IndiaMapEmbed`, no heading) rendered right after it in `contact/page.js`. This wasn't a bug introduced by accident — see the "Reconciliation fix" entry below, which explicitly documents both as intentional and "not a duplicate" (one a precise address pin, one an India-wide service-area overview) — but the client's current instruction ("no map, nothing left in its place") supersedes that decision, so both came out. Confirmed live before touching anything: 2 `<iframe>` elements, 1 "Find Us" label on the page.
+
+- `src/components/contact/ContactContent.jsx` — removed the `StudioMap` component, `MAP_EMBED_SRC`, the `mapRef` ref and its two GSAP references (`gsap.set`/`tl.to`), and the `<StudioMap>` render call. The form/info stagger tween is now the reveal timeline's last beat.
+- `src/app/contact/page.js` — removed the `<ContactLocationMap />` import and render call.
+- `src/components/contact/ContactLocationMap.jsx` — deleted (confirmed via `grep` it had no other usage; it only ever wrapped the shared embed for this one page, so removing its usage left it fully dead).
+- **Not touched, per explicit instruction:** `src/components/shared/IndiaMapEmbed.jsx` (still used by `src/components/about/IndiaMap.jsx`) and `IndiaMap.jsx` itself. One side effect worth flagging: `IndiaMap.jsx`'s own file-level comment still says the shared embed is "also used map-only... on the Contact page," which is no longer true post-removal — left as-is since editing that file wasn't in scope for this task, but worth a one-line fix next time `IndiaMap.jsx` is touched for something else.
+- Confirmed via Playwright at both 1440×900 and 390×844: 0 iframes, 0 "Find Us" text, zero console errors. Screenshots confirm `ContactContent`'s INK-background section now transitions directly into Footer (also INK) with no gap, seam, or leftover divider — both already carried their own independent `pb-16 md:pb-24` / `pt-16 md:pt-24` padding, so no additional spacing fix was needed. Clean `next build`.
 
 ### Two bug fixes: ProjectGallery full-width, WhatWeBelieve stuck-at-card-5 (2026-09-07, fourth session)
 
@@ -82,6 +93,7 @@ A batch of prior instructions asked for the About page's Google Maps embed to be
 - `src/components/contact/ContactLocationMap.jsx` (new) — wraps it map-only with a simple one-shot fade-in, rendered in `contact/page.js` between `ContactContent` and `Footer`.
 - Old `src/components/shared/LocationsMap.jsx` (the label-position layout) deleted — confirmed via `grep` it had no other usage.
 - Contact page now has two distinct, legitimate map embeds: `ContactContent.jsx`'s own precise "Find Us" embed (specific address `pb=...` URL) and this India-wide service-area overview. Not a duplicate.
+- **Superseded 2026-09-07 (see §2 top):** the client asked for the map removed from the Contact page entirely. Both embeds described here are gone — `ContactContent.jsx`'s own "Find Us" block and `ContactLocationMap.jsx` (deleted). This entry stays as the historical record of how the page got to that two-map state in the first place.
 
 ### "Where We Work" / `IndiaMap.jsx` — now a real Google Maps embed (third direction change)
 History: `react-simple-maps`/TopoJSON concentric-circle map (disliked, fully removed incl. `npm uninstall react-simple-maps`) → a minimalist Yodezeen-style label-position layout (disliked) → **current: a real keyless Google Maps iframe**, grayscale-filtered.

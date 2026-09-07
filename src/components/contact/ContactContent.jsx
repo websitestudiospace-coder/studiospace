@@ -31,13 +31,6 @@ const STUDIO_INFO = [
 
 const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
 
-// Real Google Maps embed (client-provided), centered on Bangalore generally
-// -- not a specific street address. Swap the `src` for a pin on the studio's
-// exact office address once the client provides one; until then this is
-// real, not placeholder, just imprecise.
-const MAP_EMBED_SRC =
-  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d225165.13632235647!2d77.45715697752912!3d12.988259665973798!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670c9b44e6d%3A0xf8dfc3e8517e4fe0!2sBengaluru%2C%20Karnataka!5e1!3m2!1sen!2sin!4v1787141590445!5m2!1sen!2sin";
-
 function FieldLabel({ children, optional }) {
   return (
     <span
@@ -220,39 +213,11 @@ function StudioInfo({ infoRef }) {
   );
 }
 
-function StudioMap({ mapRef }) {
-  return (
-    <div ref={mapRef} className="mt-16 md:mt-20">
-      <span
-        className="block text-xs uppercase tracking-[0.15em]"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
-      >
-        Find Us
-      </span>
-      <div className="relative mt-4 aspect-[16/9] w-full overflow-hidden rounded-[8px] md:aspect-[21/9]">
-        <iframe
-          src={MAP_EMBED_SRC}
-          className="absolute inset-0 h-full w-full border-0"
-          allowFullScreen
-          loading="lazy"
-          referrerPolicy="strict-origin-when-cross-origin"
-          title="Studio SP_ACE location — Bangalore"
-        />
-      </div>
-      {/* Centered on Bangalore generally, not a pin on the studio's exact
-          office address -- swap MAP_EMBED_SRC for a precise-address embed
-          once the client provides one. Intentionally not called out to
-          visitors; the map itself doesn't claim to be a precise pin. */}
-    </div>
-  );
-}
-
 export default function ContactContent() {
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
   const formRef = useRef(null);
   const infoRef = useRef(null);
-  const mapRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
   // One-shot reveal, not scroll-scrubbed -- this is a simple content
@@ -265,7 +230,7 @@ export default function ContactContent() {
     () => {
       const ctx = gsap.context(() => {
         gsap.set(headingRef.current, { opacity: 0, y: 24 });
-        gsap.set([formRef.current, infoRef.current, mapRef.current], { opacity: 0, y: 24 });
+        gsap.set([formRef.current, infoRef.current], { opacity: 0, y: 24 });
 
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -281,7 +246,6 @@ export default function ContactContent() {
           { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.1 },
           0.15
         );
-        tl.to(mapRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.3);
       }, sectionRef);
 
       return () => ctx.revert();
@@ -318,8 +282,6 @@ export default function ContactContent() {
           <ContactForm formRef={formRef} />
           <StudioInfo infoRef={infoRef} />
         </div>
-
-        <StudioMap mapRef={mapRef} />
       </div>
     </section>
   );
