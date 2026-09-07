@@ -1,6 +1,6 @@
 # Studio SP_ACE — Project Status (Session Handoff)
 
-**Reflects state as of 2026-09-07.** Originally a 2026-09-06 end-of-session snapshot, updated twice more same-day (a second session's content pass) and three more times on 2026-09-07 (a third session's ProjectGallery masonry rework, a fourth session's two bug fixes, and a fifth session removing the Contact page's map — see §2 top). This is a point-in-time snapshot for continuing this project in a fresh chat — it covers CURRENT STATE and IN-PROGRESS work. For architecture, locked conventions, and rules (golden rule, sticky-vs-pin, motion vocabulary, brand tokens, media pipeline), see `brain.md` instead — don't duplicate that here.
+**Reflects state as of 2026-09-07.** Originally a 2026-09-06 end-of-session snapshot, updated twice more same-day (a second session's content pass) and four more times on 2026-09-07 (a third session's ProjectGallery masonry rework, a fourth session's two bug fixes, a fifth session removing the Contact page's map, and a sixth session investigating — and dismissing — a hydration-warning report). This is a point-in-time snapshot for continuing this project in a fresh chat — it covers CURRENT STATE and IN-PROGRESS work. For architecture, locked conventions, and rules (golden rule, sticky-vs-pin, motion vocabulary, brand tokens, media pipeline), see `brain.md` instead — don't duplicate that here.
 
 **Before relying on anything below:** a fresh session should spot-check against the live code, not trust this file blindly. This file went through several rounds of drift earlier in this same session (work landing without the file being updated, then getting reconciled) — everything below was re-verified against actual current code, `git log`, and live Playwright checks at the end of the session, not carried forward from earlier drafts of this file.
 
@@ -18,6 +18,15 @@
 ---
 
 ## 2. What was completed this session (2026-09-05 – 2026-09-07), most recent first
+
+### Investigated a reported hydration-mismatch warning — false alarm, no code change (2026-09-07, sixth session)
+A console error was reported: "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties," pointing at a `<button className="flex h-11 w-11 items-center justify-center" onClick={...}>` with an extra server-only attribute `fdprocessedid="fgid2a"`.
+
+Identified the button by its exact className (no extra classes) — the Press carousel's pagination-dot buttons in `src/components/home/Press.jsx` (`Go to press item N`, around line 189). Two other `h-11 w-11` buttons exist (`ProjectGallery.jsx`'s lightbox close button, `ProjectDescriptionModal.jsx`'s close button) but both carry additional classes (`absolute`, `rounded-full`, etc.) that don't match the reported diff.
+
+`fdprocessedid` doesn't appear anywhere in this codebase's own source (confirmed via `grep` across `src/`) — it's a well-documented attribute that LastPass (and similar form-fill/autofill browser extensions) injects directly into interactive DOM elements, including plain `<button>`s outside any `<form>`, via a content script that runs independently of React. Confirmed via Playwright (a genuinely clean, extension-free Chromium profile — Playwright's default launch has no extensions installed at all): loaded the home page, waited past hydration, then specifically scrolled to and clicked one of the exact Press pagination-dot buttons in question. Zero hydration-related console messages, before or after the interaction, in either pass.
+
+Conclusion: confirmed browser-extension noise on the reporting device, not a real bug. No `suppressHydrationWarning` added — it would only mask the warning for this one element for users with this one extension pattern, doesn't reflect anything wrong with the app's actual render output, and this class of external DOM mutation can equally affect any other interactive element on any other page for a different visitor's different extension, so there's no complete fix available from application code anyway. No code changed; nothing to commit.
 
 ### Contact page's map section removed entirely, per client request (2026-09-07, fifth session)
 The client wants no map on the Contact page at all — not a reduced/simplified version, gone completely, along with its heading.
