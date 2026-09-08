@@ -35,13 +35,18 @@ const PROJECT_TYPES = [
 
 // TODO: real email/phone not yet provided by the client -- do not fabricate
 // a plausible-looking number/address, it would be mistaken for real contact
-// info. Swap this "coming soon" entry for real values once provided;
+// info. Swap this "coming soon" entry for real values once provided. Shared
+// as a constant (rather than a literal repeated in two spots) since it also
+// backs the "General Inquiries" half of InquiriesSplit below -- one string
+// to update once real contact info arrives.
+const CONTACT_COMING_SOON = "Coming soon — reach us on Instagram for now";
+
 // Studio Location mirrors the Instagram bio and is real. Labeled "Studio
 // Location" (not just "Location") to disambiguate from the form's own
 // "Location" field, which asks for the client's project location instead.
 const STUDIO_INFO = [
   { label: "Studio Location", value: "Bangalore, India" },
-  { label: "Email & Phone", value: "Coming soon — reach us on Instagram for now" },
+  { label: "Email & Phone", value: CONTACT_COMING_SOON },
 ];
 
 const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
@@ -214,7 +219,7 @@ function ContactForm({ formRef }) {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     const data = Object.fromEntries(new FormData(e.currentTarget));
@@ -231,27 +236,17 @@ function ContactForm({ formRef }) {
       return;
     }
     setFieldErrors({});
-
-    setStatus(STATUS.SUBMITTING);
     setError(null);
 
-    let payload;
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      payload = await res.json();
-      if (!res.ok || !payload.ok) {
-        throw new Error(payload?.error || "Something went wrong. Please try again.");
-      }
-    } catch (err) {
-      setStatus(STATUS.IDLE);
-      setError(err.message || "Something went wrong. Please try again.");
-      return;
-    }
-
+    // Frontend-only pass, deliberately: no request is sent yet. A real
+    // POST to /api/contact (src/app/api/contact/route.js -- already built,
+    // tested, and left untouched here) is a separate follow-up task that
+    // will replace just the two lines below with the same async
+    // fetch/try-catch shape this file carried before -- on success call
+    // setStatus(STATUS.SUBMITTED), on failure call setStatus(STATUS.IDLE)
+    // plus setError(message). Nothing about validation, the fields, or the
+    // SUBMITTING/error UI needs to change when that lands.
+    setStatus(STATUS.SUBMITTING);
     setStatus(STATUS.SUBMITTED);
   };
 
@@ -419,32 +414,59 @@ function StudioInfo({ infoRef }) {
   );
 }
 
-// TODO: client to provide Careers copy. Per the recorded walkthrough, this
-// block replaces what would otherwise be a "General Enquiries / Press
-// Enquiries" split -- the client wants Careers content here instead, but
-// hasn't sent the actual text yet. Solid maroon at full opacity (not a
-// tinted/blended maroon-on-ink block), per the brand-token rule and the
-// contrast fix from the previous split-section bug -- cream text on true
-// #6E1F24 keeps a clean, easily-verified contrast ratio.
-function CareersPlaceholder({ careersRef }) {
+// Rebuilt per a client-shared reference: a two-column split-color block,
+// one column "GENERAL INQUIRIES", the other "CAREERS" with a small
+// underlined link beneath it. The reference itself used blue/beige and had
+// fake multi-city studio addresses (London/Singapore/etc.) -- neither
+// applies here. Confirmed via grep before starting that no such
+// "General Inquiries / Press Inquiries" content, fake or otherwise, exists
+// anywhere in this codebase to remove -- this is a from-scratch build of
+// the reference's *format* (split columns, label + link), not a literal
+// replacement of prior code. Brand tokens only: cream/ink on the left,
+// solid maroon (full opacity, not a tinted blend -- see the historical
+// muddy-brown bug this avoids) with cream text on the right.
+function InquiriesSplit({ splitRef }) {
   return (
     <div
-      ref={careersRef}
-      className="mt-16 rounded-[24px] px-8 py-12 md:mt-24 md:px-16 md:py-16"
-      style={{ backgroundColor: MAROON }}
+      ref={splitRef}
+      className="mt-16 grid grid-cols-1 overflow-hidden rounded-[24px] md:mt-24 md:grid-cols-2"
     >
-      <span
-        className="block text-xs uppercase tracking-[0.15em]"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.75 }}
-      >
-        Careers
-      </span>
-      <p
-        className="mt-4 max-w-2xl text-sm md:text-base"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.9 }}
-      >
-        [Careers copy pending from client]
-      </p>
+      <div className="px-8 py-12 md:px-12 md:py-16" style={{ backgroundColor: CREAM }}>
+        <span
+          className="block text-xs uppercase tracking-[0.15em]"
+          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
+        >
+          General Inquiries
+        </span>
+        {/* Reuses the exact same "coming soon" copy as StudioInfo's own
+            Email & Phone entry -- not a fabricated contact detail, just the
+            same real placeholder surfaced in this reference-matching spot
+            too. */}
+        <p
+          className="mt-4 text-sm md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.85 }}
+        >
+          {CONTACT_COMING_SOON}
+        </p>
+      </div>
+      <div className="px-8 py-12 md:px-12 md:py-16" style={{ backgroundColor: MAROON }}>
+        <span
+          className="block text-xs uppercase tracking-[0.15em]"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.75 }}
+        >
+          Careers
+        </span>
+        {/* TODO: careers link/copy pending from client -- swap this href
+            for the real open-positions page (or a mailto:) once provided.
+            Do not fabricate a URL or email in the meantime. */}
+        <a
+          href="#"
+          className="mt-4 inline-block border-b pb-0.5 text-sm md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, borderColor: CREAM }}
+        >
+          View open positions
+        </a>
+      </div>
     </div>
   );
 }
@@ -453,7 +475,7 @@ export default function ContactContent({ heroPhoto }) {
   const heroRef = useRef(null);
   const formRef = useRef(null);
   const infoRef = useRef(null);
-  const careersRef = useRef(null);
+  const inquiriesRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
   // One-shot reveal, not scroll-scrubbed -- this is a simple content
@@ -470,7 +492,7 @@ export default function ContactContent({ heroPhoto }) {
       const ctx = gsap.context(() => {
         gsap.set(heroRef.current, { opacity: 0, y: 24 });
         gsap.set(
-          [formRef.current, infoRef.current, careersRef.current],
+          [formRef.current, infoRef.current, inquiriesRef.current],
           { opacity: 0, y: 24 }
         );
 
@@ -484,7 +506,7 @@ export default function ContactContent({ heroPhoto }) {
 
         tl.to(heroRef.current, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0);
         tl.to(
-          [formRef.current, infoRef.current, careersRef.current],
+          [formRef.current, infoRef.current, inquiriesRef.current],
           { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.1 },
           0.3
         );
@@ -571,7 +593,7 @@ export default function ContactContent({ heroPhoto }) {
             <ContactForm formRef={formRef} />
             <StudioInfo infoRef={infoRef} />
           </div>
-          <CareersPlaceholder careersRef={careersRef} />
+          <InquiriesSplit splitRef={inquiriesRef} />
         </div>
       </section>
     </>
