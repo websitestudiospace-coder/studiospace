@@ -297,7 +297,21 @@ export default function About() {
             src="/images/about/about-hero.jpg"
             alt="Studio SP_ACE"
             fill
-            sizes="50vw"
+            // The box this sits in is animated by GSAP directly on
+            // imageRef's inline style.width, growing from 0% up to 100%
+            // (see IMAGE_PHASE1_WIDTH.../IMAGE_FULL_WIDTH above) -- `sizes`
+            // is a static CSS-length hint the browser evaluates once
+            // against viewport width, with no awareness of that later
+            // GSAP-driven animation, so a value matching only the
+            // "settled" ~48% phase (this was "50vw") under-requests
+            // resolution once the image grows toward full-bleed,
+            // producing real upscaling softness at that phase on
+            // high-DPR displays. ProjectHero.jsx's own pinned/animated
+            // image (an identical GSAP-width-tween pattern) already
+            // solves this the same way: request the safe upper bound,
+            // 100vw, for any branch where width isn't a fixed static
+            // value.
+            sizes="100vw"
             className="object-cover"
           />
         </div>
