@@ -14,31 +14,47 @@ if (typeof window !== "undefined") {
 
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
+const MAROON = "#6E1F24";
 
 // Matches the standardized section-heading scale from the Phase 3 pass
 // (About/Projects/Press all share this).
 const HEADING_CLASS = "text-[32px] md:text-[48px]";
 
-const PROJECT_TYPES = ["Residential", "Commercial", "Hospitality", "Other"];
+// Client spec (recorded walkthrough, 2026-09-08): "Residential" is a parent
+// with two sub-types -- flattened into 5 individually-selectable options
+// here rather than a two-level UI, since this site's existing form controls
+// are single-level selects and the client only needs each of the 5 to be
+// choosable on its own.
+const PROJECT_TYPES = [
+  "Residential – New Build",
+  "Residential – Remodel",
+  "Commercial",
+  "Hospitality",
+  "Others",
+];
 
 // TODO: real email/phone not yet provided by the client -- do not fabricate
 // a plausible-looking number/address, it would be mistaken for real contact
 // info. Swap this "coming soon" entry for real values once provided;
-// Location mirrors the Instagram bio and is real.
+// Studio Location mirrors the Instagram bio and is real. Labeled "Studio
+// Location" (not just "Location") to disambiguate from the form's own
+// "Location" field, which asks for the client's project location instead.
 const STUDIO_INFO = [
-  { label: "Location", value: "Bangalore, India" },
+  { label: "Studio Location", value: "Bangalore, India" },
   { label: "Email & Phone", value: "Coming soon — reach us on Instagram for now" },
 ];
 
 const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
 
-function FieldLabel({ children, optional }) {
+// Client spec: every field on this form is compulsory, no exceptions --
+// there is no longer an "optional" concept here at all.
+function FieldLabel({ children }) {
   return (
     <span
       className="block text-xs uppercase tracking-[0.15em]"
       style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
     >
-      {children} {optional ? "(optional)" : "*"}
+      {children} *
     </span>
   );
 }
@@ -51,11 +67,11 @@ const fieldStyle = {
   fontFamily: "var(--font-manrope)",
 };
 
-function TextField({ label, optional, ...inputProps }) {
+function TextField({ label, ...inputProps }) {
   return (
     <label className="block">
-      <FieldLabel optional={optional}>{label}</FieldLabel>
-      <input {...inputProps} required={!optional} className={fieldClass} style={fieldStyle} />
+      <FieldLabel>{label}</FieldLabel>
+      <input {...inputProps} required className={fieldClass} style={fieldStyle} />
     </label>
   );
 }
@@ -129,6 +145,11 @@ function ContactForm({ formRef }) {
     );
   }
 
+  // Field order below is the client's exact spec, verbatim from the
+  // recorded walkthrough: name, email, phone, location, project budget,
+  // project type, then the project-description textarea last. Every field
+  // is compulsory (see FieldLabel/TextField above) -- phone in particular
+  // used to be marked optional here and no longer is.
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="w-full max-w-lg">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -137,13 +158,17 @@ function ContactForm({ formRef }) {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <TextField label="Phone" type="tel" name="phone" autoComplete="tel" />
         <TextField
-          label="Phone"
-          optional
-          type="tel"
-          name="phone"
-          autoComplete="tel"
+          label="Location"
+          type="text"
+          name="location"
+          autoComplete="address-level2"
         />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <TextField label="Project Budget" type="text" name="projectBudget" />
         <SelectField
           label="Project Type"
           name="projectType"
@@ -153,7 +178,10 @@ function ContactForm({ formRef }) {
       </div>
 
       <div className="mt-6">
-        <TextareaField label="Message" name="message" />
+        <TextareaField
+          label="Tell us about your project"
+          name="projectDetails"
+        />
       </div>
 
       <Button type="submit" variant="primary" className="mt-8">
@@ -214,10 +242,41 @@ function StudioInfo({ infoRef }) {
   );
 }
 
+// TODO: client to provide Careers copy. Per the recorded walkthrough, this
+// block replaces what would otherwise be a "General Enquiries / Press
+// Enquiries" split -- the client wants Careers content here instead, but
+// hasn't sent the actual text yet. Solid maroon at full opacity (not a
+// tinted/blended maroon-on-ink block), per the brand-token rule and the
+// contrast fix from the previous split-section bug -- cream text on true
+// #6E1F24 keeps a clean, easily-verified contrast ratio.
+function CareersPlaceholder({ careersRef }) {
+  return (
+    <div
+      ref={careersRef}
+      className="mt-16 rounded-[24px] px-8 py-12 md:mt-24 md:px-16 md:py-16"
+      style={{ backgroundColor: MAROON }}
+    >
+      <span
+        className="block text-xs uppercase tracking-[0.15em]"
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.75 }}
+      >
+        Careers
+      </span>
+      <p
+        className="mt-4 max-w-2xl text-sm md:text-base"
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.9 }}
+      >
+        [Careers copy pending from client]
+      </p>
+    </div>
+  );
+}
+
 export default function ContactContent({ heroPhoto }) {
   const heroRef = useRef(null);
   const formRef = useRef(null);
   const infoRef = useRef(null);
+  const careersRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
   // One-shot reveal, not scroll-scrubbed -- this is a simple content
@@ -233,7 +292,10 @@ export default function ContactContent({ heroPhoto }) {
     () => {
       const ctx = gsap.context(() => {
         gsap.set(heroRef.current, { opacity: 0, y: 24 });
-        gsap.set([formRef.current, infoRef.current], { opacity: 0, y: 24 });
+        gsap.set(
+          [formRef.current, infoRef.current, careersRef.current],
+          { opacity: 0, y: 24 }
+        );
 
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -245,7 +307,7 @@ export default function ContactContent({ heroPhoto }) {
 
         tl.to(heroRef.current, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0);
         tl.to(
-          [formRef.current, infoRef.current],
+          [formRef.current, infoRef.current, careersRef.current],
           { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.1 },
           0.3
         );
@@ -332,6 +394,7 @@ export default function ContactContent({ heroPhoto }) {
             <ContactForm formRef={formRef} />
             <StudioInfo infoRef={infoRef} />
           </div>
+          <CareersPlaceholder careersRef={careersRef} />
         </div>
       </section>
     </>
