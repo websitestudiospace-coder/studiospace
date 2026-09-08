@@ -51,6 +51,24 @@ const STUDIO_INFO = [
 
 const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
 
+// Backs InquiriesSplit's left-panel stacked entries below. Deliberately a
+// separate array from STUDIO_INFO above, not a reuse of it -- the client's
+// reference spec for this panel calls the first entry "Studio" (not
+// "Studio Location") and wants Instagram as its own stacked entry rather
+// than hardcoded separately, so the *shape* differs even though the real
+// values are identical to (and sourced from the same constants as)
+// STUDIO_INFO/INSTAGRAM_URL above. This means "Bangalore, India" and the
+// "coming soon" placeholder now appear twice on this page -- once here,
+// once in StudioInfo beside the form higher up. That duplication is
+// real and was flagged rather than silently resolved (StudioInfo is out
+// of scope for this task); worth a design/content decision later on
+// whether StudioInfo should be trimmed once this block exists.
+const GENERAL_INQUIRIES_ENTRIES = [
+  { label: "Studio", value: "Bangalore, India" },
+  { label: "Email & Phone", value: CONTACT_COMING_SOON },
+  { label: "Instagram", value: "@studio_sp_ace", href: INSTAGRAM_URL },
+];
+
 // Client spec: every field on this form is compulsory, no exceptions --
 // there is no longer an "optional" concept here at all. Client also asked
 // specifically for a "red asterisk" -- MAROON is the closest brand token to
@@ -414,17 +432,21 @@ function StudioInfo({ infoRef }) {
   );
 }
 
-// Rebuilt per a client-shared reference: a two-column split-color block,
-// one column "GENERAL INQUIRIES", the other "CAREERS" with a small
-// underlined link beneath it. The reference itself used blue/beige and had
-// fake multi-city studio addresses (London/Singapore/etc.) -- neither
-// applies here. Confirmed via grep before starting that no such
-// "General Inquiries / Press Inquiries" content, fake or otherwise, exists
-// anywhere in this codebase to remove -- this is a from-scratch build of
-// the reference's *format* (split columns, label + link), not a literal
-// replacement of prior code. Brand tokens only: cream/ink on the left,
-// solid maroon (full opacity, not a tinted blend -- see the historical
-// muddy-brown bug this avoids) with cream text on the right.
+// Redesigned per a client-shared reference (2026-09-08): a fuller,
+// richer two-column split-color block -- structural/typographic
+// inspiration only, NOT the reference's own blue/tan colors, fake
+// multi-city offices, or "Press Enquiries" copy, none of which apply
+// here. Confirmed via grep before starting that no such content, fake or
+// otherwise, exists anywhere in this codebase to adapt -- this is a
+// from-scratch build using this site's own tokens/data. Left panel: a
+// large two-line uppercase Agatho heading (same HEADING_CLASS every
+// other section heading on this page/site uses) over stacked
+// micro-label + value entries, matching the reference's "large heading,
+// then several labeled contact blocks" hierarchy. Right panel: same
+// heading scale, brand maroon at full opacity (re-confirmed, not a
+// tinted/blended shade -- see the historical muddy-brown bug this
+// avoids), Careers copy/link/photo all clearly marked pending real
+// content from the client where it is.
 function InquiriesSplit({ splitRef }) {
   return (
     <div
@@ -432,40 +454,87 @@ function InquiriesSplit({ splitRef }) {
       className="mt-16 grid grid-cols-1 overflow-hidden rounded-[24px] md:mt-24 md:grid-cols-2"
     >
       <div className="px-8 py-12 md:px-12 md:py-16" style={{ backgroundColor: CREAM }}>
-        <span
-          className="block text-xs uppercase tracking-[0.15em]"
-          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
+        <h2
+          className={`${HEADING_CLASS} uppercase`}
+          style={{ fontFamily: "var(--font-agatho)", color: INK, lineHeight: 1.05 }}
         >
-          General Inquiries
-        </span>
-        {/* Reuses the exact same "coming soon" copy as StudioInfo's own
-            Email & Phone entry -- not a fabricated contact detail, just the
-            same real placeholder surfaced in this reference-matching spot
-            too. */}
-        <p
-          className="mt-4 text-sm md:text-base"
-          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.85 }}
-        >
-          {CONTACT_COMING_SOON}
-        </p>
+          <span className="block">General</span>
+          <span className="block">Inquiries</span>
+        </h2>
+
+        <div className="mt-8 flex flex-col gap-6 md:mt-12">
+          {GENERAL_INQUIRIES_ENTRIES.map((entry) => (
+            <div key={entry.label}>
+              <span
+                className="block text-xs uppercase tracking-[0.15em]"
+                style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.55 }}
+              >
+                {entry.label}
+              </span>
+              {entry.href ? (
+                <a
+                  href={entry.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-sm transition-opacity duration-200 ease-out hover:opacity-70 md:text-base"
+                  style={{ fontFamily: "var(--font-manrope)", color: INK }}
+                >
+                  {entry.value}
+                </a>
+              ) : (
+                <p
+                  className="mt-1 text-sm md:text-base"
+                  style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.85 }}
+                >
+                  {entry.value}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
+
       <div className="px-8 py-12 md:px-12 md:py-16" style={{ backgroundColor: MAROON }}>
-        <span
-          className="block text-xs uppercase tracking-[0.15em]"
-          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.75 }}
+        <h2
+          className={`${HEADING_CLASS} uppercase`}
+          style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.05 }}
         >
           Careers
-        </span>
-        {/* TODO: careers link/copy pending from client -- swap this href
-            for the real open-positions page (or a mailto:) once provided.
-            Do not fabricate a URL or email in the meantime. */}
+        </h2>
+
+        {/* TODO: client to provide real Careers copy -- this supporting
+            line is a placeholder, not real content. */}
+        <p
+          className="mt-4 max-w-sm text-sm md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.85 }}
+        >
+          [Careers copy pending from client]
+        </p>
+
+        {/* TODO: href="#" is a placeholder -- swap for the real
+            open-positions page (or a mailto:) once the client provides
+            one. Do not fabricate a URL in the meantime. */}
         <a
           href="#"
-          className="mt-4 inline-block border-b pb-0.5 text-sm md:text-base"
+          className="mt-6 inline-block border-b pb-0.5 text-sm md:text-base"
           style={{ fontFamily: "var(--font-manrope)", color: CREAM, borderColor: CREAM }}
         >
           View open positions
         </a>
+
+        {/* TODO: client to provide a real Careers photo -- placeholder
+            slot only, not a borrowed/unrelated image. */}
+        <div
+          className="mt-8 flex h-40 items-center justify-center rounded-[8px] border border-dashed md:h-48"
+          style={{ borderColor: "rgba(247, 239, 228, 0.35)" }}
+        >
+          <span
+            className="text-xs uppercase tracking-[0.15em]"
+            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.5 }}
+          >
+            Photo pending
+          </span>
+        </div>
       </div>
     </div>
   );
