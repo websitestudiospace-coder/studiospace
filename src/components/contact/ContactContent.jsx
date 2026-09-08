@@ -453,7 +453,13 @@ function InquiriesSplit({ splitRef, careersPhoto }) {
       ref={splitRef}
       className="mt-16 grid w-full grid-cols-1 overflow-hidden md:mt-24 md:grid-cols-2"
     >
-      <div className="px-8 py-12 md:px-12 md:py-16" style={{ backgroundColor: CREAM }}>
+      {/* text-center on this panel's own wrapper, not per-element -- every
+          label/value pair below inherits it (the label spans are `block`,
+          the value links/paragraphs are `inline-block`, both of which
+          respect an ancestor's text-align), so each stacked entry centers
+          as one unit with no risk of centering a label while its value
+          stays left-aligned. */}
+      <div className="px-8 py-12 text-center md:px-12 md:py-16" style={{ backgroundColor: CREAM }}>
         <h2
           className={`${HEADING_CLASS} uppercase`}
           style={{ fontFamily: "var(--font-agatho)", color: INK, lineHeight: 1.05 }}
@@ -495,7 +501,7 @@ function InquiriesSplit({ splitRef, careersPhoto }) {
       </div>
 
       <div className="flex flex-col" style={{ backgroundColor: MAROON }}>
-        <div className="px-8 pt-12 md:px-12 md:pt-16">
+        <div className="px-8 pt-12 text-center md:px-12 md:pt-16">
           <h2
             className={`${HEADING_CLASS} uppercase`}
             style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.05 }}
@@ -504,9 +510,13 @@ function InquiriesSplit({ splitRef, careersPhoto }) {
           </h2>
 
           {/* TODO: client to provide real Careers copy -- this supporting
-              line is a placeholder, not real content. */}
+              line is a placeholder, not real content. mx-auto centers the
+              max-w-sm box itself (not just the text inside it) now that
+              this panel is center-aligned -- without it the box would stay
+              flush against the left edge with only its own text centered
+              inside that narrower, off-center box. */}
           <p
-            className="mt-4 max-w-sm text-sm md:text-base"
+            className="mx-auto mt-4 max-w-sm text-sm md:text-base"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.85 }}
           >
             [Careers copy pending from client]
