@@ -31,47 +31,46 @@ const SETTLED_IMAGE_WIDTH = 50;
 // as home/About.jsx's own TEXT_SLIDE_X.
 const TEXT_SLIDE_X = 40;
 
+// Micro-label styling shared by both groups below -- same treatment the
+// old single "Our Studio" label used.
+const LABEL_CLASS = "text-xs uppercase tracking-[0.2em] md:text-sm";
+const BODY_CLASS = "max-w-2xl text-sm md:text-base";
+const COPY_STYLE = { fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 };
+
 // Studio description copy, moved in from StudioDescription.jsx (now retired
 // as its own section -- see about/page.js). Alignment adapted from that
 // file's centered full-width block to a left-aligned side panel, since it
 // now sits beside the image instead of on its own.
 //
-// Third paragraph (the SP_ACE naming story) merged in from the standalone
-// OurStory.jsx section, which used to sit between AboutHero and MeetFounders
-// with its own "Our Story" heading -- the client wants it read as one
-// continuous block under this same "Our Studio" label instead, not a
-// separate beat further down the page. OurStory.jsx itself is deleted (see
-// about/page.js); this is the only place its copy lives now.
+// Two labeled sub-sections, per the client's reference doc: "About Studio
+// SP_ACE" (studio intro + no-signature-style paragraphs) and "Our Story"
+// (the SP_ACE naming story). This was briefly one continuous block under a
+// single "Our Studio" label (the naming-story paragraph got merged in
+// without its own label) -- the client asked for the two-beat structure
+// back, so it's split again here. OurStory.jsx itself stays deleted (see
+// about/page.js); this is still the only place that copy lives.
 function StudioCopy() {
   return (
     <>
-      <p
-        className="text-xs uppercase tracking-[0.2em] md:text-sm"
-        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
-      >
-        Our Studio
+      <p className={LABEL_CLASS} style={COPY_STYLE}>
+        About Studio SP_ACE
       </p>
-      <p
-        className="mt-6 max-w-2xl text-sm md:text-base"
-        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
-      >
+      <p className={`mt-6 ${BODY_CLASS}`} style={COPY_STYLE}>
         Studio SP_ACE is a Bangalore-based interior design studio founded by
         Shubham and Priyanka in 2022. Working across India, we design and
         execute homes that are personal, considered, and made around the
         people who live in them.
       </p>
-      <p
-        className="mt-4 max-w-2xl text-sm md:text-base"
-        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
-      >
+      <p className={`mt-4 ${BODY_CLASS}`} style={COPY_STYLE}>
         We don&rsquo;t really believe in one signature style. Every project
         starts with the people, their stories, and the way they live — and
         takes shape from there.
       </p>
-      <p
-        className="mt-4 max-w-2xl text-sm md:text-base"
-        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
-      >
+
+      <p className={`mt-8 ${LABEL_CLASS}`} style={COPY_STYLE}>
+        Our Story
+      </p>
+      <p className={`mt-6 ${BODY_CLASS}`} style={COPY_STYLE}>
         The name SP_ACE started with the two of us — Shubham and Priyanka —
         and a little play on words. SP for us, and ACE for what we set out
         to do: ace what we love doing. What started in Bangalore in 2022
@@ -205,6 +204,17 @@ export default function AboutHero() {
             className="object-cover"
           />
         </div>
+
+        {/* Nav sits transparent (cream text) over this hero for its first
+            ~80px of scroll (see about/page.js's <Nav /> usage) -- the
+            photo's own top strip is a light wall/sky (measured ~228/255
+            luminance), which read at ~1.2:1 contrast against cream text,
+            nowhere near legible. Same fix Home's own Hero.jsx already uses
+            for the identical problem, reused verbatim rather than inventing
+            a new one: a top-anchored dark-to-transparent band, independent
+            of imageRef's own shrinking width so it stays full-bleed for as
+            long as the transparent-nav window actually lasts. */}
+        <div className="absolute left-0 top-0 h-[250px] w-full bg-gradient-to-b from-black/50 via-black/20 to-transparent" />
 
         {/* Box stays fixed at the settled-layout position for the whole
             timeline -- only opacity/x (the entrance slide) animate. */}

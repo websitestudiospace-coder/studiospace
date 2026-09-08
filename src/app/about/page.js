@@ -79,15 +79,30 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <>
-      <Nav lightHero />
+      {/* No `lightHero` -- AboutHero's enhanced (desktop) branch is now a
+          full-bleed photo directly under Nav, same as Home's hero, so this
+          page uses the same default transparent-then-solid Nav behavior
+          Home does (see Nav.jsx's own `solid` logic). AboutHero carries its
+          own top gradient for cream-nav-text legibility over that photo
+          (see that file) -- the same fix Home's Hero.jsx already uses. Note:
+          the mobile/reduced-motion fallback below md doesn't have an
+          equivalent full-bleed hero (a deliberate AboutHero constraint, see
+          that file's own comment on why the pinned sequence has no mobile
+          equivalent) -- its top-of-page background is plain CREAM, so a
+          transparent Nav is genuinely low-contrast there for the same brief
+          initial-scroll window. Flagged, not silently patched: fixing it for
+          real would mean giving the mobile fallback its own full-bleed hero
+          treatment, which is out of this task's scope. */}
+      <Nav />
       {/* StudioDescription's copy now lives inside AboutHero's own scroll
           sequence (see that component) -- the section itself is retired but
           its file is kept around in case its content needs referencing back.
-          OurStory's copy also now lives inside AboutHero's StudioCopy (a
-          third paragraph, under the same "Our Studio" label) -- unlike
-          StudioDescription, OurStory.jsx itself has been deleted rather than
-          kept around, since the client wants this content consolidated, not
-          just visually adjacent. */}
+          OurStory's copy also now lives inside AboutHero's StudioCopy (now
+          split back into two labeled sub-sections, "About Studio SP_ACE"
+          and "Our Story" -- see AboutHero.jsx) -- unlike StudioDescription,
+          OurStory.jsx itself has been deleted rather than kept around,
+          since the client wants this content consolidated, not just
+          visually adjacent. */}
       <AboutHero />
       <MeetFounders />
       <WhatWeBelieve beliefImages={BELIEF_IMAGES} />

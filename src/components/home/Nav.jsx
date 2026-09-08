@@ -68,11 +68,16 @@ export default function Nav({ lightHero = false }) {
   // cream logo/text (same as the un-scrolled state) instead of switching
   // to the solid cream treatment, so it reads as one continuous ink
   // takeover rather than a cream bar sitting on top of an ink panel.
-  // `lightHero` covers pages whose hero content is cream-on-cream from
-  // y=0 (e.g. About) -- unlike Home/Projects, which have a dark
-  // video/image hero for the un-scrolled cream text to sit on, those
-  // pages have nothing dark for cream text to read against until the
-  // user scrolls, so the solid/ink treatment applies from the start.
+  // `lightHero` is for a page whose hero content is cream-on-cream from
+  // y=0 -- unlike Home/Projects (a dark video/image hero for the
+  // un-scrolled cream text to sit on), such a page has nothing dark for
+  // cream text to read against until the user scrolls, so the solid/ink
+  // treatment applies from the start. No current page passes this --
+  // About used to (its mobile/reduced-motion fallback is still
+  // cream-on-cream at y=0, a real gap flagged in about/page.js's own
+  // comment) but its desktop hero is now a full-bleed photo like Home's,
+  // so it dropped the prop in favor of the same scroll-based default.
+  // Left here for whichever page needs it next, not dead code to prune.
   const solid = (scrolled || lightHero) && !menuOpen;
   const textColor = solid ? INK : CREAM;
 
