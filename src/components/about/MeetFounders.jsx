@@ -96,13 +96,8 @@ const PHOTO_HEIGHT = 7948;
 // the same singular-subject phrasing.
 const TITLE = "Founder & Principal Designer";
 
-const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
-// TODO: placeholder -- swap in each founder's real LinkedIn profile URL once
-// provided by the client.
-const LINKEDIN_URL = "#";
-
 // The client provided one joint note instead of two individual bios -- see
-// FOUNDERS_NOTE below, rendered once beneath both founders' name/title/social
+// FOUNDERS_NOTE below, rendered once beneath both founders' name/title
 // blocks rather than duplicated per founder.
 const FOUNDERS = [{ name: "Shubham" }, { name: "Priyanka" }];
 
@@ -114,74 +109,21 @@ const FOUNDERS_NOTE = [
   "As SP_ACE grows, we hope to take on bigger ideas, more places, and more ambitious projects — without losing what matters to us: creating spaces that feel personal, thoughtful, and true to the people and purpose behind them.",
 ];
 
-function ArrowIcon() {
-  return (
-    <svg width="22" height="14" viewBox="0 0 22 14" fill="none" aria-hidden="true" className="shrink-0">
-      <path
-        d="M0.5 7H20.5M20.5 7L14.5 1M20.5 7L14.5 13"
-        stroke={MAROON}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-// Decorative outline that overlaps the top-left corner of the heading, like
-// a hand-drawn circle marking out part of the phrase -- stroke only, no
-// fill, so it never obscures the text it crosses over.
-function OvalOutline() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="pointer-events-none absolute -top-5 -left-5 md:-top-6 md:-left-6"
-      width="96"
-      height="56"
-      viewBox="0 0 96 56"
-      fill="none"
-    >
-      <ellipse cx="48" cy="28" rx="46" ry="25" stroke={MAROON} strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-function PillLink({ href, children }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center rounded-full px-5 py-2 text-xs uppercase tracking-[0.15em] transition-colors duration-200 ease-out hover:bg-[rgba(110,31,36,0.06)]"
-      style={{ border: `1px solid ${MAROON}`, color: INK, fontFamily: "var(--font-manrope)" }}
-    >
-      {children}
-    </a>
-  );
-}
-
 function FounderColumn({ founder, colRef, reduceMotion }) {
   return (
     <div ref={colRef} style={reduceMotion ? undefined : { opacity: 0 }}>
-      <div className="flex items-center gap-3">
-        <ArrowIcon />
-        <h3
-          className="text-2xl md:text-3xl"
-          style={{ fontFamily: "var(--font-agatho)", color: MAROON }}
-        >
-          {founder.name}
-        </h3>
-      </div>
+      <h3
+        className="text-2xl md:text-3xl"
+        style={{ fontFamily: "var(--font-agatho)", color: MAROON }}
+      >
+        {founder.name}
+      </h3>
       <p
         className="mt-3 text-xs uppercase tracking-[0.2em]"
         style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.55 }}
       >
         {TITLE}
       </p>
-      <div className="mt-6 flex gap-3">
-        <PillLink href={INSTAGRAM_URL}>Instagram</PillLink>
-        <PillLink href={LINKEDIN_URL}>LinkedIn</PillLink>
-      </div>
     </div>
   );
 }
@@ -534,15 +476,12 @@ export default function MeetFounders() {
             className="px-6 py-10 md:sticky md:px-16 md:py-0"
             style={{ top: `${STICKY_COLUMN_TOP_PX}px` }}
           >
-            <div className="relative inline-block">
-              <OvalOutline />
-              <h2
-                className="relative text-[32px] md:text-[48px]"
-                style={{ fontFamily: "var(--font-agatho)", color: INK }}
-              >
-                Meet The Founders
-              </h2>
-            </div>
+            <h2
+              className="text-[32px] md:text-[48px]"
+              style={{ fontFamily: "var(--font-agatho)", color: INK }}
+            >
+              Meet The Founders
+            </h2>
             {/* TODO: placeholder tagline -- swap in the client's confirmed
                 copy once provided. */}
             <p
@@ -552,9 +491,10 @@ export default function MeetFounders() {
               Two designers, one shared vision for how spaces should feel.
             </p>
 
-            {/* Founder blocks -- name, role, and social links only now (the
-                client provided one shared note instead of two individual
-                bios, see FOUNDERS_NOTE/noteRef below), so side-by-side reads
+            {/* Founder blocks -- name and role only now (the client
+                provided one shared note instead of two individual bios, see
+                FOUNDERS_NOTE/noteRef below, and asked for the per-founder
+                Instagram/LinkedIn buttons removed), so side-by-side reads
                 comfortably at this column's width instead of the stacked
                 layout the old, much longer per-founder bios needed. */}
             <div className="mt-10 flex flex-col gap-8 sm:flex-row sm:gap-14">
