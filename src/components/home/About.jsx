@@ -60,11 +60,16 @@ function AboutCopy() {
       >
         Based in Bangalore and working pan-India, Studio SP_ACE is a bespoke
         interior design studio offering a complete journey from design to
-        execution. Every project begins with getting to know the people
-        behind the space, their experiences, personalities and the way they
-        live. We bring these details into the design to create interiors
-        that are not just designed for our clients, but feel inherently like
-        them.
+        execution.
+      </p>
+      <p
+        className="mt-4 text-sm md:text-base"
+        style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
+      >
+        Every project begins with getting to know the people behind the
+        space, their experiences, personalities and the way they live. We
+        bring these details into the design to create interiors that are not
+        just designed for our clients, but feel inherently like them.
       </p>
       <Link
         href="/about"
