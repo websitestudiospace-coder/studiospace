@@ -19,6 +19,12 @@ const MAROON = "#6E1F24";
 const DRAG_THRESHOLD = 6;
 const SWIPE_RATIO = 0.18;
 
+// Auto-advance timing: how often the carousel moves on its own, and how
+// long it waits after the visitor's last drag/hover/dot-click before
+// resuming.
+const AUTO_ADVANCE_MS = 4500;
+const RESUME_IDLE_MS = 3500;
+
 // Real press mentions, most recent first (per the client's brief). Publish
 // dates for the first 4 are TODOs -- this environment's WebFetch can't reach
 // architectureplusdesign.in or architecturaldigest.in (both return "unable to
@@ -106,6 +112,49 @@ function InlineWordmark({ text }) {
   );
 }
 
+// Derives the outlet's bare domain from its article URL (strips "www."),
+// used to request that outlet's real favicon rather than a generic logo.
+function getDomain(pageUrl) {
+  try {
+    return new URL(pageUrl).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+// Real favicon per outlet, via Google's zero-maintenance favicon service --
+// no stated preference in brain.md for self-hosted logo assets, and this
+// avoids storing/maintaining 5 external brand logos as project assets.
+// Falls back to the original plain gray circle if the favicon fails to
+// load, so one broken/blocked domain never breaks a card's layout.
+function OutletAvatar({ publication, url }) {
+  const [failed, setFailed] = useState(false);
+  const domain = getDomain(url);
+
+  if (failed || !domain) {
+    return (
+      <div
+        className="h-10 w-10 shrink-0 rounded-full"
+        style={{ backgroundColor: "rgba(43,38,34,0.12)" }}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- external favicon service, not project-hosted media
+    <img
+      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+      alt={`${publication} logo`}
+      width={40}
+      height={40}
+      className="h-10 w-10 shrink-0 rounded-full object-contain"
+      style={{ backgroundColor: "rgba(43,38,34,0.12)" }}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function PressHeading({ headingRef }) {
   return (
     // TODO: placeholder heading copy -- pending final copy approval
@@ -128,11 +177,19 @@ function PressCarousel({
   viewportRef,
   trackRef,
   index,
-  goTo,
+  onDotClick,
+  onHoverEnter,
+  onHoverLeave,
 }) {
   return (
     <div ref={revealRef} className="mt-10 md:mt-14">
-      <div ref={viewportRef} className="overflow-hidden" style={{ touchAction: "pan-y" }}>
+      <div
+        ref={viewportRef}
+        className="overflow-hidden"
+        style={{ touchAction: "pan-y" }}
+        onMouseEnter={onHoverEnter}
+        onMouseLeave={onHoverLeave}
+      >
         <div ref={trackRef} className="flex cursor-grab select-none active:cursor-grabbing">
           {PRESS_ITEMS.map((item) => (
             <article
@@ -142,11 +199,7 @@ function PressCarousel({
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="h-10 w-10 shrink-0 rounded-full"
-                    style={{ backgroundColor: "rgba(43,38,34,0.12)" }}
-                    aria-hidden="true"
-                  />
+                  <OutletAvatar publication={item.publication} url={item.url} />
                   <div>
                     <p
                       className="text-sm font-bold md:text-base"
@@ -184,15 +237,15 @@ function PressCarousel({
         </div>
       </div>
 
-      <div className="mt-8 flex items-center justify-center gap-2 md:mt-10">
+      <div className="mt-8 flex items-center justify-center gap-1 md:mt-10">
         {PRESS_ITEMS.map((item, i) => (
           <button
             key={item.publication + item.date + item.headline}
             type="button"
             aria-label={`Go to press item ${i + 1}`}
             aria-current={i === index}
-            onClick={() => goTo(i, true)}
-            className="flex h-11 w-11 items-center justify-center"
+            onClick={() => onDotClick(i)}
+            className="flex items-center justify-center p-1.5"
           >
             <span
               className="h-2.5 rounded-full transition-all duration-300"
@@ -217,7 +270,10 @@ export default function Press() {
   const cardWidthRef = useRef(0);
   const indexRef = useRef(0);
   const dragRef = useRef({ dragging: false, startX: 0, baseX: 0, moved: false });
+  const hoveringRef = useRef(false);
+  const lastInteractionRef = useRef(0);
   const [index, setIndex] = useState(0);
+  const [inView, setInView] = useState(false);
   const reduceMotion = useReducedMotion();
 
   const goTo = useCallback((i, animate) => {
@@ -259,6 +315,7 @@ export default function Press() {
       state.moved = false;
       state.startX = e.clientX;
       state.baseX = -indexRef.current * cardWidthRef.current;
+      lastInteractionRef.current = Date.now();
       gsap.killTweensOf(track);
     };
 
@@ -279,6 +336,7 @@ export default function Press() {
     const handlePointerUp = (e) => {
       if (!state.dragging) return;
       state.dragging = false;
+      lastInteractionRef.current = Date.now();
       if (!state.moved) return;
       const delta = e.clientX - state.startX;
       const width = cardWidthRef.current || 1;
@@ -309,6 +367,51 @@ export default function Press() {
       track.removeEventListener("click", handleClickCapture, true);
     };
   }, [goTo]);
+
+  const handleHoverEnter = useCallback(() => {
+    hoveringRef.current = true;
+    lastInteractionRef.current = Date.now();
+  }, []);
+
+  const handleHoverLeave = useCallback(() => {
+    hoveringRef.current = false;
+    lastInteractionRef.current = Date.now();
+  }, []);
+
+  const handleDotClick = useCallback(
+    (i) => {
+      lastInteractionRef.current = Date.now();
+      goTo(i, true);
+    },
+    [goTo]
+  );
+
+  // Tracks whether the carousel is actually on-screen, so the auto-advance
+  // timer below doesn't keep silently ticking (and fighting scroll restore)
+  // while this section is scrolled out of view.
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0.2 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Auto-advance, loops back to the first item after the last. Disabled
+  // entirely under prefers-reduced-motion or while off-screen; paused while
+  // the visitor is dragging/hovering or shortly after their last dot click.
+  useEffect(() => {
+    if (reduceMotion || !inView) return;
+    const id = setInterval(() => {
+      if (hoveringRef.current || dragRef.current.dragging) return;
+      if (Date.now() - lastInteractionRef.current < RESUME_IDLE_MS) return;
+      goTo((indexRef.current + 1) % PRESS_ITEMS.length, true);
+    }, AUTO_ADVANCE_MS);
+    return () => clearInterval(id);
+  }, [reduceMotion, inView, goTo]);
 
   // One-shot reveal (not scroll-scrubbed): this section doesn't need to
   // feel scroll-locked, so it just plays once as it enters the viewport.
@@ -353,7 +456,9 @@ export default function Press() {
           viewportRef={viewportRef}
           trackRef={trackRef}
           index={index}
-          goTo={goTo}
+          onDotClick={handleDotClick}
+          onHoverEnter={handleHoverEnter}
+          onHoverLeave={handleHoverLeave}
         />
       </div>
     </section>
