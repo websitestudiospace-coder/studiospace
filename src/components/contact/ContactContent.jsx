@@ -451,7 +451,7 @@ function InquiriesSplit({ splitRef, careersPhoto }) {
   return (
     <div
       ref={splitRef}
-      className="mt-16 grid grid-cols-1 overflow-hidden rounded-[24px] md:mt-24 md:grid-cols-2"
+      className="mt-16 grid w-full grid-cols-1 overflow-hidden md:mt-24 md:grid-cols-2"
     >
       <div className="px-8 py-12 md:px-12 md:py-16" style={{ backgroundColor: CREAM }}>
         <h2
@@ -665,14 +665,26 @@ export default function ContactContent({ heroPhoto, careersPhoto }) {
         </div>
       </section>
 
-      <section className="w-full px-6 py-16 md:px-16 md:py-24" style={{ backgroundColor: INK }}>
-        <div className="mx-auto w-full max-w-[1100px]">
+      <section className="w-full py-16 md:py-24" style={{ backgroundColor: INK }}>
+        <div className="mx-auto w-full max-w-[1100px] px-6 md:px-16">
           <div className="grid grid-cols-1 gap-16 md:grid-cols-[1.4fr_1fr]">
             <ContactForm formRef={formRef} />
             <StudioInfo infoRef={infoRef} />
           </div>
-          <InquiriesSplit splitRef={inquiriesRef} careersPhoto={careersPhoto} />
         </div>
+
+        {/* Full-bleed relative to the viewport, not this page's usual
+            max-w-[1100px] content column -- moved out of that column's own
+            div (which still wraps the form/StudioInfo grid above) and the
+            section's own former px-6/md:px-16 side padding moved down onto
+            that inner div instead of staying on <section> itself, so this
+            sibling is no longer subject to it. Same technique IndiaMap.jsx
+            already uses for its own full-width map embed. Rounded corners
+            dropped for this box specifically now that it runs edge-to-edge
+            -- a rounded corner with nothing but flush viewport edge on the
+            other side of it reads as a rendering bug, not a deliberate
+            shape. */}
+        <InquiriesSplit splitRef={inquiriesRef} careersPhoto={careersPhoto} />
       </section>
     </>
   );
