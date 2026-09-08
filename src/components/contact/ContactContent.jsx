@@ -113,20 +113,43 @@ function TextareaField({ label, ...textareaProps }) {
   );
 }
 
-function ContactForm({ formRef }) {
-  const [submitted, setSubmitted] = useState(false);
+// idle -> submitting -> submitted, or back to idle (with `error` set) on
+// any failure so the visitor can fix something and retry without losing
+// what they already typed.
+const STATUS = { IDLE: "idle", SUBMITTING: "submitting", SUBMITTED: "submitted" };
 
-  // No backend or email service is wired up yet -- this just flips local
-  // state and shows a confirmation message (same placeholder pattern as
-  // Footer's newsletter signup). Before launch, replace this handler with
-  // a real submission (e.g. Formspree, a serverless function, or an email
-  // API) and remove the `alert`-free no-op below.
-  const handleSubmit = (e) => {
+function ContactForm({ formRef }) {
+  const [status, setStatus] = useState(STATUS.IDLE);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setStatus(STATUS.SUBMITTING);
+    setError(null);
+
+    const data = Object.fromEntries(new FormData(e.currentTarget));
+
+    let payload;
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      payload = await res.json();
+      if (!res.ok || !payload.ok) {
+        throw new Error(payload?.error || "Something went wrong. Please try again.");
+      }
+    } catch (err) {
+      setStatus(STATUS.IDLE);
+      setError(err.message || "Something went wrong. Please try again.");
+      return;
+    }
+
+    setStatus(STATUS.SUBMITTED);
   };
 
-  if (submitted) {
+  if (status === STATUS.SUBMITTED) {
     return (
       <div ref={formRef} className="max-w-lg">
         <p
@@ -184,8 +207,23 @@ function ContactForm({ formRef }) {
         />
       </div>
 
-      <Button type="submit" variant="primary" className="mt-8">
-        Submit Form
+      {error ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-[4px] px-4 py-3 text-sm"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, backgroundColor: MAROON }}
+        >
+          {error}
+        </p>
+      ) : null}
+
+      <Button
+        type="submit"
+        variant="primary"
+        className="mt-8"
+        disabled={status === STATUS.SUBMITTING}
+      >
+        {status === STATUS.SUBMITTING ? "Sending…" : "Submit Form"}
       </Button>
     </form>
   );
