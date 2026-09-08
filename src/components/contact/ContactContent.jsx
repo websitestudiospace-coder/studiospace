@@ -237,7 +237,7 @@ function ContactForm({ formRef }) {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const data = Object.fromEntries(new FormData(e.currentTarget));
@@ -255,17 +255,33 @@ function ContactForm({ formRef }) {
     }
     setFieldErrors({});
     setError(null);
-
-    // Frontend-only pass, deliberately: no request is sent yet. A real
-    // POST to /api/contact (src/app/api/contact/route.js -- already built,
-    // tested, and left untouched here) is a separate follow-up task that
-    // will replace just the two lines below with the same async
-    // fetch/try-catch shape this file carried before -- on success call
-    // setStatus(STATUS.SUBMITTED), on failure call setStatus(STATUS.IDLE)
-    // plus setError(message). Nothing about validation, the fields, or the
-    // SUBMITTING/error UI needs to change when that lands.
     setStatus(STATUS.SUBMITTING);
-    setStatus(STATUS.SUBMITTED);
+
+    // Real POST to /api/contact (src/app/api/contact/route.js), re-wired
+    // after the twentieth session's deliberate frontend-only pass. Server
+    // re-validates independently -- this call can still come back with a
+    // 400/500 (e.g. SMTP unconfigured), which surfaces as the same inline
+    // `error` banner a client-side validation failure would, not a crash.
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const payload = await res.json().catch(() => null);
+
+      if (res.ok && payload?.ok) {
+        setStatus(STATUS.SUBMITTED);
+      } else {
+        setStatus(STATUS.IDLE);
+        setError(payload?.error || "Something went wrong. Please try again.");
+      }
+    } catch {
+      setStatus(STATUS.IDLE);
+      setError(
+        "Something went wrong sending your message. Please try again or reach out via Instagram."
+      );
+    }
   };
 
   if (status === STATUS.SUBMITTED) {
