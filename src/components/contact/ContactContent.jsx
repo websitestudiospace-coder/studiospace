@@ -447,7 +447,7 @@ function StudioInfo({ infoRef }) {
 // tinted/blended shade -- see the historical muddy-brown bug this
 // avoids), Careers copy/link/photo all clearly marked pending real
 // content from the client where it is.
-function InquiriesSplit({ splitRef }) {
+function InquiriesSplit({ splitRef, careersPhoto }) {
   return (
     <div
       ref={splitRef}
@@ -494,53 +494,62 @@ function InquiriesSplit({ splitRef }) {
         </div>
       </div>
 
-      <div className="px-8 py-12 md:px-12 md:py-16" style={{ backgroundColor: MAROON }}>
-        <h2
-          className={`${HEADING_CLASS} uppercase`}
-          style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.05 }}
-        >
-          Careers
-        </h2>
-
-        {/* TODO: client to provide real Careers copy -- this supporting
-            line is a placeholder, not real content. */}
-        <p
-          className="mt-4 max-w-sm text-sm md:text-base"
-          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.85 }}
-        >
-          [Careers copy pending from client]
-        </p>
-
-        {/* TODO: href="#" is a placeholder -- swap for the real
-            open-positions page (or a mailto:) once the client provides
-            one. Do not fabricate a URL in the meantime. */}
-        <a
-          href="#"
-          className="mt-6 inline-block border-b pb-0.5 text-sm md:text-base"
-          style={{ fontFamily: "var(--font-manrope)", color: CREAM, borderColor: CREAM }}
-        >
-          View open positions
-        </a>
-
-        {/* TODO: client to provide a real Careers photo -- placeholder
-            slot only, not a borrowed/unrelated image. */}
-        <div
-          className="mt-8 flex h-40 items-center justify-center rounded-[8px] border border-dashed md:h-48"
-          style={{ borderColor: "rgba(247, 239, 228, 0.35)" }}
-        >
-          <span
-            className="text-xs uppercase tracking-[0.15em]"
-            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.5 }}
+      <div className="flex flex-col" style={{ backgroundColor: MAROON }}>
+        <div className="px-8 pt-12 md:px-12 md:pt-16">
+          <h2
+            className={`${HEADING_CLASS} uppercase`}
+            style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.05 }}
           >
-            Photo pending
-          </span>
+            Careers
+          </h2>
+
+          {/* TODO: client to provide real Careers copy -- this supporting
+              line is a placeholder, not real content. */}
+          <p
+            className="mt-4 max-w-sm text-sm md:text-base"
+            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.85 }}
+          >
+            [Careers copy pending from client]
+          </p>
+
+          {/* TODO: href="#" is a placeholder -- swap for the real
+              open-positions page (or a mailto:) once the client provides
+              one. Do not fabricate a URL in the meantime. */}
+          <a
+            href="#"
+            className="mt-6 inline-block border-b pb-0.5 text-sm md:text-base"
+            style={{ fontFamily: "var(--font-manrope)", color: CREAM, borderColor: CREAM }}
+          >
+            View open positions
+          </a>
         </div>
+
+        {/* Full-bleed within this panel (flush left/right/bottom, no
+            padding) -- flex-1 lets it consume whatever height remains
+            once the grid stretches this column to match the cream
+            panel's height on desktop; a fixed height takes over on
+            mobile, where each panel is its own row with no extra space
+            to stretch into. TODO: placeholder photo -- swap for the
+            client's chosen Careers photo when provided; see the
+            CAREERS_PLACEHOLDER_PHOTO comment in contact/page.js for which
+            real gallery photo this is and why it was picked. */}
+        {careersPhoto?.src ? (
+          <div className="relative mt-8 h-56 w-full md:h-auto md:flex-1">
+            <CldImage
+              src={careersPhoto.src}
+              alt={careersPhoto.alt}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
 }
 
-export default function ContactContent({ heroPhoto }) {
+export default function ContactContent({ heroPhoto, careersPhoto }) {
   const heroRef = useRef(null);
   const formRef = useRef(null);
   const infoRef = useRef(null);
@@ -662,7 +671,7 @@ export default function ContactContent({ heroPhoto }) {
             <ContactForm formRef={formRef} />
             <StudioInfo infoRef={infoRef} />
           </div>
-          <InquiriesSplit splitRef={inquiriesRef} />
+          <InquiriesSplit splitRef={inquiriesRef} careersPhoto={careersPhoto} />
         </div>
       </section>
     </>

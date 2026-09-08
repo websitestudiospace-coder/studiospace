@@ -1,7 +1,7 @@
 import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import ContactContent from "@/components/contact/ContactContent";
-import { toCloudinaryUrl } from "@/lib/projects";
+import { toCloudinaryUrl, getProjectPhoto } from "@/lib/projects";
 
 // ContactContent is a "use client" component (GSAP/DOM refs) and
 // toCloudinaryUrl() reads scripts/cloudinary-url-map.json off disk via
@@ -15,6 +15,18 @@ import { toCloudinaryUrl } from "@/lib/projects";
 const CONTACT_HERO_PHOTO = {
   src: toCloudinaryUrl("/images/contact/8.webp"),
   alt: "A wood-paneled console styled with marble wall sconces, candlesticks, and a ceramic bowl",
+};
+
+// TODO: placeholder photo -- swap for the client's chosen Careers photo
+// when provided. This is a real, existing gallery photo (not a fabricated
+// asset), picked and viewed (downloaded + inspected, not guessed from its
+// filename) specifically because it wasn't already used anywhere else on
+// the site -- WhatWeBelieve's 6 belief photos each pull from a different
+// project, and this one (Shraddha's Thinkpad) isn't among them, so this
+// avoids the same image showing up twice with two different meanings.
+const CAREERS_PLACEHOLDER_PHOTO = {
+  src: getProjectPhoto("the-shraddhas-thinkpad", "_H4A3801.webp"),
+  alt: "A green-cabinetry kitchen framed through an arched doorway",
 };
 
 // TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
@@ -45,7 +57,7 @@ export default function ContactPage() {
   return (
     <>
       <Nav />
-      <ContactContent heroPhoto={CONTACT_HERO_PHOTO} />
+      <ContactContent heroPhoto={CONTACT_HERO_PHOTO} careersPhoto={CAREERS_PLACEHOLDER_PHOTO} />
       <Footer />
     </>
   );
