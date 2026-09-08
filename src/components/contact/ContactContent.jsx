@@ -47,36 +47,72 @@ const STUDIO_INFO = [
 const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
 
 // Client spec: every field on this form is compulsory, no exceptions --
-// there is no longer an "optional" concept here at all.
+// there is no longer an "optional" concept here at all. Client also asked
+// specifically for a "red asterisk" -- MAROON is the closest brand token to
+// that, so the asterisk (only) renders in solid maroon while the label text
+// itself stays the usual muted cream.
 function FieldLabel({ children }) {
   return (
     <span
       className="block text-xs uppercase tracking-[0.15em]"
       style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
     >
-      {children} *
+      {children} <span style={{ color: MAROON, opacity: 1 }}>*</span>
     </span>
+  );
+}
+
+// Inline, per-field validation message -- rendered instead of relying on
+// the browser's own native `required`/`type=email` popups, which don't
+// match this site's styling and (more importantly) fire before React's
+// onSubmit ever runs, so they'd pre-empt these custom messages entirely.
+// The form itself carries `noValidate` for exactly this reason; `required`
+// stays on each control anyway for its screen-reader semantics, paired
+// with `aria-invalid`/`aria-describedby` pointing at this element.
+function FieldError({ id, error }) {
+  if (!error) return null;
+  return (
+    <p
+      id={id}
+      role="alert"
+      className="mt-1.5 border-l-2 pl-2 text-xs"
+      style={{ borderColor: MAROON, color: CREAM, opacity: 0.85, fontFamily: "var(--font-manrope)" }}
+    >
+      {error}
+    </p>
   );
 }
 
 const fieldClass =
   "mt-2 w-full border-0 border-b bg-transparent pb-2 text-sm focus:outline-none";
+const fieldBorderDefault = "rgba(247, 239, 228, 0.3)";
 const fieldStyle = {
-  borderColor: "rgba(247, 239, 228, 0.3)",
+  borderColor: fieldBorderDefault,
   color: CREAM,
   fontFamily: "var(--font-manrope)",
 };
 
-function TextField({ label, ...inputProps }) {
+function TextField({ label, name, error, ...inputProps }) {
+  const errorId = `${name}-error`;
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
-      <input {...inputProps} required className={fieldClass} style={fieldStyle} />
+      <input
+        {...inputProps}
+        name={name}
+        required
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
+        className={fieldClass}
+        style={{ ...fieldStyle, borderColor: error ? MAROON : fieldBorderDefault }}
+      />
+      <FieldError id={errorId} error={error} />
     </label>
   );
 }
 
-function SelectField({ label, options, ...selectProps }) {
+function SelectField({ label, name, options, error, ...selectProps }) {
+  const errorId = `${name}-error`;
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
@@ -84,7 +120,15 @@ function SelectField({ label, options, ...selectProps }) {
           it, browsers skip the disabled placeholder option and auto-select
           the first real option instead, which silently satisfies `required`
           before the user has chosen anything. */}
-      <select {...selectProps} required className={fieldClass} style={fieldStyle}>
+      <select
+        {...selectProps}
+        name={name}
+        required
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
+        className={fieldClass}
+        style={{ ...fieldStyle, borderColor: error ? MAROON : fieldBorderDefault }}
+      >
         <option value="" disabled hidden>
           Select one
         </option>
@@ -94,21 +138,27 @@ function SelectField({ label, options, ...selectProps }) {
           </option>
         ))}
       </select>
+      <FieldError id={errorId} error={error} />
     </label>
   );
 }
 
-function TextareaField({ label, ...textareaProps }) {
+function TextareaField({ label, name, error, ...textareaProps }) {
+  const errorId = `${name}-error`;
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
       <textarea
         {...textareaProps}
+        name={name}
         required
         rows={4}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
         className={`${fieldClass} resize-none`}
-        style={fieldStyle}
+        style={{ ...fieldStyle, borderColor: error ? MAROON : fieldBorderDefault }}
       />
+      <FieldError id={errorId} error={error} />
     </label>
   );
 }
@@ -118,16 +168,72 @@ function TextareaField({ label, ...textareaProps }) {
 // what they already typed.
 const STATUS = { IDLE: "idle", SUBMITTING: "submitting", SUBMITTED: "submitted" };
 
+// Mirrors ContactForm's own `name` attributes/order and the server-side
+// list in src/app/api/contact/route.js -- every field is required, no
+// exceptions. Kept as its own list (rather than deriving from the JSX)
+// so validate() below can run before anything ever touches the network.
+const REQUIRED_FIELDS = [
+  { name: "name", label: "Name" },
+  { name: "email", label: "Email" },
+  { name: "phone", label: "Phone" },
+  { name: "location", label: "Location" },
+  { name: "projectBudget", label: "Project Budget" },
+  { name: "projectType", label: "Project Type" },
+  { name: "projectDetails", label: "Tell us about your project" },
+];
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validate(data) {
+  const errors = {};
+  for (const { name, label } of REQUIRED_FIELDS) {
+    if (!String(data[name] ?? "").trim()) {
+      errors[name] = `${label} is required.`;
+    }
+  }
+  if (!errors.email && !EMAIL_RE.test(data.email)) {
+    errors.email = "Enter a valid email address.";
+  }
+  return errors;
+}
+
 function ContactForm({ formRef }) {
   const [status, setStatus] = useState(STATUS.IDLE);
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  // Clears one field's error as soon as the visitor edits it, rather than
+  // leaving a stale "required" message sitting under a field they already
+  // fixed until the next full submit attempt re-validates everything.
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus(STATUS.SUBMITTING);
-    setError(null);
 
     const data = Object.fromEntries(new FormData(e.currentTarget));
+
+    const errors = validate(data);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError(null);
+      // Move focus to the first invalid field, in the form's own field
+      // order, so keyboard/screen-reader users land on the first problem
+      // instead of having to hunt for it.
+      const firstInvalid = REQUIRED_FIELDS.find(({ name }) => errors[name]);
+      e.currentTarget.elements[firstInvalid?.name]?.focus();
+      return;
+    }
+    setFieldErrors({});
+
+    setStatus(STATUS.SUBMITTING);
+    setError(null);
 
     let payload;
     try {
@@ -174,29 +280,60 @@ function ContactForm({ formRef }) {
   // is compulsory (see FieldLabel/TextField above) -- phone in particular
   // used to be marked optional here and no longer is.
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="w-full max-w-lg">
+    <form ref={formRef} onSubmit={handleSubmit} noValidate className="w-full max-w-lg">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <TextField label="Name" type="text" name="name" autoComplete="name" />
-        <TextField label="Email" type="email" name="email" autoComplete="email" />
+        <TextField
+          label="Name"
+          type="text"
+          name="name"
+          autoComplete="name"
+          error={fieldErrors.name}
+          onChange={() => clearFieldError("name")}
+        />
+        <TextField
+          label="Email"
+          type="email"
+          name="email"
+          autoComplete="email"
+          error={fieldErrors.email}
+          onChange={() => clearFieldError("email")}
+        />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-        <TextField label="Phone" type="tel" name="phone" autoComplete="tel" />
+        <TextField
+          label="Phone"
+          type="tel"
+          name="phone"
+          autoComplete="tel"
+          error={fieldErrors.phone}
+          onChange={() => clearFieldError("phone")}
+        />
         <TextField
           label="Location"
           type="text"
           name="location"
           autoComplete="address-level2"
+          error={fieldErrors.location}
+          onChange={() => clearFieldError("location")}
         />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-        <TextField label="Project Budget" type="text" name="projectBudget" />
+        <TextField
+          label="Project Budget"
+          type="text"
+          name="projectBudget"
+          error={fieldErrors.projectBudget}
+          onChange={() => clearFieldError("projectBudget")}
+        />
         <SelectField
           label="Project Type"
           name="projectType"
           options={PROJECT_TYPES}
           defaultValue=""
+          error={fieldErrors.projectType}
+          onChange={() => clearFieldError("projectType")}
         />
       </div>
 
@@ -204,6 +341,8 @@ function ContactForm({ formRef }) {
         <TextareaField
           label="Tell us about your project"
           name="projectDetails"
+          error={fieldErrors.projectDetails}
+          onChange={() => clearFieldError("projectDetails")}
         />
       </div>
 
