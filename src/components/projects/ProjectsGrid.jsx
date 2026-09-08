@@ -15,32 +15,6 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
-// Small "view project" glyph shown above the name in the hover overlay --
-// this site has no icon library/component (confirmed via grep: the only
-// existing inline SVGs are ProjectGallery's and ProjectDescriptionModal's
-// close icons), so this follows their exact convention instead of pulling
-// in a new dependency: plain line SVG, strokeWidth 1.5, round caps/joins,
-// stroke="currentColor", aria-hidden.
-function ViewProjectIcon() {
-  return (
-    <span
-      className="mb-2 flex h-8 w-8 items-center justify-center rounded-full border"
-      style={{ borderColor: "rgba(247, 239, 228, 0.55)", color: CREAM }}
-      aria-hidden="true"
-    >
-      <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-        <path
-          d="M3 11L11 3M11 3H5M11 3V9"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
-  );
-}
-
 export default function ProjectsGrid({ projects }) {
   const gridRef = useRef(null);
   const cardRefs = useRef([]);
@@ -173,16 +147,19 @@ export default function ProjectsGrid({ projects }) {
             )}
             {/* Clean by default -- no visible scrim/text until hover
                 (or focus/touch, see overlayVisibilityClass above). Height
-                is content-driven (icon + name + location + padding), not a
-                fixed fraction of the card, so it reads as a bottom "strip"
+                is content-driven (name + location + padding), not a fixed
+                fraction of the card, so it reads as a bottom "strip"
                 rather than covering half the photo. Ink-toned scrim (not
                 black) per the brand-token rule -- rgba(43,38,34,...) is
                 #2B2622 -- fading from solid-ish at the bottom edge to fully
                 transparent above, with a real backdrop-filter blur over
                 that same region for the frosted-glass look from the
-                client's reference. */}
+                client's reference. Text centered (both axes) per that same
+                reference -- no "view project" icon anymore (client asked
+                for it removed); padding is symmetric top/bottom now that
+                there's no icon to reserve extra headroom for. */}
             <div
-              className={`absolute inset-x-0 bottom-0 flex flex-col items-start justify-end px-5 pb-5 pt-10 md:px-6 md:pb-6 ${overlayVisibilityClass}`}
+              className={`absolute inset-x-0 bottom-0 flex flex-col items-center justify-center px-5 py-5 text-center md:px-6 md:py-6 ${overlayVisibilityClass}`}
               style={{
                 background:
                   "linear-gradient(to top, rgba(43,38,34,0.85) 0%, rgba(43,38,34,0.55) 55%, rgba(43,38,34,0) 100%)",
@@ -190,7 +167,6 @@ export default function ProjectsGrid({ projects }) {
                 WebkitBackdropFilter: "blur(14px)",
               }}
             >
-              <ViewProjectIcon />
               <p
                 style={{
                   fontFamily: "var(--font-manrope)",
