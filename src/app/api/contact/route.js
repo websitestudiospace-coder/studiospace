@@ -123,7 +123,14 @@ export async function POST(request) {
       html: htmlBody,
     });
   } catch (err) {
+    // A failed send would otherwise lose the enquiry entirely -- the only
+    // record was the technical error, not what the visitor actually wrote.
+    // Logging the submission itself alongside the error means whoever
+    // checks server logs can still manually follow up on a lost lead,
+    // without standing up a full retry/queue system for a failure mode
+    // this rare.
     console.error("[/api/contact] sendMail failed:", err);
+    console.error("[/api/contact] lost enquiry, recover manually:", JSON.stringify(data));
     return NextResponse.json(
       {
         ok: false,
