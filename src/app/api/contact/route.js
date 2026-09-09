@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 // Must match ContactForm's `name` attributes and field order in
 // ContactContent.jsx exactly -- this is the server-side mirror of that
 // form's required-field list, since a direct POST can skip the browser's
-// own `required` validation entirely.
+// own `required` validation entirely. `maxLength` caps abuse (a scripted
+// submission padding a field with megabytes of text) -- generous enough
+// that no real visitor could ever hit it.
 const FIELDS = [
-  { key: "name", label: "Name" },
-  { key: "email", label: "Email" },
-  { key: "phone", label: "Phone" },
-  { key: "location", label: "Location" },
-  { key: "projectBudget", label: "Project Budget" },
-  { key: "projectType", label: "Project Type" },
-  { key: "projectDetails", label: "Tell us about your project" },
+  { key: "name", label: "Name", maxLength: 200 },
+  { key: "email", label: "Email", maxLength: 200 },
+  { key: "phone", label: "Phone", maxLength: 50 },
+  { key: "location", label: "Location", maxLength: 200 },
+  { key: "projectBudget", label: "Project Budget", maxLength: 100 },
+  { key: "projectType", label: "Project Type", maxLength: 100 },
+  { key: "projectDetails", label: "Tell us about your project", maxLength: 5000 },
 ];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -27,6 +30,15 @@ function escapeHtml(value) {
 }
 
 export async function POST(request) {
+  const ip = getClientIp(request);
+  const { limited, retryAfterSeconds } = checkRateLimit(ip);
+  if (limited) {
+    return NextResponse.json(
+      { ok: false, error: "Too many submissions. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+    );
+  }
+
   let body;
   try {
     body = await request.json();
@@ -40,6 +52,16 @@ export async function POST(request) {
   if (missing.length > 0) {
     return NextResponse.json(
       { ok: false, error: `Please fill in: ${missing.join(", ")}.` },
+      { status: 400 }
+    );
+  }
+
+  const tooLong = FIELDS.filter(
+    ({ key, maxLength }) => String(body[key]).trim().length > maxLength
+  ).map(({ label }) => label);
+  if (tooLong.length > 0) {
+    return NextResponse.json(
+      { ok: false, error: `Please shorten: ${tooLong.join(", ")}.` },
       { status: 400 }
     );
   }
