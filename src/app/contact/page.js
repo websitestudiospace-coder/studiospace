@@ -1,20 +1,28 @@
 import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import ContactContent from "@/components/contact/ContactContent";
-import { toCloudinaryUrl, getProjectPhoto } from "@/lib/projects";
+import { getProjectPhoto } from "@/lib/projects";
 
-// ContactContent is a "use client" component (GSAP/DOM refs) and
-// toCloudinaryUrl() reads scripts/cloudinary-url-map.json off disk via
-// Node's fs -- server-only, can't run inside a client component. Resolved
-// here instead (this page is a server component) and passed down as a
-// plain prop URL, the same pattern about/page.js already uses for
-// WhatWeBelieve's beliefImages. Not a project photo (no slug), so this
-// can't go through getProjectPhoto() -- it's a flat toCloudinaryUrl() call
-// on the same "public/images/contact/8.webp" key
-// scripts/upload-to-cloudinary.js recorded when this photo was uploaded.
+// Was "/images/contact/8.webp" via a flat toCloudinaryUrl() call (that
+// source file/folder no longer exists under public/images/contact/ at
+// all -- confirmed on disk). The Cloudinary-hosted copy itself still
+// resolved fine (200, real bytes, not a broken/stale mapping), but ~35-40%
+// of the frame was a large wall-mounted TV with its screen off -- a real
+// black rectangle in the actual photo, not a rendering bug -- which is
+// exactly what read as "broken" once that portrait 1601x2400 shot got
+// force-cropped into this wide full-bleed banner via object-cover. Swapped
+// for a real, existing gallery photo instead (viewed full-size before
+// picking it, not chosen from its filename) -- landscape-oriented (so a
+// wide object-cover crop doesn't fight its own aspect ratio the way the
+// old portrait shot did), warm/editorial, no blown-out highlights in the
+// lower third where the white "Let's Talk" heading + dark gradient sit,
+// and not already used elsewhere on the site (checked against about/
+// page.js's BELIEF_IMAGES and this file's own CAREERS_PLACEHOLDER_PHOTO
+// below -- same "no duplicate imagery with a different meaning"
+// reasoning that comment already documents).
 const CONTACT_HERO_PHOTO = {
-  src: toCloudinaryUrl("/images/contact/8.webp"),
-  alt: "A wood-paneled console styled with marble wall sconces, candlesticks, and a ceramic bowl",
+  src: getProjectPhoto("the-modern-transitional-home", "19.webp"),
+  alt: "A warm, arched bedroom nook with a cane-panelled wardrobe, terracotta bedding, and pleated bedside lamps, opening onto a neutral linen sofa",
 };
 
 // TODO: placeholder photo -- swap for the client's chosen Careers photo

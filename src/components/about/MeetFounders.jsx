@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -14,66 +14,6 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 const MAROON = "#6E1F24";
-
-// The wordmark's low-opacity muted tone, shared by both the SVG text's
-// stroke and its fill for the settled end state. Bumped up from the
-// original 0.12 -- at that value the fully-drawn wordmark read as washed
-// out rather than like a deliberate background element; 0.18 keeps it
-// subordinate to foreground content while giving it real presence.
-const WORDMARK_OPACITY = 0.18;
-
-// A warm-maroon-tinted stroke color was tried for the draw-in-progress
-// phase (blending INK toward MAROON, reverting to plain INK once filled)
-// but was dropped after a screenshot comparison: at WORDMARK_OPACITY's low
-// stroke-opacity against the cream background, the tint's rendered color
-// delta versus plain INK was ~2-6 out of 255 -- imperceptible in practice,
-// not worth the added complexity.
-
-// The stroke's opacity WHILE it's actively drawing -- deliberately much
-// darker than WORDMARK_OPACITY. That low resting value made the outline
-// nearly invisible during the draw itself (the whole point of a hand-drawn
-// reveal), which combined with an ambient (non-pinned) scroll trigger made
-// it easy to scroll straight past without ever registering it was
-// animating. Now pinned (see WORDMARK_PIN_VH below) so the draw is always
-// seen, AND darkened so it reads clearly while it happens; it settles back
-// down to WORDMARK_OPACITY as the fill-in completes (see the timeline).
-const WORDMARK_ACTIVE_DRAW_OPACITY = 0.4;
-
-// Height of the sticky frame the wordmark is centered in while pinned.
-// Originally h-screen (100vh, matching every other pinned section's sticky
-// box) but items-center inside a full 100vh frame left roughly 292px of
-// plain cream empty above AND below the wordmark at a typical 1440x900
-// viewport -- the wordmark itself is comparatively short (~0.9em), so
-// centering it in a full screen height read as excessive empty space
-// rather than a deliberate frame. Unlike other pinned sections (AboutHero,
-// Quote, HeroQuoteTransition), this one has no full-bleed media that needs
-// to cover the entire viewport while pinned -- it's flat CREAM either way
-// -- so shrinking the sticky box itself is safe: the reduced area around it
-// is still the same CREAM background from the outer (non-sticky) pin
-// wrapper, with no color seam or visible gap. 68vh roughly halves that
-// empty margin (down to ~150px/side at the same viewport) without
-// shrinking the wordmark itself.
-const WORDMARK_STICKY_VH = 68;
-
-// Extra scroll distance reserved for the draw's scrub range (on top of
-// WORDMARK_STICKY_VH below) -- same 60vh runway as before this pass, so the
-// draw itself still plays out over the same amount of scroll and takes the
-// same time; only the surrounding empty space shrank, not the animation.
-const WORDMARK_RUNWAY_VH = 60;
-
-// Total pinned scroll distance -- WORDMARK_STICKY_VH (how much of that is
-// "spoken for" by the sticky frame itself, filling from the pin's own top)
-// + WORDMARK_RUNWAY_VH (the extra scrub distance while held pinned). MUST
-// stay derived from WORDMARK_STICKY_VH like this, not a separate literal --
-// a sticky element only stays stuck for (this total - the sticky box's own
-// height) of scroll before releasing, so if this were sized against a
-// bigger assumed sticky height (e.g. the old 100vh/h-screen) than
-// WORDMARK_STICKY_VH actually is now, the pin would stay stuck for LONGER
-// than the runway needs, holding the fully-drawn wordmark still (with a
-// growing dead gap beneath the now-smaller sticky box) for extra scroll
-// that nothing was ever animating across -- which is exactly the "too much
-// empty space below" bug this pass fixed.
-const WORDMARK_PIN_VH = WORDMARK_STICKY_VH + WORDMARK_RUNWAY_VH;
 
 // Sticky offset for the right-hand content column below (heading/tagline/
 // founder blocks) -- Nav's own bar is ~104px tall at the md breakpoint
@@ -130,9 +70,10 @@ function FounderColumn({ founder, colRef, reduceMotion }) {
 
 export default function MeetFounders() {
   const sectionRef = useRef(null);
-  const wordmarkPinRef = useRef(null);
-  const wordmarkWrapRef = useRef(null);
-  const wordmarkTextRef = useRef(null);
+  const peopleHeadingWrapRef = useRef(null);
+  const peopleHeadingTextRef = useRef(null);
+  const peopleHeadingLeftLineRef = useRef(null);
+  const peopleHeadingRightLineRef = useRef(null);
   const contentRef = useRef(null);
   const photoRef = useRef(null);
   const headingRef = useRef(null);
@@ -140,51 +81,60 @@ export default function MeetFounders() {
   const noteRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
-  // Real, JS-measured pixel dimensions for the wordmark's SVG, rather than
-  // CSS `width:100%`/`height:1em` with no viewBox -- that approach relies on
-  // the SVG correctly inheriting the wrapper's clamp()-based font-size
-  // across the HTML/SVG boundary via CSS em resolution, which is a known
-  // cross-browser-fragile pattern (an SVG with no viewBox and no explicit
-  // width/height attribute falls back to a default 300x150 intrinsic box if
-  // that inheritance doesn't resolve the way a given engine/zoom level
-  // expects, silently rendering nothing visible). Measuring the wrapper's
-  // own real rendered box via ResizeObserver and feeding those exact
-  // numbers into both the SVG's width/height AND a matching viewBox removes
-  // that ambiguity entirely -- the SVG's coordinate system is always
-  // provably 1:1 with real, already-resolved pixels.
-  const [wordmarkBox, setWordmarkBox] = useState(null);
+  // "The People Behind SP ACE" -- a small transitional heading between
+  // AboutHero above and the founders content below, replacing the old
+  // hand-drawn "FOUNDERS" wordmark. Scroll-scrubbed (not one-shot): the
+  // client asked for the zoom to happen gradually as they scroll, not play
+  // out on a fixed timer the instant it enters view -- so this timeline is
+  // driven directly by scroll position (scrub: true) across the trigger's
+  // start/end window instead of toggleActions. The heading zooms in first,
+  // then the two flanking lines scale in from the text outward
+  // (transform-origin set toward the text on each side, see the JSX below)
+  // once the zoom has mostly landed.
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
+        gsap.set(peopleHeadingTextRef.current, { opacity: 0, scale: 0.65 });
+        gsap.set([peopleHeadingLeftLineRef.current, peopleHeadingRightLineRef.current], {
+          scaleX: 0,
+        });
 
-  useEffect(() => {
-    const el = wordmarkWrapRef.current;
-    if (!el) return undefined;
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: peopleHeadingWrapRef.current,
+            start: "top 90%",
+            end: "top 30%",
+            scrub: 0.6,
+          },
+        });
 
-    const measure = () => {
-      const rect = el.getBoundingClientRect();
-      const fontSize = parseFloat(getComputedStyle(el).fontSize) || 0;
-      if (rect.width > 0 && rect.height > 0) {
-        setWordmarkBox({ width: rect.width, height: rect.height, fontSize });
-      }
-    };
+        tl.to(peopleHeadingTextRef.current, { opacity: 1, scale: 1, duration: 0.8, ease: "none" }, 0);
+        tl.to(
+          [peopleHeadingLeftLineRef.current, peopleHeadingRightLineRef.current],
+          { scaleX: 1, duration: 0.5, ease: "none" },
+          0.45
+        );
+      }, peopleHeadingWrapRef);
 
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+      return () => ctx.revert();
+    },
+    [],
+    !reduceMotion
+  );
 
   // One-shot reveal (not scroll-scrubbed) -- same Phase 3 pattern as every
   // other section on this page: the photo, then the heading block, then the
   // two founder columns, all staggered on ONE timeline against ONE
-  // ScrollTrigger (never a second trigger layered on top). The wordmark is
-  // deliberately NOT in this timeline -- its own pinned stroke-draw
-  // sequence (below) is a fully separate, independent trigger, so the two
-  // never fight over the same element. Triggers against contentRef (the
+  // ScrollTrigger (never a second trigger layered on top). The "People
+  // Behind SP_ACE" heading above is deliberately NOT in this timeline --
+  // its own reveal (above) is a fully separate, independent trigger, so the
+  // two never fight over the same element. Triggers against contentRef (the
   // photo/heading/founders grid), NOT sectionRef -- sectionRef now also
-  // contains the wordmark's ~160vh pin wrapper ahead of this content, so
-  // "top 80%" measured against sectionRef's own top would fire (and fully
-  // resolve, since this isn't scrubbed) long before the user has scrolled
-  // anywhere near this content, defeating the point of a scroll-triggered
-  // reveal. contentRef sits immediately above this grid, so "top 80%"
+  // contains that heading block ahead of this content, so "top 80%"
+  // measured against sectionRef's own top would fire (and fully resolve,
+  // since this isn't scrubbed) long before the user has scrolled anywhere
+  // near this content, defeating the point of a scroll-triggered reveal.
+  // contentRef sits immediately above this grid, so "top 80%"
   // stays meaningful regardless of how tall the pin above it is. Still
   // waits for "preloader:complete" since that "top 80%" position depends on
   // AboutHero above it already being in its final, settled layout --
@@ -233,192 +183,53 @@ export default function MeetFounders() {
     !reduceMotion
   );
 
-  // The wordmark's stroke-draw now runs while PINNED (position: sticky,
-  // matching WORDMARK_PIN_VH's tall wrapper below), not during ambient
-  // scroll-through -- an earlier version scrubbed the draw against ordinary
-  // page scroll, which meant a fast scroll could carry the user straight
-  // past the wordmark before it ever finished (or even visibly started)
-  // drawing, with no way to tell it was working at all. Pinning guarantees
-  // the full draw is always seen: the section can't scroll past until the
-  // scrub distance is spent. ONE ScrollTrigger drives BOTH the pin (via the
-  // sticky wrapper + matching wordmarkPinRef height in the JSX below -- see
-  // brain.md's "golden rule" section on why this project uses sticky+scrub
-  // instead of ScrollTrigger's own `pin: true`) AND the draw timeline --
-  // never a separate pin trigger plus a separate draw trigger. wordmarkRef
-  // is a plain, direct target of this trigger -- no ancestor of it is
-  // independently transformed by anything else in this component (the
-  // content timeline above only ever touches photoRef/headingRef/
-  // founderRefs, and contentRef sits as an untransformed sibling below this
-  // pin, never nested inside it), matching the golden rule every other
-  // pinned/scrubbed section on this site follows. Scroll-scrubbed (scrub:
-  // true, ease: "none") like every other pinned sequence here, so reverse
-  // scroll correctly re-pins and undraws with no extra logic needed for
-  // that (scrub tweens are just a function of scroll position).
-  usePreloaderGate(
-    () => {
-      const textEl = wordmarkTextRef.current;
-      // The <text> element only exists once wordmarkBox has been measured
-      // (see the ResizeObserver effect above) -- this dependency array
-      // includes wordmarkBox specifically so that if this effect's first
-      // run ever lands before that measurement resolves (e.g. preloader
-      // already done at mount, racing the ResizeObserver's first callback),
-      // it re-runs again once wordmarkBox actually becomes non-null instead
-      // of silently no-op'ing forever with no retry.
-      if (!textEl) return undefined;
-
-      const ctx = gsap.context(() => {
-        // <text> has no getTotalLength() (that's path-only) -- there's no
-        // exact way to measure a glyph outline's true perimeter for
-        // stroke-dasharray. getComputedTextLength() gives the rendered
-        // ADVANCE width instead (reflecting whatever the clamp()-based
-        // font-size actually resolved to); multiplying it down (not up --
-        // measured directly against this render: an inflated estimate left
-        // most of the scroll range "dead," since text-outline dash budgets
-        // are consumed almost entirely within roughly the last third of
-        // the offset range) gives a dash length that empirically completes
-        // right as the outline visually finishes, so the scrub range isn't
-        // mostly spent on a stroke that already looks fully drawn.
-        const advanceWidth = textEl.getComputedTextLength();
-        const estimatedLength = Math.max(advanceWidth * 0.65, 100);
-
-        // Starts at WORDMARK_ACTIVE_DRAW_OPACITY (dark, clearly legible),
-        // not WORDMARK_OPACITY -- the whole point of this pass is making the
-        // in-progress draw visible; it settles down to the subtle resting
-        // tone in Phase 2 below, once there's something fully drawn to
-        // settle INTO.
-        gsap.set(textEl, {
-          strokeDasharray: estimatedLength,
-          strokeDashoffset: estimatedLength,
-          strokeOpacity: WORDMARK_ACTIVE_DRAW_OPACITY,
-          fillOpacity: 0,
-        });
-
-        // Anchors the timeline to 1 "unit" so every position argument below
-        // reads as a literal fraction of the pinned scroll range -- same
-        // trick AboutHero's own pinned timeline uses, including for the
-        // trailing hold, where nothing animates but the settled state still
-        // needs scroll distance to sit still in before the pin releases.
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: wordmarkPinRef.current,
-            start: "top top",
-            end: "bottom bottom",
-            scrub: true,
-          },
-        });
-        tl.to({}, { duration: 1 }, 0);
-
-        // Phase 1 (0%-55%): the hand-drawn outline traces in, staying at
-        // the dark active-draw opacity the whole time it's drawing.
-        tl.to(textEl, { strokeDashoffset: 0, ease: "none", duration: 0.55 }, 0);
-        // Phase 2 (45%-80%): the letterforms fill in while the stroke
-        // settles from the dark active-draw tone down to the subtle
-        // WORDMARK_OPACITY resting tone, both tied to the same window so
-        // the handoff reads as one continuous "finishing" motion. Starts
-        // slightly before Phase 1 ends so the two read as one continuous
-        // gesture rather than two disconnected beats.
-        tl.to(
-          textEl,
-          { fillOpacity: WORDMARK_OPACITY, strokeOpacity: WORDMARK_OPACITY, ease: "none", duration: 0.35 },
-          0.45
-        );
-
-        // Hold (80%-100%): the finished wordmark stays visible for a real
-        // stretch of scroll before the pin releases -- without this, the
-        // settle tween's end would land exactly at the pin's release point,
-        // so the completed wordmark would only ever be on screen for a
-        // single frame before scrolling away, undermining the entire point
-        // of pinning (same reasoning as Quote's and AboutHero's own
-        // trailing holds).
-      }, wordmarkPinRef);
-
-      return () => ctx.revert();
-    },
-    [!!wordmarkBox],
-    !reduceMotion
-  );
-
-  // Extracted so the exact same wordmark markup renders in both branches
-  // below -- only its wrapper (plain vs. pinned+sticky) differs between
-  // reduceMotion and the animated path.
-  const wordmarkWrapper = (
-    <div
-      ref={wordmarkWrapRef}
-      className={`relative w-full overflow-hidden${reduceMotion ? " mt-16 md:mt-24" : ""}`}
-      style={{ fontSize: "clamp(110px, 24vw, 340px)", height: "0.9em" }}
-    >
-      {wordmarkBox && (
-        <svg
-          width={wordmarkBox.width}
-          height={wordmarkBox.height}
-          viewBox={`0 0 ${wordmarkBox.width} ${wordmarkBox.height}`}
-          aria-hidden="true"
-          style={{ display: "block", overflow: "visible" }}
-        >
-          <text
-            ref={wordmarkTextRef}
-            x={wordmarkBox.width / 2}
-            y={wordmarkBox.height / 2}
-            textAnchor="middle"
-            dominantBaseline="central"
-            style={{
-              fontFamily: "var(--font-agatho)",
-              fontSize: wordmarkBox.fontSize,
-              textTransform: "uppercase",
-            }}
-            fill={INK}
-            fillOpacity={reduceMotion ? WORDMARK_OPACITY : 0}
-            stroke={INK}
-            strokeOpacity={reduceMotion ? WORDMARK_OPACITY : 0}
-            strokeWidth={2.25}
-          >
-            Founders
-          </text>
-        </svg>
-      )}
-    </div>
-  );
-
   return (
     <section ref={sectionRef} className="relative w-full" style={{ backgroundColor: CREAM }}>
       <h1 className="sr-only">Meet the Founders of Studio SP_ACE</h1>
 
-      {/* Oversized wordmark, bleeding off both edges (clamp()-driven
-          font-size on wordmarkWrapRef, THIS wrapper's own overflow-hidden
-          cropping it wherever it runs past the edges, deliberately scoped
-          here rather than the whole section so nothing below it -- the
-          founder blocks, whose full text needs to be free to grow to any
-          height -- is ever at risk of being clipped by an ancestor's
-          overflow rule). The SVG's own width/height/viewBox are real,
-          JS-measured pixel numbers (see the wordmarkBox state above) rather
-          than CSS `100%`/`1em` with no viewBox -- deliberately avoids
-          relying on the SVG inheriting the wrapper's font-size across the
-          HTML/SVG boundary, which is where cross-browser sizing
-          inconsistencies for unsized SVGs tend to live. Renders nothing
-          until the first measurement resolves (one frame, invisible either
-          way since this is a decorative, aria-hidden background element)
-          rather than risk painting with a stale/zero box.
-
-          reduceMotion: rendered plain, in normal flow, already at its final
-          filled state (no pin, no draw -- see wordmarkWrapper's fillOpacity/
-          strokeOpacity above). Otherwise: wrapped in a ~160vh pin (
-          wordmarkPinRef) whose inner sticky box holds it centered on screen
-          for the whole scrub range, so the draw effect built by the
-          usePreloaderGate hook above is always fully seen regardless of
-          scroll speed -- see that hook for the pin+draw ScrollTrigger
-          itself. */}
-      {reduceMotion ? (
-        wordmarkWrapper
-      ) : (
-        <div ref={wordmarkPinRef} className="relative w-full" style={{ height: `${WORDMARK_PIN_VH}vh` }}>
-          <div
-            className="sticky top-0 flex w-full items-center overflow-hidden"
-            style={{ height: `${WORDMARK_STICKY_VH}vh`, backgroundColor: CREAM }}
-          >
-            {wordmarkWrapper}
-          </div>
-        </div>
-      )}
+      {/* "The People Behind SP_ACE" -- small transitional heading, text
+          first then a thin line grows in from each side (see the hook
+          above). reduceMotion: rendered already in its settled state (full
+          opacity, full-width lines), no animation. */}
+      <div
+        ref={peopleHeadingWrapRef}
+        className="mt-16 flex w-full items-center justify-center gap-6 px-6 md:mt-24"
+      >
+        <div
+          ref={peopleHeadingLeftLineRef}
+          aria-hidden="true"
+          className="hidden h-px flex-1 sm:block"
+          style={{
+            backgroundColor: INK,
+            opacity: 0.3,
+            transformOrigin: "right",
+            ...(reduceMotion ? undefined : { transform: "scaleX(0)" }),
+          }}
+        />
+        <h2
+          ref={peopleHeadingTextRef}
+          className="whitespace-nowrap text-4xl md:text-6xl lg:text-7xl"
+          style={{
+            fontFamily: "var(--font-agatho)",
+            color: INK,
+            transformOrigin: "center",
+            ...(reduceMotion ? undefined : { opacity: 0 }),
+          }}
+        >
+          The People Behind SP ACE
+        </h2>
+        <div
+          ref={peopleHeadingRightLineRef}
+          aria-hidden="true"
+          className="hidden h-px flex-1 sm:block"
+          style={{
+            backgroundColor: INK,
+            opacity: 0.3,
+            transformOrigin: "left",
+            ...(reduceMotion ? undefined : { transform: "scaleX(0)" }),
+          }}
+        />
+      </div>
 
       {/* Photo (left, bleeds to the true left edge, ~40% of the row) +
           right column (~60%, normal page padding) carrying the heading,

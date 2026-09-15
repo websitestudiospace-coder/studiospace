@@ -16,6 +16,14 @@ const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 const MAROON = "#6E1F24";
 
+// Client-provided exact shade for the Careers panel below (2026-09-14) --
+// deliberately its own constant rather than reusing MAROON above, since the
+// client's ask was scoped to just that one panel replacing its photo, not a
+// site-wide brand-maroon change (which would also shift the form's borders/
+// asterisk/submit button on this same page -- see every other MAROON usage
+// below).
+const CAREERS_MAROON = "rgb(73, 13, 15)";
+
 // Matches the standardized section-heading scale from the Phase 3 pass
 // (About/Projects/Press all share this).
 const HEADING_CLASS = "text-[32px] md:text-[48px]";
@@ -463,7 +471,7 @@ function StudioInfo({ infoRef }) {
 // tinted/blended shade -- see the historical muddy-brown bug this
 // avoids), Careers copy/link/photo all clearly marked pending real
 // content from the client where it is.
-function InquiriesSplit({ splitRef, careersPhoto }) {
+function InquiriesSplit({ splitRef }) {
   return (
     <div
       ref={splitRef}
@@ -516,8 +524,8 @@ function InquiriesSplit({ splitRef, careersPhoto }) {
         </div>
       </div>
 
-      <div className="flex flex-col" style={{ backgroundColor: MAROON }}>
-        <div className="px-8 pt-12 text-center md:px-12 md:pt-16">
+      <div className="flex flex-col" style={{ backgroundColor: CAREERS_MAROON }}>
+        <div className="flex flex-1 flex-col px-8 py-12 text-center md:px-12 md:py-16">
           <h2
             className={`${HEADING_CLASS} uppercase`}
             style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.05 }}
@@ -549,27 +557,6 @@ function InquiriesSplit({ splitRef, careersPhoto }) {
             View open positions
           </a>
         </div>
-
-        {/* Full-bleed within this panel (flush left/right/bottom, no
-            padding) -- flex-1 lets it consume whatever height remains
-            once the grid stretches this column to match the cream
-            panel's height on desktop; a fixed height takes over on
-            mobile, where each panel is its own row with no extra space
-            to stretch into. TODO: placeholder photo -- swap for the
-            client's chosen Careers photo when provided; see the
-            CAREERS_PLACEHOLDER_PHOTO comment in contact/page.js for which
-            real gallery photo this is and why it was picked. */}
-        {careersPhoto?.src ? (
-          <div className="relative mt-8 h-56 w-full md:h-auto md:flex-1">
-            <CldImage
-              src={careersPhoto.src}
-              alt={careersPhoto.alt}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
-        ) : null}
       </div>
     </div>
   );

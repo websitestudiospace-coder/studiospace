@@ -13,39 +13,44 @@ import { getProjectPhoto } from "@/lib/projects";
 // a server component) and passed down as plain prop URLs, same pattern
 // src/app/projects/[slug]/page.js already uses for ProjectDetail.
 //
-// 6 beliefs now (the real "SP_ACE Way"), reusing the original 4 photos
-// (reassigned to whichever new belief they pair with best) plus 2 newly
-// picked photos -- viewed via the media-source originals before picking,
-// not guessed from filenames -- for "A Little Unexpected" (the neo-classical
-// bedroom's blush velvet bed and patterned throw against traditional wood
-// paneling -- literally an unexpected colour/detail worked into a more
-// traditional room) and "Making Ideas Work" (the transitional home's
-// arched wood-and-glass door plus lattice screen and built-in cabinetry --
-// custom joinery standing in for the "figuring it out on site" idea).
+// Client-requested photo swap (2026-09-15) -- all 6 replaced with a new,
+// specific set of project photos, same order as given. Each was checked
+// against scripts/cloudinary-url-map.json first: every one of the 6
+// already had a real getProjectPhoto()-resolvable entry (confirmed by
+// matching Cloudinary version ids), including the two the client's own
+// URLs looked hardest to resolve (the-modern-classical-home/8 and
+// the-modern-neo-classical-home/IMG_1391) -- those two were just missing
+// their ".webp" extension and carrying inline transform params
+// (c_limit,w_1920/f_auto/q_auto) plus a Cloudinary Media Library UI
+// tracking param (?_a=BAVT+OE80) copy-pasted from the console, not a sign
+// they were unmapped. So every entry below goes through getProjectPhoto()
+// like the rest of this array, with no plain-string fallback needed. Each
+// photo was actually opened/viewed (not guessed from its filename) before
+// writing its alt text below.
 const BELIEF_IMAGES = [
   {
     src: getProjectPhoto("the-neo-colonial-home", "Photos/3.webp"),
-    alt: "A warm, layered living room styled for everyday living",
+    alt: "A cream sofa with a dark brown velvet cushion beside a wood pedestal coffee table, striped rug, and mercury-glass pendant lights",
   },
   {
-    src: getProjectPhoto("the-modern-eclectic-home", "3H4A2309.webp"),
-    alt: "Ornate hardware detail on a vintage-styled dresser",
+    src: getProjectPhoto("the-shraddhas-thinkpad", "_H4A3764.webp"),
+    alt: "A view through an arched hallway with a patterned bench and wall shelves, opening onto a dining area with a wrought-iron chandelier and a framed tapestry",
   },
   {
-    src: getProjectPhoto("the-modern-classical-home", "3.webp"),
-    alt: "A clean, balanced living room composition",
+    src: getProjectPhoto("the-modern-classical-home", "8.webp"),
+    alt: "A sage-green built-in shelving unit displaying curated curios and a model ship, behind a terracotta sofa and dark wood console table",
   },
   {
-    src: getProjectPhoto("the-modern-neo-classical-home", "IMG_1380.webp"),
-    alt: "A blush velvet bed and patterned throw against traditional wood paneling",
+    src: getProjectPhoto("the-modern-transitional-home", "9.webp"),
+    alt: "A round dining table framed by arched wood-and-glass doors, with a built-in blue cabinet and living room beyond",
   },
   {
-    src: getProjectPhoto("the-modern-transitional-home", "6.webp"),
-    alt: "A custom arched wood-and-glass door and lattice screen",
+    src: getProjectPhoto("the-modern-organic-home", "4.webp"),
+    alt: "A living room with a rust velvet curved sofa and a round marble coffee table on sculptural wood legs, beneath boucle pendant lights",
   },
   {
-    src: getProjectPhoto("the-modern-organic-home", "3.webp"),
-    alt: "Textural materials and natural finishes in a Studio SP_ACE living space",
+    src: getProjectPhoto("the-modern-neo-classical-home", "IMG_1391.webp"),
+    alt: "A blush channel-tufted bed against wood paneling, with a cream boucle armchair and striped rug in the foreground",
   },
 ];
 

@@ -62,7 +62,8 @@ export default function MediaPage() {
       {/* No `lightHero` -- MediaHero is now a full-bleed photo hero (like
           Home/Projects/Contact), not the plain-CREAM version that used to
           need the solid-from-y=0 nav treatment. Default transparent-then-
-          solid Nav behavior applies, same as those other photo-hero pages. */}
+          solid Nav behavior applies, same as those other photo-hero pages
+          -- logo always visible immediately, same as every other page. */}
       <Nav />
       <MediaHero heroPhoto={MEDIA_HERO_PHOTO} />
       <MediaGrid />
