@@ -5,7 +5,6 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
-import { PRESS_ITEMS } from "@/data/press";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -20,9 +19,11 @@ const CARD_BG = "rgba(43,38,34,0.04)";
 // used to request that outlet's real favicon via the same Google
 // favicon-service approach home/Press.jsx's OutletAvatar already uses.
 // Duplicated locally rather than extracted to a shared component -- both
-// copies are a handful of lines each and PRESS_ITEMS (the actual content,
-// the thing genuinely worth deduplicating so the two pages can't drift out
-// of sync) already lives in one place (@/data/press).
+// copies are a handful of lines each and the actual content (static
+// PRESS_ITEMS + any Sanity-added mentions, merged by @/lib/press's
+// getAllPressItems()) is what's genuinely worth keeping in one place, not
+// this rendering helper -- this component just renders whatever `items`
+// its caller (src/app/media/page.js) passes down as a prop.
 function getDomain(pageUrl) {
   try {
     return new URL(pageUrl).hostname.replace(/^www\./, "");
@@ -70,7 +71,7 @@ function OutletAvatar({ publication, url }) {
 // (bordered ink-tinted panel, avatar + name + date, headline) borrowed
 // from home/Press.jsx's carousel cards -- the one place on this site that
 // already solved "how does a press mention look as a card."
-export default function MediaGrid() {
+export default function MediaGrid({ items }) {
   const gridRef = useRef(null);
   const cardRefs = useRef([]);
   const reduceMotion = useReducedMotion();
@@ -108,7 +109,7 @@ export default function MediaGrid() {
       style={{ backgroundColor: CREAM }}
     >
       <div className="mx-auto grid w-full max-w-[1100px] grid-cols-1 gap-8 md:grid-cols-3 md:gap-8">
-        {PRESS_ITEMS.map((item, i) => (
+        {items.map((item, i) => (
           <a
             key={item.publication + item.date + item.headline}
             href={item.url}

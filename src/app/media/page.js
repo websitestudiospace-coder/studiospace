@@ -3,6 +3,7 @@ import Footer from "@/components/home/Footer";
 import MediaHero from "@/components/media/MediaHero";
 import MediaGrid from "@/components/media/MediaGrid";
 import { getProjectPhoto } from "@/lib/projects";
+import { getAllPressItems } from "@/lib/press";
 
 // MediaHero is a "use client" component (GSAP/DOM refs) and
 // getProjectPhoto() reads scripts/photo-manifest.json + cloudinary-url-map
@@ -56,7 +57,9 @@ export const metadata = {
   },
 };
 
-export default function MediaPage() {
+export default async function MediaPage() {
+  const pressItems = await getAllPressItems();
+
   return (
     <>
       {/* No `lightHero` -- MediaHero is now a full-bleed photo hero (like
@@ -66,7 +69,7 @@ export default function MediaPage() {
           -- logo always visible immediately, same as every other page. */}
       <Nav />
       <MediaHero heroPhoto={MEDIA_HERO_PHOTO} />
-      <MediaGrid />
+      <MediaGrid items={pressItems} />
       <Footer />
     </>
   );

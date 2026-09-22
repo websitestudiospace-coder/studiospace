@@ -6,7 +6,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Button from "@/components/ui/Button";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
-import { PRESS_ITEMS } from "@/data/press";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -125,6 +124,7 @@ function PressHeading({ headingRef }) {
 }
 
 function PressCarousel({
+  items,
   revealRef,
   viewportRef,
   trackRef,
@@ -143,7 +143,7 @@ function PressCarousel({
         onMouseLeave={onHoverLeave}
       >
         <div ref={trackRef} className="flex cursor-grab select-none active:cursor-grabbing">
-          {PRESS_ITEMS.map((item) => (
+          {items.map((item) => (
             <article
               key={item.publication + item.date + item.headline}
               className="w-full shrink-0 rounded-[28px] border p-8 md:p-12"
@@ -190,7 +190,7 @@ function PressCarousel({
       </div>
 
       <div className="mt-8 flex items-center justify-center gap-1 md:mt-10">
-        {PRESS_ITEMS.map((item, i) => (
+        {items.map((item, i) => (
           <button
             key={item.publication + item.date + item.headline}
             type="button"
@@ -213,7 +213,7 @@ function PressCarousel({
   );
 }
 
-export default function Press() {
+export default function Press({ items }) {
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
   const revealRef = useRef(null);
@@ -232,7 +232,7 @@ export default function Press() {
     const track = trackRef.current;
     const viewport = viewportRef.current;
     if (!track || !viewport) return;
-    const clamped = Math.max(0, Math.min(PRESS_ITEMS.length - 1, i));
+    const clamped = Math.max(0, Math.min(items.length - 1, i));
     const width = viewport.getBoundingClientRect().width;
     cardWidthRef.current = width;
     indexRef.current = clamped;
@@ -243,7 +243,7 @@ export default function Press() {
     } else {
       gsap.set(track, { x: -clamped * width });
     }
-  }, [reduceMotion]);
+  }, [items.length, reduceMotion]);
 
   // Keep the track aligned with the current card whenever viewport width changes.
   useEffect(() => {
@@ -278,7 +278,7 @@ export default function Press() {
       if (!state.moved) return;
       e.preventDefault();
       const width = cardWidthRef.current || 1;
-      const min = -(PRESS_ITEMS.length - 1) * width;
+      const min = -(items.length - 1) * width;
       let x = state.baseX + delta;
       if (x > 0) x *= 0.35;
       if (x < min) x = min + (x - min) * 0.35;
@@ -360,7 +360,7 @@ export default function Press() {
     const id = setInterval(() => {
       if (hoveringRef.current || dragRef.current.dragging) return;
       if (Date.now() - lastInteractionRef.current < RESUME_IDLE_MS) return;
-      goTo((indexRef.current + 1) % PRESS_ITEMS.length, true);
+      goTo((indexRef.current + 1) % items.length, true);
     }, AUTO_ADVANCE_MS);
     return () => clearInterval(id);
   }, [reduceMotion, inView, goTo]);
@@ -404,6 +404,7 @@ export default function Press() {
       <div className="mx-auto w-full max-w-[1100px]">
         <PressHeading headingRef={headingRef} />
         <PressCarousel
+          items={items}
           revealRef={revealRef}
           viewportRef={viewportRef}
           trackRef={trackRef}

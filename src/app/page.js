@@ -6,6 +6,7 @@ import Projects from "@/components/home/Projects";
 import Instagram from "@/components/home/Instagram";
 import Press from "@/components/home/Press";
 import Footer from "@/components/home/Footer";
+import { getAllPressItems } from "@/lib/press";
 
 // TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
 // doesn't deep-merge nested `openGraph`/`twitter` objects, so a page that
@@ -37,7 +38,9 @@ export const metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const pressItems = await getAllPressItems();
+
   return (
     <>
       <Nav />
@@ -46,7 +49,7 @@ export default function Home() {
       <About />
       <Projects />
       <Instagram />
-      <Press />
+      <Press items={pressItems} />
       <Footer />
     </>
   );
