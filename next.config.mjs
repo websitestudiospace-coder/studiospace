@@ -69,6 +69,28 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=31536000" },
 ];
 
+// Sanity Studio (/studio, src/app/studio/[[...tool]]/page.js) is a
+// third-party SPA that loads scripts/fonts from Sanity-owned CDNs
+// (core.sanity-cdn.com, design-system-static.sanity.io) and connects to
+// project-specific *.api.sanity.io subdomains -- the site-wide cspHeader
+// above blocks all of that (confirmed via browser console CSP-violation
+// errors), so /studio gets its own deliberately permissive policy instead
+// of trying to enumerate every Sanity-owned origin individually.
+const studioCspHeader = `
+  default-src 'self' https: wss:;
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
+  style-src 'self' 'unsafe-inline' https:;
+  img-src 'self' data: blob: https:;
+  font-src 'self' data: https:;
+  connect-src 'self' https: wss:;
+  worker-src 'self' blob:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+`
+  .replace(/\s{2,}/g, " ")
+  .trim();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
@@ -85,6 +107,19 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: securityHeaders,
+      },
+      // Later matching rules override an earlier one for the same header
+      // key on the same path, so these two only replace the
+      // Content-Security-Policy for /studio routes -- every other header
+      // (X-Frame-Options, HSTS, etc.) still comes from securityHeaders
+      // above for those paths.
+      {
+        source: "/studio",
+        headers: [{ key: "Content-Security-Policy", value: studioCspHeader }],
+      },
+      {
+        source: "/studio/:path*",
+        headers: [{ key: "Content-Security-Policy", value: studioCspHeader }],
       },
     ];
   },
