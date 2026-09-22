@@ -118,8 +118,13 @@ function FieldError({ id, error }) {
   );
 }
 
+// py-2.5 (not just pb-2) gives every field a taller tap/focus target on
+// mobile -- previously ~29px tall (bottom padding only, no top), under the
+// ~44px touch-target guideline. Purely a padding change on a borderless,
+// background-less underline field, so it reads as slightly roomier rather
+// than visually different.
 const fieldClass =
-  "mt-2 w-full border-0 border-b bg-transparent pb-2 text-sm focus:outline-none";
+  "mt-2 w-full border-0 border-b bg-transparent py-2.5 text-sm focus:outline-none";
 const fieldBorderDefault = "rgba(247, 239, 228, 0.3)";
 const fieldStyle = {
   borderColor: fieldBorderDefault,
@@ -525,7 +530,7 @@ function StudioInfo({ infoRef }) {
 // tinted/blended shade -- see the historical muddy-brown bug this
 // avoids), Careers copy/link/photo all clearly marked pending real
 // content from the client where it is.
-function InquiriesSplit({ splitRef }) {
+function InquiriesSplit({ splitRef, careersPhoto }) {
   return (
     <div
       ref={splitRef}
@@ -586,6 +591,22 @@ function InquiriesSplit({ splitRef }) {
       </div>
 
       <div className="flex flex-col" style={{ backgroundColor: CAREERS_MAROON }}>
+        {/* Full-bleed within this panel, no rounded corners -- same
+            edge-to-edge convention InquiriesSplit's own outer wrapper uses
+            (see that comment below). Falls back to just the solid maroon
+            panel (no placeholder box) when careersPhoto isn't provided,
+            same as heroPhoto's own `?.src` guard above. */}
+        {careersPhoto?.src ? (
+          <div className="relative h-48 w-full md:h-64">
+            <CldImage
+              src={careersPhoto.src}
+              alt={careersPhoto.alt}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+            />
+          </div>
+        ) : null}
         <div className="flex flex-1 flex-col px-8 py-12 text-center md:px-12 md:py-16">
           <h2
             className={`${HEADING_CLASS} uppercase`}

@@ -79,7 +79,10 @@ function FormField({ label, ...inputProps }) {
       <input
         {...inputProps}
         required
-        className="mt-2 w-full border-0 border-b bg-transparent pb-2 text-sm focus:outline-none"
+        // py-2.5 (not just pb-2) gives this a taller tap/focus target on
+        // mobile -- previously ~29px tall, under the ~44px touch-target
+        // guideline. Same fix as ContactContent.jsx's own fieldClass.
+        className="mt-2 w-full border-0 border-b bg-transparent py-2.5 text-sm focus:outline-none"
         style={{
           borderColor: "rgba(247, 239, 228, 0.3)",
           color: CREAM,

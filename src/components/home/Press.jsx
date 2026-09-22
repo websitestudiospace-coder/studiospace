@@ -197,7 +197,10 @@ function PressCarousel({
             aria-label={`Go to press item ${i + 1}`}
             aria-current={i === index}
             onClick={() => onDotClick(i)}
-            className="flex items-center justify-center p-1.5"
+            // p-2.5 (not p-1.5) grows the invisible tap zone toward the
+            // ~44px touch-target guideline without changing the visible
+            // dot's own size at all -- purely more padding.
+            className="flex items-center justify-center p-2.5"
           >
             <span
               className="h-2.5 rounded-full transition-all duration-300"
