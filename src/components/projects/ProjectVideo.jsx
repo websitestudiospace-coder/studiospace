@@ -50,15 +50,25 @@ export default function ProjectVideo({ video }) {
 
       let ctx;
       let scrollTriggerInstance;
+      let objectUrl;
+      let cancelled = false;
 
       const bindScrub = () => {
-        videoEl.pause();
+        // A <video> that's never been played can fail to paint any frame
+        // once currentTime is set programmatically -- it just shows black
+        // even though currentTime is advancing correctly underneath. A
+        // one-time play-then-immediately-pause forces the browser to paint
+        // an initial frame before scroll-driven scrubbing begins. Muted +
+        // playsInline is what lets this autoplay without a user gesture;
+        // if a browser still blocks it, .catch() no-ops and scrubbing
+        // proceeds anyway (currentTime updates keep working regardless).
+        videoEl.play().then(() => videoEl.pause()).catch(() => {});
         ctx = gsap.context(() => {
           scrollTriggerInstance = ScrollTrigger.create({
             trigger: outerRef.current,
             start: "top top",
             end: "bottom bottom",
-            scrub: true,
+            scrub: 0.3,
             onUpdate: (self) => {
               if (videoEl.duration) {
                 videoEl.currentTime = self.progress * videoEl.duration;
@@ -68,15 +78,41 @@ export default function ProjectVideo({ video }) {
         }, outerRef);
       };
 
-      if (videoEl.readyState >= 1) {
-        bindScrub();
-      } else {
-        videoEl.addEventListener("loadedmetadata", bindScrub, { once: true });
-      }
+      // Scrubbing seeks all over the timeline near-instantly, but a <video>
+      // streaming over HTTP only keeps a modest window buffered ahead of
+      // wherever it currently is -- a far seek outside that window forces a
+      // fresh network fetch that can't complete before the next seek
+      // supersedes it, so the visible frame lags far behind currentTime
+      // (confirmed via pixel sampling across all 6 project videos: the
+      // painted frame changed only 2-3 times across a full scroll, frozen
+      // the rest of the time despite currentTime advancing correctly).
+      // Fetching the whole file into memory first and scrubbing that
+      // in-memory copy means every seek is zero-latency, no network race.
+      fetch(video.src)
+        .then((res) => res.blob())
+        .then((blob) => {
+          if (cancelled) return;
+          objectUrl = URL.createObjectURL(blob);
+          videoEl.addEventListener("loadedmetadata", bindScrub, { once: true });
+          videoEl.src = objectUrl;
+          videoEl.load();
+        })
+        .catch(() => {
+          // Network/CSP/CORS failure -- fall back to the streamed <source>
+          // so the video still plays (just without guaranteed-smooth
+          // scrub) instead of showing nothing.
+          if (videoEl.readyState >= 1) {
+            bindScrub();
+          } else {
+            videoEl.addEventListener("loadedmetadata", bindScrub, { once: true });
+          }
+        });
 
       return () => {
+        cancelled = true;
         scrollTriggerInstance?.kill();
         ctx?.revert();
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
       };
     },
     [],

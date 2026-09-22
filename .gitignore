@@ -40,6 +40,14 @@ yarn-error.log*
 # raw/uncompressed source media awaiting compression -- never deploy these
 /media-source/
 
+# raw/pre-compression project video originals and pre-fix backups kept
+# alongside the deployed public/images/projects/<slug>/video.mp4 -- these
+# are 150-425MB each, over GitHub's 100MB per-file push limit, and are
+# not needed in the repo (the client's Drive/original files are the
+# actual backup). Only the compressed video.mp4 should ever be committed.
+public/images/projects/**/video-source.mp4
+public/images/projects/**/video-old-backup.mp4
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

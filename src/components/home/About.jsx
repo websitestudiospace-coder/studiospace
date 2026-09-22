@@ -235,7 +235,7 @@ export default function About() {
     // by side at md and up.
     return (
       <section
-        className="flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
+        className="flex w-full flex-col items-center gap-8 px-6 py-12 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
         style={{ backgroundColor: CREAM }}
       >
         <div className="relative h-[50vh] w-full overflow-hidden md:h-[70vh] md:w-[55%]">

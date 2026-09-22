@@ -202,7 +202,7 @@ function LinksColumns({ navRef, socialRef }) {
 
 function Wordmark({ wordmarkRef }) {
   return (
-    <div className="mt-8 flex w-full justify-center md:mt-24">
+    <div className="mt-16 flex w-full justify-center md:mt-24">
       <div
         ref={wordmarkRef}
         className="relative w-[79.2%]"

@@ -27,8 +27,12 @@ const STICKY_COLUMN_TOP_PX = 128;
 // width/height (not `fill` inside a forced aspect-ratio box) so the whole
 // photo lays out at its real, uncropped ratio. h-auto/w-full below then
 // just scales that intrinsic box responsively; nothing ever crops it.
-const PHOTO_WIDTH = 5331;
-const PHOTO_HEIGHT = 7948;
+// Source was originally a 5331x7948 (42MP) unresized export -- absurdly
+// oversized for a photo that only ever renders at up to 40vw; downscaled
+// to 2400x3578 (same aspect ratio, still well above any real render size)
+// during the pre-launch audit's image-compression pass.
+const PHOTO_WIDTH = 2400;
+const PHOTO_HEIGHT = 3578;
 
 // Confirmed via the studio's own Instagram bio ("Founders & Principal
 // Designers — @shubham.shingate_07 @priyanka_khandekar"), not invented --
@@ -193,7 +197,7 @@ export default function MeetFounders() {
           opacity, full-width lines), no animation. */}
       <div
         ref={peopleHeadingWrapRef}
-        className="mt-16 flex w-full items-center justify-center gap-6 px-6 md:mt-24"
+        className="flex min-h-[50vh] w-full items-center justify-center gap-6 px-6 md:min-h-[58vh]"
       >
         <div
           ref={peopleHeadingLeftLineRef}

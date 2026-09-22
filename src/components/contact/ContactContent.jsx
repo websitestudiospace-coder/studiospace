@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CldImage } from "next-cloudinary";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -41,12 +41,9 @@ const PROJECT_TYPES = [
   "Others",
 ];
 
-// TODO: real email/phone not yet provided by the client -- do not fabricate
-// a plausible-looking number/address, it would be mistaken for real contact
-// info. Swap this "coming soon" entry for real values once provided. Shared
-// as a constant (rather than a literal repeated in two spots) since it also
-// backs the "General Inquiries" half of InquiriesSplit below -- one string
-// to update once real contact info arrives.
+// TODO: phone not yet provided by the client -- do not fabricate a
+// plausible-looking number, it would be mistaken for real contact info.
+// Email is now real (client-provided, 2026-09-21): hello@studiospace.co.in.
 const CONTACT_COMING_SOON = "Coming soon — reach us on Instagram for now";
 
 // Studio Location mirrors the Instagram bio and is real. Labeled "Studio
@@ -54,28 +51,35 @@ const CONTACT_COMING_SOON = "Coming soon — reach us on Instagram for now";
 // "Location" field, which asks for the client's project location instead.
 const STUDIO_INFO = [
   { label: "Studio Location", value: "Bangalore, India" },
-  { label: "Email & Phone", value: CONTACT_COMING_SOON },
+  { label: "Email", value: "hello@studiospace.co.in", href: "mailto:hello@studiospace.co.in" },
+  { label: "Phone", value: CONTACT_COMING_SOON },
 ];
 
 const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
 
-// Backs InquiriesSplit's left-panel stacked entries below. Deliberately a
-// separate array from STUDIO_INFO above, not a reuse of it -- the client's
-// reference spec for this panel calls the first entry "Studio" (not
-// "Studio Location") and wants Instagram as its own stacked entry rather
-// than hardcoded separately, so the *shape* differs even though the real
-// values are identical to (and sourced from the same constants as)
-// STUDIO_INFO/INSTAGRAM_URL above. This means "Bangalore, India" and the
-// "coming soon" placeholder now appear twice on this page -- once here,
-// once in StudioInfo beside the form higher up. That duplication is
-// real and was flagged rather than silently resolved (StudioInfo is out
-// of scope for this task); worth a design/content decision later on
-// whether StudioInfo should be trimmed once this block exists.
+// Backs the "Let's Connect" (formerly "General Inquiries") left panel of
+// InquiriesSplit below. Deliberately a separate array from STUDIO_INFO
+// above, not a reuse of it -- this panel's own spec calls the first entry
+// "Studio" (not "Studio Location") and wants Instagram as its own stacked
+// entry rather than hardcoded separately, so the *shape* differs even
+// though the real values are identical to (and sourced from the same
+// constants as) STUDIO_INFO/INSTAGRAM_URL above. All 5 client-provided
+// inboxes (2026-09-21) except careers@ (which lives in the right/"Join
+// Our Team" panel instead) are listed here, with the client's own exact
+// labels: "Main inbox/General", "Inquiries", "Shubham inbox", "Priyanka
+// inbox".
 const GENERAL_INQUIRIES_ENTRIES = [
   { label: "Studio", value: "Bangalore, India" },
-  { label: "Email & Phone", value: CONTACT_COMING_SOON },
+  { label: "Main Inbox / General", value: "hello@studiospace.co.in", href: "mailto:hello@studiospace.co.in" },
+  { label: "Inquiries", value: "inquiry@studiospace.co.in", href: "mailto:inquiry@studiospace.co.in" },
+  { label: "Shubham Inbox", value: "shubham@studiospace.co.in", href: "mailto:shubham@studiospace.co.in" },
+  { label: "Priyanka Inbox", value: "priyanka@studiospace.co.in", href: "mailto:priyanka@studiospace.co.in" },
   { label: "Instagram", value: "@studio_sp_ace", href: INSTAGRAM_URL },
 ];
+
+// Client-provided Careers inbox (2026-09-21), replacing the earlier
+// "[Careers copy pending from client]" placeholder copy/link.
+const CAREERS_EMAIL = "careers@studiospace.co.in";
 
 // Client spec: every field on this form is compulsory, no exceptions --
 // there is no longer an "optional" concept here at all. Client also asked
@@ -279,6 +283,13 @@ function ContactForm({ formRef }) {
       const payload = await res.json().catch(() => null);
 
       if (res.ok && payload?.ok) {
+        // Client request (2026-09-21): confirmation should be a popup, not
+        // a screen that replaces the form -- the form now stays on screen
+        // (and clears itself via e.currentTarget.reset(), captured before
+        // this async gap since React pools/clears synthetic events) so the
+        // visitor can immediately send a second message if they want to,
+        // rather than the whole form vanishing behind a "thanks" message.
+        e.currentTarget.reset();
         setStatus(STATUS.SUBMITTED);
       } else {
         setStatus(STATUS.IDLE);
@@ -292,31 +303,16 @@ function ContactForm({ formRef }) {
     }
   };
 
-  if (status === STATUS.SUBMITTED) {
-    return (
-      <div ref={formRef} className="max-w-lg">
-        <p
-          className="text-xl"
-          style={{ fontFamily: "var(--font-agatho)", color: CREAM }}
-        >
-          Thanks, we&apos;ll be in touch.
-        </p>
-        <p
-          className="mt-3 text-sm"
-          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
-        >
-          We&apos;ve received your message and will get back to you shortly.
-        </p>
-      </div>
-    );
-  }
-
   // Field order below is the client's exact spec, verbatim from the
   // recorded walkthrough: name, email, phone, location, project budget,
   // project type, then the project-description textarea last. Every field
   // is compulsory (see FieldLabel/TextField above) -- phone in particular
   // used to be marked optional here and no longer is.
   return (
+    <>
+    {status === STATUS.SUBMITTED ? (
+      <SuccessPopup onClose={() => setStatus(STATUS.IDLE)} />
+    ) : null}
     <form ref={formRef} onSubmit={handleSubmit} noValidate className="w-full max-w-lg">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <TextField
@@ -402,6 +398,64 @@ function ContactForm({ formRef }) {
         {status === STATUS.SUBMITTING ? "Sending…" : "Submit Form"}
       </Button>
     </form>
+    </>
+  );
+}
+
+// Centered modal popup shown on successful submit, in place of the old
+// "form disappears, thank-you text takes its place" behavior (client
+// request, 2026-09-21). Fixed/full-viewport overlay so it reads clearly as
+// a popup regardless of where the form sits on the page; z-[200] clears
+// Nav's own z-[100] (see MeetFounders.jsx's STICKY_COLUMN_TOP_PX comment
+// for that same fixed-Nav reference point). Auto-dismisses after 6s but
+// also closable immediately, for anyone who wants to keep reading the page
+// right away rather than waiting it out.
+function SuccessPopup({ onClose }) {
+  // This component only exists while status === SUBMITTED, so it mounts
+  // fresh each time it appears -- a plain mount-effect timer is enough,
+  // no ref/guard needed. Cleanup clears the timer if onClose already fired
+  // (the close button) before the 6s auto-dismiss would have.
+  useEffect(() => {
+    const id = setTimeout(onClose, 6000);
+    return () => clearTimeout(id);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Message sent"
+      className="fixed inset-0 z-[200] flex items-center justify-center px-6"
+      style={{ backgroundColor: "rgba(43,38,34,0.55)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-[8px] px-8 py-10 text-center"
+        style={{ backgroundColor: CREAM }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p
+          className="text-xl"
+          style={{ fontFamily: "var(--font-agatho)", color: INK }}
+        >
+          Thanks, we&apos;ll be in touch.
+        </p>
+        <p
+          className="mt-3 text-sm"
+          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
+        >
+          We&apos;ve received your message and will get back to you shortly.
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-6 inline-block border-b pb-0.5 text-sm uppercase tracking-[0.15em]"
+          style={{ fontFamily: "var(--font-manrope)", color: MAROON, borderColor: MAROON }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -488,9 +542,16 @@ function InquiriesSplit({ splitRef }) {
           className={`${HEADING_CLASS} uppercase`}
           style={{ fontFamily: "var(--font-agatho)", color: INK, lineHeight: 1.05 }}
         >
-          <span className="block">General</span>
-          <span className="block">Inquiries</span>
+          Let&apos;s Connect
         </h2>
+
+        {/* Client copy, exact (2026-09-21). */}
+        <p
+          className="mx-auto mt-4 max-w-sm text-sm md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.75 }}
+        >
+          For collaborations, ideas, or just to say hello!
+        </p>
 
         <div className="mt-8 flex flex-col gap-6 md:mt-12">
           {GENERAL_INQUIRIES_ENTRIES.map((entry) => (
@@ -530,31 +591,30 @@ function InquiriesSplit({ splitRef }) {
             className={`${HEADING_CLASS} uppercase`}
             style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.05 }}
           >
-            Careers
+            Join Our Team
           </h2>
 
-          {/* TODO: client to provide real Careers copy -- this supporting
-              line is a placeholder, not real content. mx-auto centers the
-              max-w-sm box itself (not just the text inside it) now that
-              this panel is center-aligned -- without it the box would stay
-              flush against the left edge with only its own text centered
-              inside that narrower, off-center box. */}
+          {/* Client copy, exact (2026-09-21). mx-auto centers the max-w-sm
+              box itself (not just the text inside it) now that this panel
+              is center-aligned -- without it the box would stay flush
+              against the left edge with only its own text centered inside
+              that narrower, off-center box. */}
           <p
             className="mx-auto mt-4 max-w-sm text-sm md:text-base"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.85 }}
           >
-            [Careers copy pending from client]
+            Interested in joining our team? We&apos;d love to hear from you.
           </p>
 
-          {/* TODO: href="#" is a placeholder -- swap for the real
-              open-positions page (or a mailto:) once the client provides
-              one. Do not fabricate a URL in the meantime. */}
+          {/* Client-provided Careers inbox (2026-09-21), replacing the
+              earlier href="#" placeholder. Swap for a real open-positions
+              page link instead if/when the client sets one up. */}
           <a
-            href="#"
+            href={`mailto:${CAREERS_EMAIL}`}
             className="mt-6 inline-block border-b pb-0.5 text-sm md:text-base"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM, borderColor: CREAM }}
           >
-            View open positions
+            {CAREERS_EMAIL}
           </a>
         </div>
       </div>
@@ -681,7 +741,26 @@ export default function ContactContent({ heroPhoto, careersPhoto }) {
       <section className="w-full py-16 md:py-24" style={{ backgroundColor: INK }}>
         <div className="mx-auto w-full max-w-[1100px] px-6 md:px-16">
           <div className="grid grid-cols-1 gap-16 md:grid-cols-[1.4fr_1fr]">
-            <ContactForm formRef={formRef} />
+            <div>
+              {/* Client copy, exact (2026-09-21): heading + subheading go
+                  directly above the form, not as a separate section. */}
+              <h2
+                className={`${HEADING_CLASS} uppercase`}
+                style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.05 }}
+              >
+                Design With Us
+              </h2>
+              <p
+                className="mt-4 max-w-lg text-sm md:text-base"
+                style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.75 }}
+              >
+                Tell us your story. Let&apos;s bring it to life!
+              </p>
+
+              <div className="mt-10">
+                <ContactForm formRef={formRef} />
+              </div>
+            </div>
             <StudioInfo infoRef={infoRef} />
           </div>
         </div>

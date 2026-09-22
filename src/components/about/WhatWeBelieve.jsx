@@ -375,7 +375,7 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
       >
         <div className="mx-auto w-full max-w-[1100px]">
           <h2
-            className="text-center text-[36px] md:text-[64px]"
+            className="text-center text-[32px] md:text-[48px]"
             style={{ fontFamily: "var(--font-agatho)", color: INK }}
           >
             {HEADING}

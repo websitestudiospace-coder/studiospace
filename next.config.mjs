@@ -9,16 +9,34 @@
 // third-party script ever loads here, so script-src stays 'self' (with
 // 'unsafe-inline' only because Next.js's own streaming/hydration scripts
 // are inline and this app doesn't use nonce-based CSP -- see below for
-// why not).
+// why not). media-src additionally allows blob: -- ProjectVideo.jsx
+// fetches a project's video as a Blob and scrubs that in-memory copy
+// (via URL.createObjectURL) rather than seeking the live network stream,
+// since far scroll-driven seeks outrun what a streamed <video> keeps
+// buffered; same blob: allowance img-src already had, just never needed
+// by media-src until this. connect-src additionally allows
+// res.cloudinary.com for that same fetch() -- once a project's video is
+// Cloudinary-hosted (not just the local /images/projects path), that
+// fetch is cross-origin and connect-src (not media-src) is what CSP
+// checks for fetch()/XHR, confirmed by the exact failure this produced
+// with 'self' alone: a plain "TypeError: Failed to fetch", not a
+// media-src-style console violation.
+// Dev mode genuinely needs eval() -- Next.js/React use it in development
+// for HMR and for reconstructing callstacks across environments (React
+// never uses eval() in production). 'unsafe-eval' is only added to
+// script-src when running the dev server; the production CSP below is
+// unchanged and does not get this loosened.
+const isDev = process.env.NODE_ENV !== "production";
+
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline';
+  script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""};
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https://res.cloudinary.com https://www.google.com https://*.gstatic.com;
-  media-src 'self' https://res.cloudinary.com;
+  media-src 'self' blob: https://res.cloudinary.com;
   font-src 'self';
   frame-src https://www.google.com;
-  connect-src 'self';
+  connect-src 'self' https://res.cloudinary.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';

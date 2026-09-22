@@ -4,7 +4,8 @@ import LegalContent, { LegalSection } from "@/components/legal/LegalContent";
 
 export const metadata = {
   title: "Privacy Policy | Studio SP_ACE",
-  description: "Privacy Policy for the Studio SP_ACE website.",
+  description:
+    "Read Studio SP_ACE's Privacy Policy to learn how we collect, use, and protect information submitted through this website.",
 };
 
 export default function PrivacyPage() {

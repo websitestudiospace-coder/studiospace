@@ -4,7 +4,8 @@ import LegalContent, { LegalSection } from "@/components/legal/LegalContent";
 
 export const metadata = {
   title: "Terms of Service | Studio SP_ACE",
-  description: "Terms of Service for the Studio SP_ACE website.",
+  description:
+    "The Terms of Service governing your use of the Studio SP_ACE website, including site use, intellectual property, and liability.",
 };
 
 export default function TermsPage() {

@@ -13,14 +13,18 @@ import Footer from "@/components/home/Footer";
 // default. Swap for a purpose-made image from the client before launch.
 const DEFAULT_OG_IMAGE = "/images/projects/the-modern-eclectic-home/3H4A2226-1.webp";
 
+// Matches layout.js's own SITE_DESCRIPTION (pulled from home/About.jsx's
+// real positioning copy) -- the homepage is meant to carry the site's main
+// brand title/description, same as the root layout's own default.
+const HOME_DESCRIPTION =
+  "Based in Bangalore and working pan-India, Studio SP_ACE is a bespoke interior design studio offering a complete journey from design to execution.";
+
 export const metadata = {
   title: "Studio SP_ACE | Architecture & Interior Design",
-  description:
-    "Studio SP_ACE is an architecture and interior design studio crafting spaces that feel like you.",
+  description: HOME_DESCRIPTION,
   openGraph: {
     title: "Studio SP_ACE | Architecture & Interior Design",
-    description:
-      "Studio SP_ACE is an architecture and interior design studio crafting spaces that feel like you.",
+    description: HOME_DESCRIPTION,
     siteName: "Studio SP_ACE",
     images: [{ url: DEFAULT_OG_IMAGE }],
     type: "website",
@@ -28,8 +32,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Studio SP_ACE | Architecture & Interior Design",
-    description:
-      "Studio SP_ACE is an architecture and interior design studio crafting spaces that feel like you.",
+    description: HOME_DESCRIPTION,
     images: [DEFAULT_OG_IMAGE],
   },
 };

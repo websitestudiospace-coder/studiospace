@@ -60,14 +60,15 @@ const BELIEF_IMAGES = [
 // default. Swap for a purpose-made image from the client before launch.
 const DEFAULT_OG_IMAGE = "/images/projects/the-modern-eclectic-home/3H4A2226-1.webp";
 
+const ABOUT_DESCRIPTION =
+  "Meet the founders behind Studio SP_ACE and discover our approach to architecture and interior design built around the way you live.";
+
 export const metadata = {
   title: "About | Studio SP_ACE",
-  description:
-    "Meet the studio behind Studio SP_ACE -- architecture and interior design built around the way you live.",
+  description: ABOUT_DESCRIPTION,
   openGraph: {
     title: "About | Studio SP_ACE",
-    description:
-      "Meet the studio behind Studio SP_ACE -- architecture and interior design built around the way you live.",
+    description: ABOUT_DESCRIPTION,
     siteName: "Studio SP_ACE",
     images: [{ url: DEFAULT_OG_IMAGE }],
     type: "website",
@@ -75,8 +76,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "About | Studio SP_ACE",
-    description:
-      "Meet the studio behind Studio SP_ACE -- architecture and interior design built around the way you live.",
+    description: ABOUT_DESCRIPTION,
     images: [DEFAULT_OG_IMAGE],
   },
 };

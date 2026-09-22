@@ -152,7 +152,7 @@
         "height": 2400
       }
     ],
-    "hasVideo": false,
+    "hasVideo": true,
     "posterFile": null
   },
   "the-modern-eclectic-home": {
@@ -278,7 +278,7 @@
         "height": 2400
       }
     ],
-    "hasVideo": false,
+    "hasVideo": true,
     "posterFile": null
   },
   "the-modern-neo-classical-home": {
@@ -711,7 +711,7 @@
         "height": 2400
       }
     ],
-    "hasVideo": false,
+    "hasVideo": true,
     "posterFile": null
   },
   "the-neo-colonial-home": {
@@ -917,7 +917,7 @@
         "height": 2400
       }
     ],
-    "hasVideo": false,
+    "hasVideo": true,
     "posterFile": null
   },
   "the-shraddhas-thinkpad": {
@@ -1058,7 +1058,7 @@
         "height": 2400
       }
     ],
-    "hasVideo": false,
+    "hasVideo": true,
     "posterFile": null
   }
 }

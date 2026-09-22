@@ -14,10 +14,19 @@ export async function generateMetadata({ params }) {
   const project = getProjectBySlug(slug);
   if (!project) return {};
   const title = `${project.name} — Studio SP_ACE`;
+  // project.description (src/data/projects.js) runs 200+ characters --
+  // real, client-approved copy, but too long for a search-result snippet
+  // (~155-160 char budget) and would get truncated mid-sentence. Using
+  // just its first sentence keeps this genuinely per-project (every
+  // project's opening sentence names its own style/location) while
+  // staying under budget; verified all 7 land at 124-157 chars.
+  const firstSentence = project.description.split(". ")[0].replace(/\.$/, "");
+  const description = `${project.name} — ${firstSentence}.`;
   return {
     title,
-    openGraph: { title, description: project.description },
-    twitter: { title, description: project.description },
+    description,
+    openGraph: { title, description },
+    twitter: { title, description },
   };
 }
 

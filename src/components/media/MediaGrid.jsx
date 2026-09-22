@@ -13,6 +13,7 @@ if (typeof window !== "undefined") {
 
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
+const MAROON = "#6E1F24";
 const CARD_BG = "rgba(43,38,34,0.04)";
 
 // Derives the outlet's bare domain from its article URL (strips "www."),
@@ -116,13 +117,26 @@ export default function MediaGrid() {
             ref={(el) => {
               cardRefs.current[i] = el;
             }}
-            className="block rounded-[8px] border p-6 transition-colors duration-200 ease-out hover:border-[rgba(43,38,34,0.3)] md:p-8"
+            className="group flex h-full flex-col rounded-[8px] border p-6 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[rgba(43,38,34,0.3)] hover:shadow-[0_10px_30px_rgba(43,38,34,0.1)] md:p-8"
             style={{
               backgroundColor: CARD_BG,
               borderColor: "rgba(43,38,34,0.1)",
               ...(reduceMotion ? undefined : { opacity: 0 }),
             }}
           >
+            {/* Job-listing-card reference (client-provided, 2026-09-21):
+                everything always visible, no hover-reveal -- that was tried
+                and reverted. Avatar + name/date stay side-by-side (name
+                bold, date a smaller muted line directly under it, same
+                pairing as the reference's "Company Name  5 days ago"), then
+                the headline gets real breathing room below, then a divider
+                + bottom-right pill button anchor the card's bottom edge.
+                mt-auto on the footer wrapper below is what pins that row to
+                the bottom even when headlines run short, so every card in a
+                row lands its button on the same baseline regardless of
+                headline length (grid's default align-items: stretch is what
+                gives this h-full flex-col card the row's full height to
+                push against). */}
             <div className="flex items-center gap-3">
               <OutletAvatar publication={item.publication} url={item.url} />
               <div>
@@ -142,11 +156,29 @@ export default function MediaGrid() {
             </div>
 
             <p
-              className="mt-6 text-lg font-bold leading-snug md:text-xl"
+              className="mt-6 text-lg font-bold leading-snug md:mt-8 md:text-xl"
               style={{ fontFamily: "var(--font-manrope)", color: INK }}
             >
               {item.headline}
             </p>
+
+            {/* Visual affordance only, not a second link -- the whole card
+                above is already the <a> to item.url. A real nested <a>/
+                <button> here would be invalid HTML (interactive content
+                inside interactive content) and would give keyboard/screen
+                reader users two separate stops for the exact same
+                destination. */}
+            <div className="mt-auto flex flex-col pt-6 md:pt-8">
+              <div className="border-t" style={{ borderColor: "rgba(43,38,34,0.1)" }} />
+              <div className="mt-4 flex justify-end md:mt-5">
+                <span
+                  className="inline-flex items-center rounded-full px-4 py-2 text-xs uppercase tracking-[0.1em] transition-opacity duration-200 ease-out group-hover:opacity-90"
+                  style={{ backgroundColor: MAROON, color: CREAM, fontFamily: "var(--font-manrope)" }}
+                >
+                  Read Article
+                </span>
+              </div>
+            </div>
           </a>
         ))}
       </div>
