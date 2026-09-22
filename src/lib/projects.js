@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PROJECTS } from "@/data/projects";
+import { client } from "@/sanity/lib/client";
+import { urlFor } from "@/sanity/lib/image";
 
 const VIDEOS_DIR = path.join(process.cwd(), "public", "videos", "projects");
 const CLOUDINARY_MAP_PATH = path.join(process.cwd(), "scripts", "cloudinary-url-map.json");
@@ -109,43 +111,94 @@ export function getProjectPhoto(slug, file) {
   return match ? toCloudinaryUrl(`/images/projects/${slug}/${file}`) : null;
 }
 
-export function getAllProjects() {
-  return PROJECTS.map((project) => {
+const SANITY_PROJECT_QUERY = `*[_type == "project"] | order(coalesce(order, 9999) asc, _createdAt desc) {
+  "slug": slug.current,
+  name,
+  description,
+  longDescription,
+  typology,
+  location,
+  squareFootage,
+  completion,
+  coverImage,
+  "galleryPhotos": galleryPhotos[] {
+    ...,
+    "dimensions": asset->metadata.dimensions
+  },
+  videoUrl,
+}`;
+
+// Client-added projects (via /studio) live entirely in Sanity -- photos and
+// video are uploaded there directly, no photo-manifest/Cloudinary pipeline
+// step required (see the module comment above for why the original 7
+// projects keep using that pipeline instead of also being migrated in).
+// Fails soft (empty array) rather than breaking the whole /projects page if
+// Sanity is briefly unreachable.
+async function fetchSanityProjects() {
+  try {
+    const docs = await client.fetch(SANITY_PROJECT_QUERY);
+    return docs
+      .filter((doc) => doc.slug && doc.coverImage)
+      .map((doc) => ({
+        slug: doc.slug,
+        name: doc.name,
+        description: doc.description,
+        longDescription: doc.longDescription,
+        typology: doc.typology ?? null,
+        location: doc.location ?? null,
+        squareFootage: doc.squareFootage ?? null,
+        completion: doc.completion ?? null,
+        cover: urlFor(doc.coverImage).width(1600).url(),
+        galleryPhotos: (doc.galleryPhotos ?? []).map((image) => ({
+          src: urlFor(image).width(1920).url(),
+          width: image.dimensions?.width ?? null,
+          height: image.dimensions?.height ?? null,
+        })),
+        video: doc.videoUrl ? { src: doc.videoUrl, poster: null } : null,
+      }));
+  } catch (err) {
+    console.error("[projects] Sanity fetch failed, showing static projects only:", err);
+    return [];
+  }
+}
+
+export async function getAllProjects() {
+  const staticProjects = PROJECTS.map((project) => {
     const [firstFile] = listProjectPhotoFilenames(project.slug);
     return {
       ...project,
       cover: firstFile ? toCloudinaryUrl(`/images/projects/${project.slug}/${firstFile}`) : null,
     };
   });
+  const sanityProjects = await fetchSanityProjects();
+  return [...staticProjects, ...sanityProjects];
 }
 
-export function getProjectBySlug(slug) {
+export async function getProjectBySlug(slug) {
   const meta = PROJECTS.find((project) => project.slug === slug);
-  if (!meta) return null;
+  if (meta) {
+    const photos = listProjectPhotos(slug);
+    const [cover, ...galleryPhotos] = photos;
+    return {
+      ...meta,
+      cover: cover?.src ?? null,
+      galleryPhotos,
+      video: getProjectVideo(slug),
+    };
+  }
 
-  const photos = listProjectPhotos(slug);
-  const [cover, ...galleryPhotos] = photos;
-
-  return {
-    ...meta,
-    cover: cover?.src ?? null,
-    galleryPhotos,
-    video: getProjectVideo(slug),
-  };
+  const sanityProjects = await fetchSanityProjects();
+  return sanityProjects.find((project) => project.slug === slug) ?? null;
 }
 
-// Cycles to the next project after `slug` in the roster, wrapping back to
-// the first -- used by the "Next Project" link at the bottom of the detail
-// page. Returns a lightweight {slug, name, cover} rather than the full
-// project (no gallery/video needed for a preview link).
-export function getNextProject(slug) {
-  const index = PROJECTS.findIndex((project) => project.slug === slug);
+// Cycles to the next project after `slug` in the combined (static + Sanity)
+// roster, wrapping back to the first -- used by the "Next Project" link at
+// the bottom of the detail page. Returns a lightweight {slug, name, cover}
+// rather than the full project (no gallery/video needed for a preview link).
+export async function getNextProject(slug) {
+  const all = await getAllProjects();
+  const index = all.findIndex((project) => project.slug === slug);
   if (index === -1) return null;
-  const next = PROJECTS[(index + 1) % PROJECTS.length];
-  const [firstFile] = listProjectPhotoFilenames(next.slug);
-  return {
-    slug: next.slug,
-    name: next.name,
-    cover: firstFile ? toCloudinaryUrl(`/images/projects/${next.slug}/${firstFile}`) : null,
-  };
+  const next = all[(index + 1) % all.length];
+  return { slug: next.slug, name: next.name, cover: next.cover };
 }

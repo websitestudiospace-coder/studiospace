@@ -1,8 +1,6 @@
 import { Manrope } from "next/font/google";
 import localFont from "next/font/local";
-import Preloader from "@/components/Preloader";
-import SmoothScroll from "@/components/SmoothScroll";
-import ScrollProgress from "@/components/ScrollProgress";
+import SiteChrome from "@/components/SiteChrome";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -26,22 +24,15 @@ const BASE_URL = "https://studiospace.example.com";
 // Swap for a purpose-made image from the client before launch.
 const DEFAULT_OG_IMAGE = "/images/projects/the-modern-eclectic-home/3H4A2226-1.webp";
 
-// Pulled from home/About.jsx's own AboutCopy paragraph (the site's real
-// positioning statement) rather than inventing new marketing copy -- kept
-// in sync with that component's wording.
-const SITE_DESCRIPTION =
-  "Based in Bangalore and working pan-India, Studio SP_ACE is a bespoke interior design studio offering a complete journey from design to execution.";
-
 export const metadata = {
   metadataBase: new URL(BASE_URL),
   title: "Studio SP_ACE | Architecture & Interior Design",
-  description: SITE_DESCRIPTION,
-  icons: {
-    icon: "/logos/favicon/SP.png",
-  },
+  description:
+    "Studio SP_ACE is an architecture and interior design studio crafting spaces that feel like you.",
   openGraph: {
     title: "Studio SP_ACE | Architecture & Interior Design",
-    description: SITE_DESCRIPTION,
+    description:
+      "Studio SP_ACE is an architecture and interior design studio crafting spaces that feel like you.",
     siteName: "Studio SP_ACE",
     images: [{ url: DEFAULT_OG_IMAGE }],
     type: "website",
@@ -49,7 +40,8 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Studio SP_ACE | Architecture & Interior Design",
-    description: SITE_DESCRIPTION,
+    description:
+      "Studio SP_ACE is an architecture and interior design studio crafting spaces that feel like you.",
     images: [DEFAULT_OG_IMAGE],
   },
 };
@@ -61,9 +53,7 @@ export default function RootLayout({ children }) {
       className={`${manrope.variable} ${agatho.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-manrope">
-        <Preloader />
-        <ScrollProgress />
-        <SmoothScroll>{children}</SmoothScroll>
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );
