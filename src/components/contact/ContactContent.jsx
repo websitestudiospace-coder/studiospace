@@ -63,17 +63,15 @@ const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
 // "Studio" (not "Studio Location") and wants Instagram as its own stacked
 // entry rather than hardcoded separately, so the *shape* differs even
 // though the real values are identical to (and sourced from the same
-// constants as) STUDIO_INFO/INSTAGRAM_URL above. All 5 client-provided
-// inboxes (2026-09-21) except careers@ (which lives in the right/"Join
-// Our Team" panel instead) are listed here, with the client's own exact
-// labels: "Main inbox/General", "Inquiries", "Shubham inbox", "Priyanka
-// inbox".
+// constants as) STUDIO_INFO/INSTAGRAM_URL above. Only 3 client-provided
+// inboxes remain in total: hello@ and inquiry@ here, with the client's
+// own exact labels ("Main inbox/General", "Inquiries"), plus careers@ in
+// the right/"Join Our Team" panel. The personal shubham@/priyanka@
+// inboxes were dropped at the client's latest request.
 const GENERAL_INQUIRIES_ENTRIES = [
   { label: "Studio", value: "Bangalore, India" },
   { label: "Main Inbox / General", value: "hello@studiospace.co.in", href: "mailto:hello@studiospace.co.in" },
   { label: "Inquiries", value: "inquiry@studiospace.co.in", href: "mailto:inquiry@studiospace.co.in" },
-  { label: "Shubham Inbox", value: "shubham@studiospace.co.in", href: "mailto:shubham@studiospace.co.in" },
-  { label: "Priyanka Inbox", value: "priyanka@studiospace.co.in", href: "mailto:priyanka@studiospace.co.in" },
   { label: "Instagram", value: "@studio_sp_ace", href: INSTAGRAM_URL },
 ];
 
@@ -528,9 +526,9 @@ function StudioInfo({ infoRef }) {
 // then several labeled contact blocks" hierarchy. Right panel: same
 // heading scale, brand maroon at full opacity (re-confirmed, not a
 // tinted/blended shade -- see the historical muddy-brown bug this
-// avoids), Careers copy/link/photo all clearly marked pending real
-// content from the client where it is.
-function InquiriesSplit({ splitRef, careersPhoto }) {
+// avoids), Careers copy/link clearly marked pending real content from the
+// client where it is.
+function InquiriesSplit({ splitRef }) {
   return (
     <div
       ref={splitRef}
@@ -590,60 +588,43 @@ function InquiriesSplit({ splitRef, careersPhoto }) {
         </div>
       </div>
 
-      <div className="flex flex-col" style={{ backgroundColor: CAREERS_MAROON }}>
-        {/* Full-bleed within this panel, no rounded corners -- same
-            edge-to-edge convention InquiriesSplit's own outer wrapper uses
-            (see that comment below). Falls back to just the solid maroon
-            panel (no placeholder box) when careersPhoto isn't provided,
-            same as heroPhoto's own `?.src` guard above. */}
-        {careersPhoto?.src ? (
-          <div className="relative h-48 w-full md:h-64">
-            <CldImage
-              src={careersPhoto.src}
-              alt={careersPhoto.alt}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
-        ) : null}
-        <div className="flex flex-1 flex-col px-8 py-12 text-center md:px-12 md:py-16">
-          <h2
-            className={`${HEADING_CLASS} uppercase`}
-            style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.05 }}
-          >
-            Join Our Team
-          </h2>
+      {/* Solid CAREERS_MAROON only, no photo -- client request. */}
+      <div className="px-8 py-12 text-center md:px-12 md:py-16" style={{ backgroundColor: CAREERS_MAROON }}>
+        <h2
+          className={`${HEADING_CLASS} uppercase`}
+          style={{ fontFamily: "var(--font-agatho)", color: CREAM, lineHeight: 1.05 }}
+        >
+          Join Our Team
+        </h2>
 
-          {/* Client copy, exact (2026-09-21). mx-auto centers the max-w-sm
-              box itself (not just the text inside it) now that this panel
-              is center-aligned -- without it the box would stay flush
-              against the left edge with only its own text centered inside
-              that narrower, off-center box. */}
-          <p
-            className="mx-auto mt-4 max-w-sm text-sm md:text-base"
-            style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.85 }}
-          >
-            Interested in joining our team? We&apos;d love to hear from you.
-          </p>
+        {/* Client copy, exact (2026-09-21). mx-auto centers the max-w-sm
+            box itself (not just the text inside it) now that this panel
+            is center-aligned -- without it the box would stay flush
+            against the left edge with only its own text centered inside
+            that narrower, off-center box. */}
+        <p
+          className="mx-auto mt-4 max-w-sm text-sm md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.85 }}
+        >
+          Interested in joining our team? We&apos;d love to hear from you.
+        </p>
 
-          {/* Client-provided Careers inbox (2026-09-21), replacing the
-              earlier href="#" placeholder. Swap for a real open-positions
-              page link instead if/when the client sets one up. */}
-          <a
-            href={`mailto:${CAREERS_EMAIL}`}
-            className="mt-6 inline-block border-b pb-0.5 text-sm md:text-base"
-            style={{ fontFamily: "var(--font-manrope)", color: CREAM, borderColor: CREAM }}
-          >
-            {CAREERS_EMAIL}
-          </a>
-        </div>
+        {/* Client-provided Careers inbox (2026-09-21), replacing the
+            earlier href="#" placeholder. Swap for a real open-positions
+            page link instead if/when the client sets one up. */}
+        <a
+          href={`mailto:${CAREERS_EMAIL}`}
+          className="mt-6 inline-block border-b pb-0.5 text-sm md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, borderColor: CREAM }}
+        >
+          {CAREERS_EMAIL}
+        </a>
       </div>
     </div>
   );
 }
 
-export default function ContactContent({ heroPhoto, careersPhoto }) {
+export default function ContactContent({ heroPhoto }) {
   const heroRef = useRef(null);
   const formRef = useRef(null);
   const infoRef = useRef(null);
@@ -797,7 +778,7 @@ export default function ContactContent({ heroPhoto, careersPhoto }) {
             -- a rounded corner with nothing but flush viewport edge on the
             other side of it reads as a rendering bug, not a deliberate
             shape. */}
-        <InquiriesSplit splitRef={inquiriesRef} careersPhoto={careersPhoto} />
+        <InquiriesSplit splitRef={inquiriesRef} />
       </section>
     </>
   );

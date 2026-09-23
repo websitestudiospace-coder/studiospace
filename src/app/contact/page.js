@@ -17,24 +17,11 @@ import { getProjectPhoto } from "@/lib/projects";
 // old portrait shot did), warm/editorial, no blown-out highlights in the
 // lower third where the white "Let's Talk" heading + dark gradient sit,
 // and not already used elsewhere on the site (checked against about/
-// page.js's BELIEF_IMAGES and this file's own CAREERS_PLACEHOLDER_PHOTO
-// below -- same "no duplicate imagery with a different meaning"
-// reasoning that comment already documents).
+// page.js's BELIEF_IMAGES -- no duplicate imagery with a different
+// meaning).
 const CONTACT_HERO_PHOTO = {
   src: getProjectPhoto("the-modern-transitional-home", "19.webp"),
   alt: "A warm, arched bedroom nook with a cane-panelled wardrobe, terracotta bedding, and pleated bedside lamps, opening onto a neutral linen sofa",
-};
-
-// TODO: placeholder photo -- swap for the client's chosen Careers photo
-// when provided. This is a real, existing gallery photo (not a fabricated
-// asset), picked and viewed (downloaded + inspected, not guessed from its
-// filename) specifically because it wasn't already used anywhere else on
-// the site -- WhatWeBelieve's 6 belief photos each pull from a different
-// project, and this one (Shraddha's Thinkpad) isn't among them, so this
-// avoids the same image showing up twice with two different meanings.
-const CAREERS_PLACEHOLDER_PHOTO = {
-  src: getProjectPhoto("the-shraddhas-thinkpad", "_H4A3801.webp"),
-  alt: "A green-cabinetry kitchen framed through an arched doorway",
 };
 
 // TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
@@ -65,7 +52,7 @@ export default function ContactPage() {
   return (
     <>
       <Nav />
-      <ContactContent heroPhoto={CONTACT_HERO_PHOTO} careersPhoto={CAREERS_PLACEHOLDER_PHOTO} />
+      <ContactContent heroPhoto={CONTACT_HERO_PHOTO} />
       <Footer />
     </>
   );

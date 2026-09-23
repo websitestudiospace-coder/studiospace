@@ -10,7 +10,7 @@ import { getAllPressItems } from "@/lib/press";
 // off disk via Node's fs -- server-only, can't run inside a client
 // component. Resolved here instead (this page is a server component) and
 // passed down as a plain prop URL, same pattern contact/page.js's own
-// CAREERS_PLACEHOLDER_PHOTO and about/page.js's beliefImages already use.
+// CONTACT_HERO_PHOTO and about/page.js's beliefImages already use.
 //
 // TODO: placeholder hero photo -- swap for the client's chosen photo if
 // they want a different one. Picked (not guessed from a filename --
