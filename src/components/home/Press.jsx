@@ -22,8 +22,8 @@ const SWIPE_RATIO = 0.18;
 // Auto-advance timing: how often the carousel moves on its own, and how
 // long it waits after the visitor's last drag/hover/dot-click before
 // resuming.
-const AUTO_ADVANCE_MS = 4500;
-const RESUME_IDLE_MS = 3500;
+const AUTO_ADVANCE_MS = 5000;
+const RESUME_IDLE_MS = 2000;
 
 function ArrowIcon() {
   return (
@@ -139,8 +139,8 @@ function PressCarousel({
         ref={viewportRef}
         className="overflow-hidden"
         style={{ touchAction: "pan-y" }}
-        onMouseEnter={onHoverEnter}
-        onMouseLeave={onHoverLeave}
+        onPointerEnter={onHoverEnter}
+        onPointerLeave={onHoverLeave}
       >
         <div ref={trackRef} className="flex cursor-grab select-none active:cursor-grabbing">
           {items.map((item) => (
@@ -323,7 +323,11 @@ export default function Press({ items }) {
     };
   }, [goTo]);
 
-  const handleHoverEnter = useCallback(() => {
+  // Real mouse hover only -- a touch tap fires an emulated mouseenter with
+  // no matching mouseleave on most mobile browsers, which would leave
+  // hoveringRef stuck true and pause auto-advance for good after one tap.
+  const handleHoverEnter = useCallback((e) => {
+    if (e.pointerType !== "mouse") return;
     hoveringRef.current = true;
     lastInteractionRef.current = Date.now();
   }, []);
