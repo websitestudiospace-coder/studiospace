@@ -86,6 +86,7 @@ export default function AboutHero() {
   const outerRef = useRef(null);
   const imageRef = useRef(null);
   const textRef = useRef(null);
+  const mobileImageRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -114,7 +115,7 @@ export default function AboutHero() {
     if (!enhanced) return;
 
     const ctx = gsap.context(() => {
-      gsap.set(imageRef.current, { width: "100%", filter: "grayscale(100%)" });
+      gsap.set(imageRef.current, { width: "100%", filter: "grayscale(0%)" });
       gsap.set(textRef.current, { opacity: 0, x: TEXT_SLIDE_X });
 
       // ONE ScrollTrigger, ONE timeline, on the section's own pinned root --
@@ -136,11 +137,12 @@ export default function AboutHero() {
       tl.to({}, { duration: 1 }, 0);
 
       // Phase 1 (0%-55%): image shrinks from full-bleed to its settled half
-      // width while desaturating to full color, on the same window -- both
-      // read as one continuous "the hero is settling in" motion rather than
-      // two separate, sequential beats.
+      // width while draining from full color to black & white (same
+      // direction as the mobile branch and ProjectHero's cover photo), on
+      // the same window -- both read as one continuous "the hero is settling
+      // in" motion rather than two separate, sequential beats.
       tl.to(imageRef.current, { width: `${SETTLED_IMAGE_WIDTH}%`, ease: "none", duration: 0.55 }, 0);
-      tl.to(imageRef.current, { filter: "grayscale(0%)", ease: "none", duration: 0.55 }, 0);
+      tl.to(imageRef.current, { filter: "grayscale(100%)", ease: "none", duration: 0.55 }, 0);
 
       // Phase 2 (45%-75%): the studio copy fades/slides in from the side
       // that's opening up as the image shrinks -- starts slightly before
@@ -149,8 +151,8 @@ export default function AboutHero() {
       // "text starts appearing."
       tl.to(textRef.current, { opacity: 1, x: 0, ease: "none", duration: 0.3 }, 0.45);
 
-      // Phase 3 (75%-100%): hold at the settled half-width/full-color/text-
-      // visible state so it registers before the pin releases into
+      // Phase 3 (75%-100%): hold at the settled half-width/black-and-white/
+      // text-visible state so it registers before the pin releases into
       // StudioDescription's old neighbor, MeetFounders -- same reasoning as
       // Quote's and home/About's own closing holds.
     }, outerRef);
@@ -158,17 +160,53 @@ export default function AboutHero() {
     return () => ctx.revert();
   }, [enhanced]);
 
+  // Mobile-only (the fallback branch below, minus reduced-motion users, who
+  // keep the static full-color photo): no pin, just the photo draining to
+  // grayscale as it scrolls through the viewport -- same color-to-B&W
+  // direction as ProjectHero's cover photo. Starts at "top top" rather than
+  // "top bottom": the photo already sits inside the first screen on load,
+  // so "top bottom" would have it ~60% gray before any scrolling at all.
+  const mobileScrub = !reduceMotion && !isDesktop;
+
+  useEffect(() => {
+    if (!mobileScrub) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        mobileImageRef.current,
+        { filter: "grayscale(0%)" },
+        {
+          filter: "grayscale(100%)",
+          ease: "none",
+          scrollTrigger: {
+            trigger: mobileImageRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        }
+      );
+    });
+
+    return () => ctx.revert();
+  }, [mobileScrub]);
+
   if (!enhanced) {
     // Shared fallback for both the reduced-motion opt-out and mobile/narrow
     // viewports -- stacks image-over-text (full width) below md, sits side
     // by side at md and up (same pattern as home/About.jsx's own fallback).
+    // Below md the photo is a full-bleed hero starting at y=0 behind the
+    // transparent Nav (no top padding, no side padding -- the text column
+    // carries its own px-6 instead), same treatment as the desktop branch
+    // and project pages. md+ (reduced-motion desktop) keeps its padded
+    // side-by-side layout unchanged.
     return (
       <section
-        className="flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
+        className="flex w-full flex-col items-center gap-8 pb-16 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
         style={{ backgroundColor: CREAM }}
       >
         <h1 className="sr-only">About Studio SP_ACE</h1>
-        <div className="relative h-[50vh] w-full overflow-hidden md:h-[70vh] md:w-1/2">
+        <div ref={mobileImageRef} className="relative h-[50vh] w-full overflow-hidden md:h-[70vh] md:w-1/2">
           <Image
             src="/images/about/about-cover.webp"
             alt="Priyanka and Shubham, co-founders of Studio SP_ACE"
@@ -177,8 +215,13 @@ export default function AboutHero() {
             sizes="(max-width: 767px) 100vw, 50vw"
             className="object-cover"
           />
+          {/* Same top-anchored band as the desktop branch below, so the
+              transparent Nav's cream logo/links stay legible over the
+              photo's light sky. Mobile only -- at md+ this branch's photo
+              sits in padded flow, not under the Nav. */}
+          <div className="absolute left-0 top-0 h-[250px] w-full bg-gradient-to-b from-black/50 via-black/20 to-transparent md:hidden" />
         </div>
-        <div className="w-full md:w-1/2">
+        <div className="w-full px-6 md:w-1/2 md:px-0">
           <StudioCopy />
         </div>
       </section>

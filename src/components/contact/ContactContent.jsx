@@ -63,15 +63,13 @@ const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
 // "Studio" (not "Studio Location") and wants Instagram as its own stacked
 // entry rather than hardcoded separately, so the *shape* differs even
 // though the real values are identical to (and sourced from the same
-// constants as) STUDIO_INFO/INSTAGRAM_URL above. Only 3 client-provided
-// inboxes remain in total: hello@ and inquiry@ here, with the client's
-// own exact labels ("Main inbox/General", "Inquiries"), plus careers@ in
-// the right/"Join Our Team" panel. The personal shubham@/priyanka@
-// inboxes were dropped at the client's latest request.
+// constants as) STUDIO_INFO/INSTAGRAM_URL above. Per the client's latest
+// request, hello@ (labelled just "General") is the only inbox listed here;
+// careers@ lives in the right/"Join Our Team" panel. The inquiry@ and
+// personal shubham@/priyanka@ inboxes were all dropped.
 const GENERAL_INQUIRIES_ENTRIES = [
   { label: "Studio", value: "Bangalore, India" },
-  { label: "Main Inbox / General", value: "hello@studiospace.co.in", href: "mailto:hello@studiospace.co.in" },
-  { label: "Inquiries", value: "inquiry@studiospace.co.in", href: "mailto:inquiry@studiospace.co.in" },
+  { label: "General", value: "hello@studiospace.co.in", href: "mailto:hello@studiospace.co.in" },
   { label: "Instagram", value: "@studio_sp_ace", href: INSTAGRAM_URL },
 ];
 
