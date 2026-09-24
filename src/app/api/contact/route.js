@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { EMAIL_RE, SMTP_NOT_CONFIGURED_LOG, escapeHtml, getMailer } from "@/lib/mailer";
 
 // Must match ContactForm's `name` attributes and field order in
 // ContactContent.jsx exactly -- this is the server-side mirror of that
@@ -17,17 +17,6 @@ const FIELDS = [
   { key: "projectType", label: "Project Type", maxLength: 100 },
   { key: "projectDetails", label: "Tell us about your project", maxLength: 5000 },
 ];
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 export async function POST(request) {
   const ip = getClientIp(request);
@@ -77,16 +66,12 @@ export async function POST(request) {
     );
   }
 
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, CONTACT_TO_EMAIL, CONTACT_FROM_EMAIL } =
-    process.env;
-
   // Never tell the client which specific env var is missing -- that's
   // internal deployment detail, not something a site visitor should see.
   // The real reason goes to the server log only.
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !CONTACT_TO_EMAIL) {
-    console.error(
-      "[/api/contact] SMTP is not configured -- set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and CONTACT_TO_EMAIL in .env.local (see .env.example)."
-    );
+  const mailer = getMailer();
+  if (!mailer) {
+    console.error(`[/api/contact] ${SMTP_NOT_CONFIGURED_LOG}`);
     return NextResponse.json(
       {
         ok: false,
@@ -96,13 +81,6 @@ export async function POST(request) {
       { status: 500 }
     );
   }
-
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT),
-    secure: Number(SMTP_PORT) === 465,
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  });
 
   const textBody = FIELDS.map(({ key, label }) => `${label}: ${data[key]}`).join("\n");
   const htmlBody = `<table cellpadding="4" cellspacing="0">${FIELDS.map(
@@ -114,9 +92,9 @@ export async function POST(request) {
   ).join("")}</table>`;
 
   try {
-    await transporter.sendMail({
-      from: CONTACT_FROM_EMAIL || SMTP_USER,
-      to: CONTACT_TO_EMAIL,
+    await mailer.transporter.sendMail({
+      from: mailer.from,
+      to: mailer.to,
       replyTo: data.email,
       subject: `New project enquiry from ${data.name}`,
       text: textBody,

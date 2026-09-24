@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Button from "@/components/ui/Button";
+import ContactForm from "@/components/contact/ContactForm";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
 
@@ -67,45 +67,11 @@ function InlineWordmark({ text }) {
   );
 }
 
-function FormField({ label, ...inputProps }) {
-  return (
-    <label className="block">
-      <span
-        className="block text-xs uppercase tracking-[0.15em]"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
-      >
-        {label} *
-      </span>
-      <input
-        {...inputProps}
-        required
-        // py-2.5 (not just pb-2) gives this a taller tap/focus target on
-        // mobile -- previously ~29px tall, under the ~44px touch-target
-        // guideline. Same fix as ContactContent.jsx's own fieldClass.
-        className="mt-2 w-full border-0 border-b bg-transparent py-2.5 text-sm focus:outline-none"
-        style={{
-          borderColor: "rgba(247, 239, 228, 0.3)",
-          color: CREAM,
-          fontFamily: "var(--font-manrope)",
-        }}
-      />
-    </label>
-  );
-}
-
+// Heading/copy unchanged; the form is the full project enquiry form, shared
+// with the Contact page (same fields, validation, /api/contact POST and
+// success popup -- see ContactForm.jsx). "text" keeps the Footer's own
+// underlined submit button rather than the Contact page's filled one.
 function SignupBlock({ blockRef }) {
-  const [submitted, setSubmitted] = useState(false);
-
-  // No backend or email service is wired up yet -- this just flips local
-  // state instead of letting the browser fall back to a native GET submit
-  // (which would reload the page with every field appended to the URL as a
-  // query string). Same placeholder pattern as ContactContent's form; before
-  // launch, replace this handler with a real submission.
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
-
   return (
     <div ref={blockRef} className="col-span-2 md:col-span-1">
       <h3 style={{ fontFamily: "var(--font-agatho)", color: CREAM }} className="leading-none">
@@ -124,39 +90,9 @@ function SignupBlock({ blockRef }) {
         Subscribe to join our community and stay up to date with the studio.
       </p>
 
-      {submitted ? (
-        <p
-          className="mt-8 max-w-xs text-sm"
-          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.8 }}
-        >
-          Thanks for subscribing — we&apos;ll keep you posted.
-        </p>
-      ) : (
-        <form onSubmit={handleSubmit} className="mt-8 w-full max-w-sm">
-          <div className="grid grid-cols-2 gap-6">
-            <FormField label="First Name" type="text" name="firstName" autoComplete="given-name" />
-            <FormField label="Last Name" type="text" name="lastName" autoComplete="family-name" />
-          </div>
-
-          <div className="relative mt-6 max-w-xs">
-            <FormField label="Email" type="email" name="email" autoComplete="email" />
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              aria-hidden="true"
-              className="pointer-events-none absolute right-0 bottom-3"
-            >
-              <path d="M1 1L11 6L1 11V1Z" fill={CREAM} />
-            </svg>
-          </div>
-
-          <Button type="submit" variant="text" className="mt-8">
-            Submit Form
-          </Button>
-        </form>
-      )}
+      <div className="mt-8">
+        <ContactForm submitVariant="text" />
+      </div>
     </div>
   );
 }
