@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
+import InlineWordmark from "@/components/ui/InlineWordmark";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -85,7 +86,7 @@ export default function MeetFounders() {
   const noteRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
-  // "The People Behind SP ACE" -- a small transitional heading between
+  // "The People Behind SP_ACE" -- a small transitional heading between
   // AboutHero above and the founders content below, replacing the old
   // hand-drawn "FOUNDERS" wordmark. Scroll-scrubbed (not one-shot): the
   // client asked for the zoom to happen gradually as they scroll, not play
@@ -212,7 +213,9 @@ export default function MeetFounders() {
         />
         <h2
           ref={peopleHeadingTextRef}
-          className="whitespace-nowrap text-4xl md:text-6xl lg:text-7xl"
+          // min(8.2vw, 36px) below md: at a flat text-4xl the nowrap heading
+          // (~378px) outgrew the 375px viewport's 327px content width.
+          className="whitespace-nowrap text-[min(8.2vw,2.25rem)] md:text-6xl lg:text-7xl"
           style={{
             fontFamily: "var(--font-agatho)",
             color: INK,
@@ -220,7 +223,7 @@ export default function MeetFounders() {
             ...(reduceMotion ? undefined : { opacity: 0 }),
           }}
         >
-          The People Behind SP ACE
+          The People Behind <InlineWordmark text="SP_ACE" />
         </h2>
         <div
           ref={peopleHeadingRightLineRef}

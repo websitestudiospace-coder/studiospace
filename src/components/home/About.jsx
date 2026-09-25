@@ -73,7 +73,7 @@ function AboutCopy() {
       </p>
       <Link
         href="/about"
-        className="mt-8 inline-block w-max uppercase tracking-[0.15em] text-xs md:text-sm border-b pb-1"
+        className="hit-area mt-8 inline-block w-max uppercase tracking-[0.15em] text-xs md:text-sm border-b pb-1"
         style={{
           fontFamily: "var(--font-manrope)",
           color: INK,

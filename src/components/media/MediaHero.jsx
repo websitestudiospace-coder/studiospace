@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
+import InlineWordmark from "@/components/ui/InlineWordmark";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -17,33 +18,6 @@ const CREAM = "#F7EFE4";
 // Matches the standardized section-heading scale from the Phase 3 pass
 // (About/Projects/Press/Contact all share this).
 const HEADING_CLASS = "text-[32px] md:text-[48px]";
-
-// Bundled Agatho font's underscore glyph is a "buy font" watermark, not a
-// real underscore -- draw it as a small decorative bar instead of relying
-// on the font's own glyph. Duplicated locally rather than shared/extracted
-// -- this is already the third copy of this exact pattern in this codebase
-// (Footer.jsx, home/Press.jsx), an established precedent for this specific
-// small helper, not new debt.
-function InlineWordmark({ text }) {
-  return text.split("").map((char, i) =>
-    char === "_" ? (
-      <span
-        key={i}
-        aria-hidden="true"
-        style={{
-          display: "inline-block",
-          position: "relative",
-          top: "0.14em",
-          width: "0.32em",
-          height: "0.09em",
-          backgroundColor: "currentColor",
-        }}
-      />
-    ) : (
-      char
-    )
-  );
-}
 
 // Rebuilt to structurally mirror ContactContent.jsx's own hero -- itself
 // explicitly modeled on ProjectHero.jsx's established visual language

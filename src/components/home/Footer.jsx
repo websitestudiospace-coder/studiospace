@@ -8,6 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ContactForm from "@/components/contact/ContactForm";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
+import InlineWordmark from "@/components/ui/InlineWordmark";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -40,32 +41,6 @@ const NAV_LINKS = [
 const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://instagram.com/studio_sp_ace" },
 ];
-
-// Renders "SP_ACE" as normal readable text with the underscore drawn as a
-// small decorative bar (see the big wordmark below for why: the bundled
-// Agatho font's underscore glyph is a "buy font" watermark, not a real
-// underscore). Used wherever the wordmark appears inline in copy, sized
-// relative to the surrounding text via em units.
-function InlineWordmark({ text }) {
-  return text.split("").map((char, i) =>
-    char === "_" ? (
-      <span
-        key={i}
-        aria-hidden="true"
-        style={{
-          display: "inline-block",
-          position: "relative",
-          top: "0.14em",
-          width: "0.32em",
-          height: "0.09em",
-          backgroundColor: "currentColor",
-        }}
-      />
-    ) : (
-      char
-    )
-  );
-}
 
 // Heading/copy unchanged; the form is the full project enquiry form, shared
 // with the Contact page (same fields, validation, /api/contact POST and

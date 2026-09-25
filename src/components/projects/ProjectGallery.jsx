@@ -289,13 +289,17 @@ export default function ProjectGallery({ name, photos = [] }) {
   if (photos.length === 0) return null;
 
   return (
-    <section className="w-full py-16 md:py-24" style={{ backgroundColor: CREAM }}>
+    <section className="w-full px-6 py-16 md:px-0 md:py-24" style={{ backgroundColor: CREAM }}>
       {/* Full-width relative to the viewport, not this page's usual
           max-w-[1100px] content column -- same override IndiaMap.jsx uses
           for its own full-bleed map (no horizontal padding on the section,
           no max-w/mx-auto on this grid itself), so photos actually run edge
           to edge instead of sitting in a narrower centered block with dead
-          cream space on either side. */}
+          cream space on either side. Mobile only keeps the site's 24px
+          gutter (px-6) -- at phone width, photos flush against the screen
+          edges read as a layout bug next to the gutter-aligned text around
+          them. The ResizeObserver below measures this div's own width, so
+          the columns reflow to fit inside that padding. */}
       <div
         ref={containerRef}
         className="relative w-full"

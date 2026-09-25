@@ -77,7 +77,7 @@ function StudioInfo({ infoRef }) {
           {item.href ? (
             <a
               href={item.href}
-              className="mt-1 inline-block text-sm transition-opacity duration-200 ease-out hover:opacity-70 md:text-base"
+              className="hit-area mt-1 inline-block text-sm transition-opacity duration-200 ease-out hover:opacity-70 md:text-base"
               style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
             >
               {item.value}
@@ -104,7 +104,7 @@ function StudioInfo({ infoRef }) {
           href={INSTAGRAM_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1 inline-block text-sm transition-opacity duration-200 ease-out hover:opacity-70 md:text-base"
+          className="hit-area mt-1 inline-block text-sm transition-opacity duration-200 ease-out hover:opacity-70 md:text-base"
           style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
         >
           @studio_sp_ace
@@ -171,7 +171,7 @@ function InquiriesSplit({ splitRef }) {
                   href={entry.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 inline-block text-sm transition-opacity duration-200 ease-out hover:opacity-70 md:text-base"
+                  className="hit-area mt-1 inline-block text-sm transition-opacity duration-200 ease-out hover:opacity-70 md:text-base"
                   style={{ fontFamily: "var(--font-manrope)", color: INK }}
                 >
                   {entry.value}
@@ -215,7 +215,7 @@ function InquiriesSplit({ splitRef }) {
             page link instead if/when the client sets one up. */}
         <a
           href={`mailto:${CAREERS_EMAIL}`}
-          className="mt-6 inline-block border-b pb-0.5 text-sm md:text-base"
+          className="hit-area mt-6 inline-block border-b pb-0.5 text-sm md:text-base"
           style={{ fontFamily: "var(--font-manrope)", color: CREAM, borderColor: CREAM }}
         >
           {CAREERS_EMAIL}
@@ -341,7 +341,11 @@ export default function ContactContent({ heroPhoto }) {
         </div>
       </section>
 
-      <section className="w-full py-16 md:py-24" style={{ backgroundColor: INK }}>
+      {/* Top padding only: this section ends with InquiriesSplit's cream/
+          maroon panels and is followed directly by the (also INK) Footer,
+          so a bottom padding here just stacked onto the Footer's own top
+          padding as one ~140px band of empty dark space between them. */}
+      <section className="w-full pt-16 md:pt-24" style={{ backgroundColor: INK }}>
         <div className="mx-auto w-full max-w-[1100px] px-6 md:px-16">
           <div className="grid grid-cols-1 gap-16 md:grid-cols-[1.4fr_1fr]">
             <div>

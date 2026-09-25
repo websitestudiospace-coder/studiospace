@@ -184,7 +184,7 @@ export default function ProjectsGrid({ projects }) {
                     fontFamily: "var(--font-manrope)",
                     color: CREAM,
                     opacity: 0.75,
-                    fontSize: "clamp(11px, 1vw, 13px)",
+                    fontSize: "clamp(12px, 1vw, 13px)",
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
                   }}

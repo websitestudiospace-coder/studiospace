@@ -11,7 +11,7 @@ const VARIANT_CLASSES = {
     "inline-block uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-90",
   secondary:
     "inline-block rounded-full transition-opacity duration-200 ease-out hover:opacity-70",
-  text: "inline-block border-b pb-1 uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70",
+  text: "hit-area inline-block border-b pb-1 uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70",
   icon: "inline-flex shrink-0 items-center justify-center rounded-full transition-opacity duration-200 ease-out hover:opacity-60",
 };
 

@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Button from "@/components/ui/Button";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
+import InlineWordmark from "@/components/ui/InlineWordmark";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -36,30 +37,6 @@ function ArrowIcon() {
         strokeLinejoin="round"
       />
     </svg>
-  );
-}
-
-// Bundled Agatho font's underscore glyph is a "buy font" watermark, not a
-// real underscore (see Footer.jsx's InlineWordmark) -- draw it as a small
-// decorative bar instead of relying on the font's own glyph.
-function InlineWordmark({ text }) {
-  return text.split("").map((char, i) =>
-    char === "_" ? (
-      <span
-        key={i}
-        aria-hidden="true"
-        style={{
-          display: "inline-block",
-          position: "relative",
-          top: "0.14em",
-          width: "0.32em",
-          height: "0.09em",
-          backgroundColor: "currentColor",
-        }}
-      />
-    ) : (
-      char
-    )
   );
 }
 
@@ -189,7 +166,7 @@ function PressCarousel({
         </div>
       </div>
 
-      <div className="mt-8 flex items-center justify-center gap-1 md:mt-10">
+      <div className="mt-8 flex items-center justify-center md:mt-10">
         {items.map((item, i) => (
           <button
             key={item.publication + item.date + item.headline}
@@ -197,10 +174,10 @@ function PressCarousel({
             aria-label={`Go to press item ${i + 1}`}
             aria-current={i === index}
             onClick={() => onDotClick(i)}
-            // p-2.5 (not p-1.5) grows the invisible tap zone toward the
-            // ~44px touch-target guideline without changing the visible
-            // dot's own size at all -- purely more padding.
-            className="flex items-center justify-center p-2.5"
+            // A fixed 44x44 tap box (the touch-target guideline) around the
+            // unchanged visible dot. The row has no gap: the boxes' own
+            // padding already spaces the dots out.
+            className="flex h-11 min-w-11 items-center justify-center"
           >
             <span
               className="h-2.5 rounded-full transition-all duration-300"

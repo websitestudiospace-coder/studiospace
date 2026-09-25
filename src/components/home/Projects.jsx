@@ -51,7 +51,7 @@ function ProjectsHeader({ headingRef, seeAllRef }) {
       <Link
         ref={seeAllRef}
         href="/projects"
-        className="group inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] md:text-sm"
+        className="hit-area group inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] md:text-sm"
         style={{ fontFamily: "var(--font-manrope)", color: INK }}
       >
         <span className="border-b border-transparent pb-1 transition-colors duration-200 ease-out group-hover:border-current">

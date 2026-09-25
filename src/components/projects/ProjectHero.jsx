@@ -63,7 +63,7 @@ function StatBlock({ label, value }) {
   return (
     <div>
       <p
-        className="text-[11px] uppercase tracking-[0.15em]"
+        className="text-xs uppercase tracking-[0.15em]"
         style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
       >
         {label}
@@ -91,7 +91,7 @@ function DetailsPanelContent({ project, onReadMore }) {
       <button
         type="button"
         onClick={onReadMore}
-        className="mt-4 inline-block w-max uppercase tracking-[0.15em] text-xs md:text-sm border-b pb-1"
+        className="hit-area mt-4 inline-block w-max uppercase tracking-[0.15em] text-xs md:text-sm border-b pb-1"
         style={{ fontFamily: "var(--font-manrope)", color: INK, borderColor: INK }}
       >
         Read More
