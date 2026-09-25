@@ -198,7 +198,11 @@ export default function MeetFounders() {
           opacity, full-width lines), no animation. */}
       <div
         ref={peopleHeadingWrapRef}
-        className="flex min-h-[50vh] w-full items-center justify-center gap-6 px-6 md:min-h-[58vh]"
+        // min-h-[30vh] below md (was 50vh): on a phone the extra height was
+        // just ~190px of blank cream above and below the one-line heading.
+        // The zoom's scrub window (trigger top 90% -> 30%) is measured from
+        // this box's top, not its height, so it still plays in full.
+        className="flex min-h-[30vh] w-full items-center justify-center gap-6 px-6 md:min-h-[58vh]"
       >
         <div
           ref={peopleHeadingLeftLineRef}

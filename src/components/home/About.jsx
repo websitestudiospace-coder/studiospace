@@ -282,8 +282,18 @@ export default function About() {
     // by side at md and up.
     return (
       <section
-        className="flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
-        style={{ backgroundColor: CREAM }}
+        className="relative flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
+        style={{
+          backgroundColor: CREAM,
+          // Same pull-up as the desktop branch below (see its marginTop
+          // comment): Quote's full-height sticky box leaves its empty lower
+          // half scrolling past after the pin releases -- ~420px of blank
+          // cream on a phone. Starting this section 35svh earlier slides it
+          // over that space (relative, so it paints above the sticky box),
+          // leaving ~130px. Only on the animated mobile path: under reduced
+          // motion Quote renders as plain stacked text with no sticky box.
+          ...(mobileAnim ? { marginTop: "-35svh" } : undefined),
+        }}
       >
         {/* On the animated mobile path the grayscale lives on this wrapper
             (inline, as GSAP's tween start state) instead of the image's
