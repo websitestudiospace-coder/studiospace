@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Hero from "./Hero";
@@ -11,29 +11,21 @@ if (typeof window !== "undefined") {
 }
 
 // Matches the old GSAP `pin:true` distance ("+=60%" of the trigger's own
-// 100vh) as extra height on the sticky wrapper below -- 100vh natural +
-// 60vh reserved = 160vh total, so nothing after this component shifts.
+// 100svh) as extra height on the sticky wrapper below -- 100svh natural +
+// 60svh reserved = 160svh total, so nothing after this component shifts.
 const PIN_EXTRA_VH = 60;
 
 export default function HeroQuoteTransition() {
   const heroPinRef = useRef(null);
   const heroInnerRef = useRef(null);
   const reduceMotion = useReducedMotion();
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(min-width: 768px)");
-    const update = () => setIsDesktop(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
-
-  // Equivalent to the single compound query this used to run
-  // ("(min-width: 768px) and (prefers-reduced-motion: no-preference)") --
-  // split into the two matchMedia checks every other pinned section already
-  // keeps separate, combined here the same way they combine `enhanced`.
-  const parallax = isDesktop && !reduceMotion;
+  // Runs at every viewport width (it used to be desktop-only); only
+  // reduced motion opts out. Heights below are svh, not vh, to match
+  // Hero's own h-[100svh]: on mobile Safari vh is the toolbar-collapsed
+  // viewport, taller than what's on screen while the toolbar shows (see
+  // About.jsx's section-height comment for the same issue). On desktop
+  // svh and vh are identical.
+  const parallax = !reduceMotion;
 
   useEffect(() => {
     if (!parallax) return;
@@ -96,10 +88,10 @@ export default function HeroQuoteTransition() {
     <div
       ref={heroPinRef}
       className="relative z-0 w-full"
-      style={{ height: `${100 + PIN_EXTRA_VH}vh` }}
+      style={{ height: `${100 + PIN_EXTRA_VH}svh` }}
     >
       <div
-        className="sticky top-0 h-screen w-full overflow-hidden"
+        className="sticky top-0 h-[100svh] w-full overflow-hidden"
         // Opaque backdrop for the parallax fade below: heroInnerRef's own
         // opacity dips to 0.7 as this pin scrolls, and neither this div nor
         // its ancestors otherwise paint anything -- with no backdrop, that

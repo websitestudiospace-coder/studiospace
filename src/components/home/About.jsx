@@ -90,6 +90,8 @@ export default function About() {
   const outerRef = useRef(null);
   const imageRef = useRef(null);
   const textRef = useRef(null);
+  const mobileImageRef = useRef(null);
+  const mobileTextRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -229,6 +231,51 @@ export default function About() {
     enhanced
   );
 
+  // Mobile's own, non-pinned version of the reveal (the pinned split above
+  // doesn't fit a phone): the photo scales up from 0.9 and goes grayscale
+  // to color, scrubbed across its entry into the viewport, and the copy
+  // fades/slides up once as it arrives. Reduced motion keeps the static
+  // grayscale layout. Waits for the preloader for the same reason as the
+  // desktop trigger above (layout above settles late).
+  const mobileAnim = !reduceMotion && !isDesktop;
+
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
+        gsap.fromTo(
+          mobileImageRef.current,
+          { scale: 0.9, filter: "grayscale(100%)" },
+          {
+            scale: 1,
+            filter: "grayscale(0%)",
+            ease: "none",
+            scrollTrigger: {
+              trigger: mobileImageRef.current,
+              start: "top 90%",
+              end: "top 25%",
+              scrub: true,
+            },
+          }
+        );
+        gsap.from(mobileTextRef.current, {
+          opacity: 0,
+          y: 24,
+          duration: 0.7,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: mobileTextRef.current,
+            start: "top 85%",
+            toggleActions: "play none none none",
+          },
+        });
+      });
+
+      return () => ctx.revert();
+    },
+    [],
+    mobileAnim
+  );
+
   if (!enhanced) {
     // Shared fallback for both the reduced-motion opt-out and mobile/narrow
     // viewports -- stacks image-over-text (full width) below md, sits side
@@ -238,16 +285,23 @@ export default function About() {
         className="flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
         style={{ backgroundColor: CREAM }}
       >
-        <div className="relative h-[50vh] w-full overflow-hidden md:h-[70vh] md:w-[55%]">
+        {/* On the animated mobile path the grayscale lives on this wrapper
+            (inline, as GSAP's tween start state) instead of the image's
+            static `grayscale` class, which would otherwise pin it gray. */}
+        <div
+          ref={mobileImageRef}
+          className="relative h-[50vh] w-full overflow-hidden md:h-[70vh] md:w-[55%]"
+          style={mobileAnim ? { filter: "grayscale(100%)", transform: "scale(0.9)" } : undefined}
+        >
           <Image
             src="/images/about/about-hero.jpg"
             alt="Studio SP_ACE"
             fill
             sizes="(max-width: 767px) 100vw, 55vw"
-            className="object-cover grayscale"
+            className={mobileAnim ? "object-cover" : "object-cover grayscale"}
           />
         </div>
-        <div className="w-full md:w-[45%]">
+        <div ref={mobileTextRef} className="w-full md:w-[45%]">
           <AboutCopy />
         </div>
       </section>

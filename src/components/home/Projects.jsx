@@ -253,15 +253,50 @@ export default function Projects() {
     enhanced
   );
 
+  // Mobile's own, non-pinned version of the same sequence (the pinned one
+  // above can't fit stacked cards in one screen): heading and "See All"
+  // fade up, each card scales 1.15 -> 1 with a fade as it individually
+  // enters the viewport, then the CTA fades in. One-shot per element, in
+  // normal document flow. Reduced motion keeps the static layout.
+  const mobileAnim = !reduceMotion && !isDesktop;
+
+  usePreloaderGate(
+    () => {
+      const ctx = gsap.context(() => {
+        const reveal = (targets, from, trigger) =>
+          gsap.from(targets, {
+            ...from,
+            duration: 0.7,
+            ease: "power3.out",
+            stagger: 0.12,
+            scrollTrigger: { trigger, start: "top 85%", toggleActions: "play none none none" },
+          });
+
+        reveal([headingRef.current, seeAllRef.current], { opacity: 0, y: 24 }, headingRef.current);
+        cardRefs.current.filter(Boolean).forEach((card) => {
+          reveal(card, { opacity: 0, scale: 1.15 }, card);
+        });
+        reveal(ctaRef.current, { opacity: 0, y: 20 }, ctaRef.current);
+      }, sectionRef);
+
+      return () => ctx.revert();
+    },
+    [],
+    mobileAnim
+  );
+
   if (!enhanced) {
     return (
+      // overflow-x-clip: a full-width card starting at scale 1.15 is
+      // briefly wider than the phone screen.
       <section
-        className="w-full px-6 py-16 md:px-16 md:py-24"
+        ref={sectionRef}
+        className="w-full overflow-x-clip px-6 py-16 md:px-16 md:py-24"
         style={{ backgroundColor: CREAM }}
       >
         <div className="mx-auto w-full max-w-[1100px]">
-          <ProjectsHeader />
-          <ProjectsGrid cardRefs={null} ctaRef={{ current: null }} />
+          <ProjectsHeader headingRef={headingRef} seeAllRef={seeAllRef} />
+          <ProjectsGrid cardRefs={cardRefs} ctaRef={ctaRef} />
         </div>
       </section>
     );
