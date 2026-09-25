@@ -1,9 +1,9 @@
 import { PROJECTS } from "@/data/projects";
 
-// TODO: placeholder production domain -- swap for the real studio-splace
-// domain before launch. Not defined anywhere else in the codebase (no env
-// var / constant found), so it's set here and mirrored in robots.js.
-const BASE_URL = "https://studiospace.example.com";
+// Production domain. Not defined anywhere else in the codebase (no env var
+// / shared constant), so it's set here and mirrored in robots.js and
+// layout.js.
+const BASE_URL = "https://studiospace.co.in";
 
 export default function sitemap() {
   const staticRoutes = [

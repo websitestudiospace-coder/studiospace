@@ -1,6 +1,5 @@
-// TODO: placeholder production domain -- swap for the real studio-splace
-// domain before launch (kept in sync with src/app/sitemap.js).
-const BASE_URL = "https://studiospace.example.com";
+// Production domain (kept in sync with src/app/sitemap.js and layout.js).
+const BASE_URL = "https://studiospace.co.in";
 
 export default function robots() {
   return {

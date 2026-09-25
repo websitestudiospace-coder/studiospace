@@ -15,9 +15,8 @@ const agatho = localFont({
   variable: "--font-agatho",
 });
 
-// TODO: placeholder production domain -- swap for the real studio-splace
-// domain before launch (kept in sync with src/app/sitemap.js and robots.js).
-const BASE_URL = "https://studiospace.example.com";
+// Production domain (kept in sync with src/app/sitemap.js and robots.js).
+const BASE_URL = "https://studiospace.co.in";
 
 // TODO: placeholder OG/Twitter share image -- using an existing project
 // cover photo since no dedicated 1200x630 social-share image exists yet.
