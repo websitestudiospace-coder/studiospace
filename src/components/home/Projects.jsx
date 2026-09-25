@@ -256,7 +256,7 @@ export default function Projects() {
   if (!enhanced) {
     return (
       <section
-        className="w-full px-6 py-12 md:px-16 md:py-24"
+        className="w-full px-6 py-16 md:px-16 md:py-24"
         style={{ backgroundColor: CREAM }}
       >
         <div className="mx-auto w-full max-w-[1100px]">
