@@ -53,7 +53,8 @@ export default function ContactPage() {
     <>
       <Nav />
       <ContactContent heroPhoto={CONTACT_HERO_PHOTO} />
-      <Footer />
+      {/* The enquiry form already sits just above as "Design With Us". */}
+      <Footer hideForm />
     </>
   );
 }

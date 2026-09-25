@@ -42,7 +42,8 @@ const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://instagram.com/studio_sp_ace" },
 ];
 
-// Heading/copy unchanged; the form is the full project enquiry form, shared
+// Intro copy invites a project enquiry (not a newsletter signup -- this
+// used to be one); the form is the full project enquiry form, shared
 // with the Contact page (same fields, validation, /api/contact POST and
 // success popup -- see ContactForm.jsx). "text" keeps the Footer's own
 // underlined submit button rather than the Contact page's filled one.
@@ -62,7 +63,8 @@ function SignupBlock({ blockRef }) {
         className="mt-4 max-w-xs text-sm"
         style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
       >
-        Subscribe to join our community and stay up to date with the studio.
+        Have a space in mind? Share a few details about your project and
+        we&apos;ll be in touch.
       </p>
 
       <div className="mt-8">
@@ -80,9 +82,19 @@ function SignupBlock({ blockRef }) {
 // Stacking them removes that column entirely rather than inventing filler
 // content (no second confirmed social account or studio address/hours
 // exists yet to legitimately fill a real third column).
-function LinksColumns({ navRef, socialRef }) {
+//
+// `fullWidth` (Footer's hideForm case): with no form block beside it, the
+// stacked column would sit in the left half with the right half empty, so
+// at desktop it spans both grid columns with nav left and social right.
+function LinksColumns({ navRef, socialRef, fullWidth = false }) {
   return (
-    <div className="contents md:flex md:flex-col md:items-start md:gap-8">
+    <div
+      className={
+        fullWidth
+          ? "contents md:col-span-2 md:flex md:flex-row md:items-start md:justify-between"
+          : "contents md:flex md:flex-col md:items-start md:gap-8"
+      }
+    >
       <nav ref={navRef} className="flex flex-col items-start">
         {NAV_LINKS.map((link) => (
           <Link
@@ -165,7 +177,10 @@ function LegalRow() {
   );
 }
 
-export default function Footer() {
+// `hideForm` drops the enquiry form block (SignupBlock) and keeps the rest
+// of the footer -- used on /contact, where the same form already sits
+// directly above the footer as "Design With Us".
+export default function Footer({ hideForm = false }) {
   const sectionRef = useRef(null);
   const signupRef = useRef(null);
   const navRef = useRef(null);
@@ -185,7 +200,10 @@ export default function Footer() {
         // link columns together, then the wordmark wipes in -- same
         // single-timeline rule as every other section (no separate triggers
         // per piece).
-        gsap.set(signupRef.current, { opacity: 0, y: 24 });
+        // signupRef is null when hideForm skips the form block -- only
+        // animate it when it's actually rendered.
+        const signup = signupRef.current;
+        if (signup) gsap.set(signup, { opacity: 0, y: 24 });
         gsap.set([navRef.current, socialRef.current], { opacity: 0, y: 24 });
         gsap.set(wordmarkRef.current, { clipPath: "inset(0% 100% 0% 0%)" });
 
@@ -197,7 +215,7 @@ export default function Footer() {
           },
         });
 
-        tl.to(signupRef.current, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
+        if (signup) tl.to(signup, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0);
         tl.to(
           [navRef.current, socialRef.current],
           { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
@@ -229,8 +247,8 @@ export default function Footer() {
             one column there (see its own comment), so signup and links are
             the only two real columns. */}
         <div className="grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-2 md:gap-16">
-          <SignupBlock blockRef={signupRef} />
-          <LinksColumns navRef={navRef} socialRef={socialRef} />
+          {!hideForm && <SignupBlock blockRef={signupRef} />}
+          <LinksColumns navRef={navRef} socialRef={socialRef} fullWidth={hideForm} />
         </div>
         <Wordmark wordmarkRef={wordmarkRef} />
         <LegalRow />
