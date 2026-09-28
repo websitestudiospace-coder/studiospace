@@ -77,8 +77,8 @@ function listProjectPhotos(slug) {
 
 // A compressed project video is expected at
 // public/images/projects/<slug>/video.mp4, alongside that project's photos
-// -- with an optional video-poster image (same folder) used as the
-// reduced-motion/mobile fallback frame. Presence of both is recorded in the
+// -- with an optional video-poster image (same folder) shown until
+// playback starts. Presence of both is recorded in the
 // photo manifest (see getManifestEntry) rather than checked on disk, for the
 // same reason listProjectPhotos reads from it. Falls back to the older
 // public/videos/projects/<slug>.mp4 convention if that's ever used instead.
@@ -89,48 +89,15 @@ function getProjectVideo(slug) {
     return {
       src: toCloudinaryUrl(`/images/projects/${slug}/video.mp4`),
       poster: entry.posterFile ? toCloudinaryUrl(`/images/projects/${slug}/${entry.posterFile}`) : null,
-      duration: readMp4Duration(path.join(process.cwd(), "public", "images", "projects", slug, "video.mp4")),
     };
   }
 
   const legacyVideo = path.join(VIDEOS_DIR, `${slug}.mp4`);
   if (fs.existsSync(legacyVideo)) {
-    return { src: `/videos/projects/${slug}.mp4`, poster: null, duration: readMp4Duration(legacyVideo) };
+    return { src: `/videos/projects/${slug}.mp4`, poster: null };
   }
 
   return null;
-}
-
-// Duration (seconds) straight from an MP4's `mvhd` box, so ProjectVideo can
-// size its pinned section on first render instead of after the file has
-// downloaded (which used to shift the page under anyone already scrolling).
-// Only reads the head of the file -- the project videos are encoded with
-// `-movflags +faststart`, which puts the moov/mvhd box at the front. Returns
-// null (ProjectVideo then falls back to measuring after load) if the file
-// or box can't be found.
-function readMp4Duration(filePath) {
-  let fd;
-  try {
-    fd = fs.openSync(filePath, "r");
-    const head = Buffer.alloc(512 * 1024);
-    const bytesRead = fs.readSync(fd, head, 0, head.length, 0);
-    const i = head.subarray(0, bytesRead).indexOf("mvhd");
-    if (i < 0) return null;
-    const version = head[i + 4];
-    // After the 4-byte version/flags: creation + modification times (4 bytes
-    // each in v0, 8 in v1), then timescale (4), then duration (4 or 8).
-    const timescaleAt = i + 8 + (version === 1 ? 16 : 8);
-    const timescale = head.readUInt32BE(timescaleAt);
-    const duration =
-      version === 1
-        ? Number(head.readBigUInt64BE(timescaleAt + 4))
-        : head.readUInt32BE(timescaleAt + 4);
-    return timescale > 0 ? duration / timescale : null;
-  } catch {
-    return null;
-  } finally {
-    if (fd !== undefined) fs.closeSync(fd);
-  }
 }
 
 // Resolves one specific photo (by its manifest filename) from a project's
