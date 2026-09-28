@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { PROJECTS as PROJECT_DATA } from "@/data/projects";
 import Button from "@/components/ui/Button";
+import ProjectCard from "@/components/projects/ProjectCard";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
 
@@ -25,10 +25,10 @@ const PROJECTS = [
   { name: "The Modern Organic Home", image: "/images/projects/project-2.jpg" },
   { name: "The Neo Colonial Home", image: "/images/projects/project-3.jpg" },
   { name: "The Modern Classical Home", image: "/images/projects/project-1.jpg" },
-].map((project) => ({
-  ...project,
-  slug: PROJECT_DATA.find((p) => p.name === project.name)?.slug ?? "",
-}));
+].map((project) => {
+  const data = PROJECT_DATA.find((p) => p.name === project.name);
+  return { ...project, slug: data?.slug ?? "", location: data?.location ?? null };
+});
 
 // Heading + "See All" row. Part of the same pinned/scrubbed sequence as the
 // cards and CTA -- it's the first two steps of that single timeline (see
@@ -64,8 +64,6 @@ function ProjectsHeader({ headingRef, seeAllRef }) {
 }
 
 function ProjectsGrid({ cardRefs, ctaRef }) {
-  const [failedImages, setFailedImages] = useState(() => new Set());
-
   return (
     <>
       {/* grid-cols-1 at mobile, matching /projects index's ProjectsGrid --
@@ -75,50 +73,24 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
           document flow. No fixed-height sticky container to overflow, so
           full-width single-column cards are safe here. */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-8">
+        {/* Same card component as the /projects listing, so the two stay
+            identical -- only the curated photos and this section's own
+            pinned/scrubbed entrance (via cardRefs) differ. */}
         {PROJECTS.map((project, i) => (
-          <Link
+          <ProjectCard
             key={project.name}
             href={project.slug ? `/projects/${project.slug}` : "/projects"}
-            ref={(el) => {
+            name={project.name}
+            location={project.location}
+            image={project.image}
+            // Only the first card is above-the-fold-adjacent priority
+            // content -- cards 2/3 fall through to next/image's default
+            // native lazy loading like every other below-fold image.
+            priority={i === 0}
+            cardRef={(el) => {
               if (el && cardRefs) cardRefs.current[i] = el;
             }}
-            className="group relative block aspect-[4/5] w-full overflow-hidden rounded-[8px]"
-          >
-            {failedImages.has(i) ? (
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: `linear-gradient(135deg, ${INK} 0%, rgba(43,38,34,0.6) 100%)`,
-                }}
-              />
-            ) : (
-              <Image
-                src={project.image}
-                alt={project.name}
-                fill
-                sizes="(max-width: 768px) 100vw, 33vw"
-                // Only the first card is above-the-fold-adjacent priority
-                // content -- cards 2/3 fall through to next/image's default
-                // native lazy loading like every other below-fold image.
-                priority={i === 0}
-                className="object-cover transition-transform duration-200 ease-out group-hover:scale-[1.03]"
-                onError={() =>
-                  setFailedImages((prev) => new Set(prev).add(i))
-                }
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-            <p
-              className="absolute bottom-6 left-6 text-white"
-              style={{
-                fontFamily: "var(--font-manrope)",
-                fontSize: "clamp(16px, 1.8vw, 22px)",
-                fontWeight: 700,
-              }}
-            >
-              {project.name}
-            </p>
-          </Link>
+          />
         ))}
       </div>
 
