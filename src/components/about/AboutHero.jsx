@@ -31,6 +31,13 @@ const SETTLED_IMAGE_WIDTH = 50;
 // as home/About.jsx's own TEXT_SLIDE_X.
 const TEXT_SLIDE_X = 40;
 
+// Mobile: the photo pins full-screen and shrinks 100vh -> 50vh (same
+// pinned, scrubbed height tween as ProjectHero's mobile cover), over a
+// runway equal to the height it loses -- see the mobile branch below for
+// why the two must match.
+const MOBILE_SETTLED_IMAGE_VH = 50;
+const MOBILE_SHRINK_RUNWAY_VH = 100 - MOBILE_SETTLED_IMAGE_VH;
+
 // Micro-label styling shared by both groups below -- same treatment the
 // old single "Our Studio" label used.
 const LABEL_CLASS = "text-xs uppercase tracking-[0.2em] md:text-sm";
@@ -87,6 +94,7 @@ export default function AboutHero() {
   const imageRef = useRef(null);
   const textRef = useRef(null);
   const mobileImageRef = useRef(null);
+  const mobileOuterRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -160,41 +168,112 @@ export default function AboutHero() {
     return () => ctx.revert();
   }, [enhanced]);
 
-  // Mobile-only (the fallback branch below, minus reduced-motion users, who
-  // keep the static full-color photo): no pin, just the photo draining to
-  // grayscale as it scrolls through the viewport -- same color-to-B&W
-  // direction as ProjectHero's cover photo. Starts at "top top" rather than
-  // "top bottom": the photo already sits inside the first screen on load,
-  // so "top bottom" would have it ~60% gray before any scrolling at all.
-  const mobileScrub = !reduceMotion && !isDesktop;
+  // Mobile shrink: the photo box's height scrubs 100% -> 50% of its sticky
+  // h-screen wrapper across the whole runway, linearly (ease "none", full
+  // range), so its bottom edge moves at exactly scroll speed -- which is
+  // what keeps the pulled-up copy below glued to it (see the mobile branch).
+  // It drains from full color to black & white on the same scrub, the same
+  // way the desktop branch above and ProjectHero's cover pair their shrink
+  // with the grayscale filter. Reduced motion gets the static 50vh photo,
+  // already in its settled black & white state.
+  const mobileShrink = !reduceMotion && !isDesktop;
 
   useEffect(() => {
-    if (!mobileScrub) return;
+    if (!mobileShrink) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
         mobileImageRef.current,
-        { filter: "grayscale(0%)" },
+        { height: "100%", filter: "grayscale(0%)" },
         {
+          height: `${MOBILE_SETTLED_IMAGE_VH}%`,
           filter: "grayscale(100%)",
           ease: "none",
           scrollTrigger: {
-            trigger: mobileImageRef.current,
+            trigger: mobileOuterRef.current,
             start: "top top",
-            end: "bottom top",
+            end: "bottom bottom",
             scrub: true,
           },
         }
       );
-    });
+    }, mobileOuterRef);
 
     return () => ctx.revert();
-  }, [mobileScrub]);
+  }, [mobileShrink]);
+
+  // Mobile (below md), with or without reduced motion. Photo turns black &
+  // white as it shrinks (see above), cropped at 35% horizontally (15% left
+  // of center) -- client request, after trying left/right/center/40%.
+  //
+  // Shrink layout: the section is 100vh + a runway equal to the height the
+  // photo loses (50vh), with the photo pinned in a sticky h-screen wrapper.
+  // The copy that follows is pulled up by that same runway, so at scroll s
+  // its top sits at 100vh - s -- exactly where the shrinking photo's bottom
+  // edge is (100vh - s, until it settles at 50vh when the pin releases).
+  // The two move together, with no empty band opening up between them.
+  if (!isDesktop) {
+    return (
+      <>
+        <section
+          ref={mobileOuterRef}
+          className="relative w-full"
+          style={{
+            height: mobileShrink ? `${100 + MOBILE_SHRINK_RUNWAY_VH}vh` : undefined,
+            backgroundColor: CREAM,
+          }}
+        >
+          <h1 className="sr-only">About Studio SP_ACE</h1>
+          {/* z-[1] keeps the photo above the pulled-up copy wherever
+              sub-pixel rounding lets them touch; pointer-events-none since
+              the wrapper's empty lower half sits over that copy mid-pin. */}
+          <div className={mobileShrink ? "pointer-events-none sticky top-0 z-[1] h-screen w-full" : "w-full"}>
+            {/* Height via classes, never an inline style: reduceMotion
+                resolves after the first render, so the shrink tween can
+                start and then be reverted, and ctx.revert() restores the
+                inline style GSAP first saw -- an inline "100%" would come
+                back over the static branch and collapse the box to 0. With
+                no inline height, revert leaves the class in charge.
+                h-[50vh] matches MOBILE_SETTLED_IMAGE_VH (Tailwind needs it
+                written out literally). */}
+            <div
+              ref={mobileImageRef}
+              className={`relative w-full overflow-hidden ${mobileShrink ? "h-full" : "h-[50vh]"}`}
+            >
+              <Image
+                src="/images/about/about-cover.webp"
+                alt="Priyanka and Shubham, co-founders of Studio SP_ACE"
+                fill
+                priority
+                sizes="100vw"
+                className={`object-cover object-[35%_50%] ${mobileShrink ? "" : "grayscale"}`}
+              />
+              {/* Same top-anchored band as the desktop branch, so the
+                  transparent Nav's cream logo/links stay legible over the
+                  photo's light sky. */}
+              <div className="absolute left-0 top-0 h-[250px] w-full bg-gradient-to-b from-black/50 via-black/20 to-transparent" />
+            </div>
+          </div>
+        </section>
+        <div
+          className="relative w-full px-6 pb-16 pt-8"
+          style={{
+            backgroundColor: CREAM,
+            marginTop: mobileShrink ? `-${MOBILE_SHRINK_RUNWAY_VH}vh` : undefined,
+          }}
+        >
+          <StudioCopy />
+        </div>
+      </>
+    );
+  }
 
   if (!enhanced) {
-    // Shared fallback for both the reduced-motion opt-out and mobile/narrow
-    // viewports -- stacks image-over-text (full width) below md, sits side
-    // by side at md and up (same pattern as home/About.jsx's own fallback).
+    // Reduced-motion fallback -- in practice only reached at md and up now
+    // (mobile has its own branch above); the below-md classes are what it
+    // used to share with mobile. Stacks image-over-text (full width) below
+    // md, sits side by side at md and up (same pattern as home/About.jsx's
+    // own fallback).
     // Below md the photo is a full-bleed hero starting at y=0 behind the
     // transparent Nav (no top padding, no side padding -- the text column
     // carries its own px-6 instead), same treatment as the desktop branch
