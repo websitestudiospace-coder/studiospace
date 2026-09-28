@@ -60,7 +60,12 @@ export default function ProjectsGrid({ projects }) {
               isDesktop()
                 ? `top ${DESKTOP_GRID_TOP_PX + window.innerHeight * HERO_SETTLED_REMAINING_VH}px`
                 : "top 85%",
-            toggleActions: "play none none none",
+            // "reverse" on leaveBack: the grid is pulled up underneath the
+            // pinned hero, so scrolling back above the start point has to
+            // hide the cards again (and make them unclickable) -- with
+            // "none" they stayed visible and painted over the hero as it
+            // grew back to full size.
+            toggleActions: "play none none reverse",
           },
         });
       }, gridRef);
