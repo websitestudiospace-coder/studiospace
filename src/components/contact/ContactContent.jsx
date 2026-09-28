@@ -124,11 +124,10 @@ function StudioInfo({ infoRef }) {
 // large two-line uppercase Agatho heading (same HEADING_CLASS every
 // other section heading on this page/site uses) over stacked
 // micro-label + value entries, matching the reference's "large heading,
-// then several labeled contact blocks" hierarchy. Right panel: same
-// heading scale, brand maroon at full opacity (re-confirmed, not a
-// tinted/blended shade -- see the historical muddy-brown bug this
-// avoids), Careers copy/link clearly marked pending real content from the
-// client where it is.
+// then several labeled contact blocks" hierarchy. Right panel: brand
+// maroon at full opacity (re-confirmed, not a tinted/blended shade -- see
+// the historical muddy-brown bug this avoids), with the same heading scale,
+// the careers intro line, and the careers address as plain text.
 function InquiriesSplit({ splitRef }) {
   return (
     <div
@@ -210,16 +209,14 @@ function InquiriesSplit({ splitRef }) {
           Interested in joining our team? We&apos;d love to hear from you.
         </p>
 
-        {/* Client-provided Careers inbox (2026-09-21), replacing the
-            earlier href="#" placeholder. Swap for a real open-positions
-            page link instead if/when the client sets one up. */}
-        <a
-          href={`mailto:${CAREERS_EMAIL}`}
-          className="hit-area mt-6 inline-block border-b pb-0.5 text-sm md:text-base"
-          style={{ fontFamily: "var(--font-manrope)", color: CREAM, borderColor: CREAM }}
+        {/* Client request: the careers address as plain text, not a
+            mailto link (no underline). */}
+        <p
+          className="mt-6 text-sm md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
         >
           {CAREERS_EMAIL}
-        </a>
+        </p>
       </div>
     </div>
   );
