@@ -44,20 +44,25 @@ function getColumnCount(containerWidth) {
   return tier.columns;
 }
 
-// Packs `photos` into `columns` using the standard masonry heuristic --
-// each photo goes into whichever column is currently shortest, using its
-// real width/height (from scripts/photo-manifest.json, see @/lib/projects)
-// to compute a proportional height at that column's width so portraits and
-// landscapes actually read as taller/wider relative to each other, not a
-// random or fixed box.
+// Places `photos` row by row, strictly left to right: photo i goes in column
+// i % columns, stacked under that column's previous photo. The manifest
+// order (scripts/photo-manifest.json, see @/lib/projects) is the client's
+// chosen sequence, so it has to read exactly left-to-right, top-to-bottom.
+// This replaced shortest-column masonry packing, which balanced column
+// heights but put photos in whichever column was shortest, so rows read out
+// of order. Each photo still keeps its real proportions (height from its
+// width/height at the column width), so portraits and landscapes read as
+// taller/wider than each other -- which is also why column bottoms end
+// unevenly on projects mixing in landscape photos. Accepted by the client
+// in exchange for the exact order; don't rebalance.
 function computeMasonryLayout(photos, containerWidth) {
   const columns = getColumnCount(containerWidth);
   const gap = containerWidth >= GAP_BREAKPOINT ? GAP_WIDE : GAP_NARROW;
   const columnWidth = columns > 0 ? (containerWidth - (columns - 1) * gap) / columns : 0;
   const colHeights = new Array(columns).fill(0);
 
-  const items = photos.map((photo) => {
-    const col = colHeights.indexOf(Math.min(...colHeights));
+  const items = photos.map((photo, i) => {
+    const col = i % columns;
     const ratio = photo.width && photo.height ? photo.height / photo.width : FALLBACK_HEIGHT_RATIO;
     const height = columnWidth * ratio;
     const x = col * (columnWidth + gap);
@@ -167,7 +172,8 @@ function GalleryItem({ photo, alt, placed, itemRef, onOpen, onMouseEnter, onMous
 
 // Masonry grid (adapted from React Bits' "Masonry" pattern) replacing the
 // old row-grouped layout (landscape-full-width / portrait-clustered rows,
-// see @/lib/projects's now-removed groupGalleryRows). Real project photos,
+// see @/lib/projects's now-removed groupGalleryRows), now filled strictly
+// left to right rather than shortest-column (see computeMasonryLayout above). Real project photos,
 // full color throughout -- no grayscale/filter anywhere in this component
 // (unlike the site's Google Maps embeds, which are intentionally
 // black-and-white; that's a different, unrelated convention).
