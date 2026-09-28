@@ -7,6 +7,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
+import { SETTLED_HEIGHT_DESKTOP } from "@/components/projects/ProjectsHero";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -14,6 +15,16 @@ if (typeof window !== "undefined") {
 
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
+
+// Desktop: the grid rests this far below the top of the viewport once
+// ProjectsHero's pin releases -- just under its settled heading row
+// (SETTLED_HEIGHT_DESKTOP) plus a small gap, i.e. ~64px below the heading's
+// text. Must match the md:mt-[calc(168px-100vh)] class below (Tailwind
+// needs that value written out literally).
+const DESKTOP_GRID_TOP_PX = SETTLED_HEIGHT_DESKTOP + 8;
+// ProjectsHero finishes shrinking at 85% of its pinned scroll (60vh), so
+// the grid is still 15% of 60vh = 9vh below its resting spot at that point.
+const HERO_SETTLED_REMAINING_VH = 0.09;
 
 export default function ProjectsGrid({ projects }) {
   const gridRef = useRef(null);
@@ -52,17 +63,28 @@ export default function ProjectsGrid({ projects }) {
     () => {
       const ctx = gsap.context(() => {
         const cards = cardRefs.current.filter(Boolean);
-        gsap.set(cards, { opacity: 0, y: 32 });
+        // pointerEvents: on desktop the (still hidden) cards sit under the
+        // pinned hero until they reveal -- don't let them catch clicks.
+        gsap.set(cards, { opacity: 0, y: 32, pointerEvents: "none" });
 
+        const isDesktop = () => window.matchMedia("(min-width: 768px)").matches;
         gsap.to(cards, {
           opacity: 1,
           y: 0,
+          pointerEvents: "auto",
           duration: 0.6,
           ease: "power2.out",
           stagger: 0.12,
           scrollTrigger: {
             trigger: gridRef.current,
-            start: "top 85%",
+            // Desktop: reveal exactly when the hero heading has finished
+            // shrinking into its corner (the grid is pulled up under the hero,
+            // so a plain "top 85%" would fade cards in over the still-large
+            // heading). Mobile keeps its original trigger.
+            start: () =>
+              isDesktop()
+                ? `top ${DESKTOP_GRID_TOP_PX + window.innerHeight * HERO_SETTLED_REMAINING_VH}px`
+                : "top 85%",
             toggleActions: "play none none none",
           },
         });
@@ -94,7 +116,15 @@ export default function ProjectsGrid({ projects }) {
   // moderate (not minimal) gap at rest -- still roughly half the original,
   // uncorrected void. Only applies when the pin animation is actually
   // running (matches ProjectsHero's `enhanced` = `!reduceMotion`).
-  const pullUpClass = reduceMotion ? "" : "mt-[-50vh]";
+  //
+  // Desktop now pulls the grid all the way up to just below the settled
+  // heading row (md:mt-[calc(168px-100vh)], see DESKTOP_GRID_TOP_PX) -- the
+  // -50vh compromise still left ~345px (1440px) to ~435px (1920px) of blank
+  // cream. The overlap problem described above is avoided by timing
+  // instead: the cards stay hidden (and unclickable) until the heading has
+  // settled, then reveal in place (see the reveal trigger above). Mobile
+  // keeps -50vh.
+  const pullUpClass = reduceMotion ? "" : "mt-[-50vh] md:mt-[calc(168px-100vh)]";
 
   // Touch devices get the overlay permanently visible (there's no `:hover`
   // to reveal it on), but at a slightly lower opacity than the desktop

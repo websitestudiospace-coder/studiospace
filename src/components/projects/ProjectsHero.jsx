@@ -23,7 +23,9 @@ const HERO_IMAGE = "/images/projects/project-1.jpg";
 // what's tweened (not a separate image height), so the image -- sized via
 // next/image's `fill` against this same wrapper -- shrinks with it for
 // free, and nothing empty is left behind once the pin releases.
-const SETTLED_HEIGHT_DESKTOP = 160;
+// Exported for ProjectsGrid, which sits its (desktop) grid just below this
+// settled row.
+export const SETTLED_HEIGHT_DESKTOP = 160;
 const SETTLED_HEIGHT_MOBILE = 108;
 
 // Heading font-size keyframes (px, tweened directly rather than via CSS
@@ -39,17 +41,20 @@ const HEADING_START_MOBILE_CAP = 44;
 const HEADING_END_DESKTOP = 56;
 const HEADING_END_MOBILE = 32;
 
-// Settled left inset for the heading, computed to land exactly where
-// ProjectsGrid's own `max-w-[1100px] mx-auto px-6 md:px-16` puts its content
-// edge. An absolutely positioned child is offset from its containing
-// block's padding EDGE, not its padding-adjusted content box, so the
-// wrapper's Tailwind padding classes are invisible to the heading's own
-// `left` -- this reproduces the same "pad, then center within what's left"
-// math by hand instead.
+// Settled left inset for the heading, so its left edge lands exactly on
+// ProjectsGrid's first column. The grid's left edge is its section padding
+// (px-6 / md:px-16) plus centering of its max-w-[1100px] content. The
+// heading, though, is absolutely positioned inside a wrapper that is itself
+// already centered at max-w-[1100px] (padding doesn't offset an absolute
+// child), so the inset is the difference between the two left edges. The
+// old formula added the centering offset a second time, landing the heading
+// ~170px (1440px) to ~410px (1920px) right of the grid on wide screens.
 function computeHeadingInset(isDesktopViewport) {
+  const vw = window.innerWidth;
   const pad = isDesktopViewport ? 64 : 24;
-  const available = window.innerWidth - pad * 2;
-  return available > 1100 ? pad + (available - 1100) / 2 : pad;
+  const gridLeft = pad + Math.max(0, (vw - pad * 2 - 1100) / 2);
+  const wrapperLeft = Math.max(0, (vw - 1100) / 2);
+  return gridLeft - wrapperLeft;
 }
 
 export default function ProjectsHero() {
@@ -165,8 +170,11 @@ export default function ProjectsHero() {
 
   if (reduceMotion) {
     return (
-      <section className="w-full" style={{ backgroundColor: CREAM }}>
-        <div className="mx-auto w-full max-w-[1100px] px-6 pt-16 md:px-16 md:pt-24">
+      // Same container shape as ProjectsGrid (padding outside, centered
+      // max-w-[1100px] inside) so the heading lines up with its first column,
+      // plus bottom padding as the breathing room above the grid.
+      <section className="w-full px-6 pb-12 pt-16 md:px-16 md:pb-16 md:pt-24" style={{ backgroundColor: CREAM }}>
+        <div className="mx-auto w-full max-w-[1100px]">
           <h1
             style={{
               fontFamily: "var(--font-agatho)",
