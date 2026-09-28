@@ -287,14 +287,18 @@ export default function About() {
         className="relative flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-0 md:py-24"
         style={{
           backgroundColor: CREAM,
-          // Same pull-up as the desktop branch below (see its marginTop
-          // comment): Quote's full-height sticky box leaves its empty lower
-          // half scrolling past after the pin releases -- ~420px of blank
-          // cream on a phone. Starting this section 35svh earlier slides it
-          // over that space (relative, so it paints above the sticky box),
-          // leaving ~130px. Only on the animated mobile path: under reduced
-          // motion Quote renders as plain stacked text with no sticky box.
-          ...(mobileAnim ? { marginTop: "-35svh" } : undefined),
+          // Pull-up so this section's content starts just under Quote's
+          // text when Quote's pin releases, instead of after the rest of
+          // Quote's sticky frame (relative, so it paints above that frame).
+          // Quote's mobile frame is 65svh with its text centered, and its
+          // section is 35svh taller than the frame, so at release this
+          // section's top sits at 65svh minus the pull-up. Pulling up by
+          // (32.5svh - 117px) puts this section's py-16 content ~50-75px
+          // below the quote's last line (text block ~210-250px tall), the
+          // same gap as before Quote's frame was shortened. Only on the
+          // animated mobile path: under reduced motion Quote renders as
+          // plain stacked text with no sticky box.
+          ...(mobileAnim ? { marginTop: "calc(117px - 32.5svh)" } : undefined),
         }}
       >
         {/* On the animated mobile path the grayscale lives on this wrapper

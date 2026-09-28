@@ -21,6 +21,7 @@ const QUOTE_2 = "Where timeless design meets the way you truly live.";
 
 export default function Quote() {
   const wrapperRef = useRef(null);
+  const stickyRef = useRef(null);
   const quote1Ref = useRef(null);
   const quote2Ref = useRef(null);
   const q1WordsRef = useRef([]);
@@ -76,11 +77,17 @@ export default function Quote() {
 
       const q1WordEls = q1WordsRef.current.filter(Boolean);
 
+      // The scrub runs exactly as long as the sticky frame stays pinned:
+      // section height minus frame height (135vh - 100vh = 35vh on desktop,
+      // 100svh - 65svh = 35svh on mobile). "bottom bottom" only equals that
+      // when the frame is a full viewport tall, which it no longer is on
+      // mobile.
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: wrapperRef.current,
           start: "top top",
-          end: "bottom bottom",
+          end: () => `+=${wrapperRef.current.offsetHeight - stickyRef.current.offsetHeight}`,
+          invalidateOnRefresh: true,
           scrub: true,
         },
       });
@@ -210,9 +217,16 @@ export default function Quote() {
   }
 
   return (
-    <section ref={wrapperRef} className="relative w-full h-[135vh]">
+    // Mobile: the pinned frame is 65svh rather than a full screen -- the
+    // quote block is only ~210-250px tall on a phone, so a full-height frame
+    // left ~280px of bare cream above and below it. The pin's scroll length
+    // stays 35 (section = frame + 35svh), so the animation paces the same.
+    // home/About.jsx's mobile pull-up is derived from this 65svh -- change
+    // them together. Desktop keeps 100vh / 135vh.
+    <section ref={wrapperRef} className="relative w-full h-[100svh] md:h-[135vh]">
       <div
-        className="sticky top-0 flex h-[100vh] w-full flex-col items-center justify-center overflow-hidden px-6 md:px-16"
+        ref={stickyRef}
+        className="sticky top-0 flex h-[65svh] w-full flex-col items-center justify-center overflow-hidden px-6 md:h-[100vh] md:px-16"
         style={{ backgroundColor: CREAM }}
       >
         <div className="relative w-full min-h-[260px] max-w-[1400px] md:min-h-[220px]">
