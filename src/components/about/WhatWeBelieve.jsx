@@ -87,6 +87,22 @@ const ITEM_DISTANCE_VH_MOBILE = 50;
 const TRAILING_HOLD_VH_DESKTOP = 35;
 const TRAILING_HOLD_VH_MOBILE = 20;
 
+// Cards already settled when the pin starts. Mobile starts with the first
+// card in place: at progress 0 every card is invisible, so card 1's own
+// fade-in used to leave the heading pinned over ~250px of scroll with blank
+// cream beneath it. Cards 2+ still arrive and stack exactly as before, and
+// the section drops card 1's 50vh of scroll budget. Desktop unchanged.
+const LEAD_CARDS_DESKTOP = 0;
+const LEAD_CARDS_MOBILE = 1;
+
+function sectionVh(isDesktop) {
+  const itemDistanceVh = isDesktop ? ITEM_DISTANCE_VH_DESKTOP : ITEM_DISTANCE_VH_MOBILE;
+  const trailingHoldVh = isDesktop ? TRAILING_HOLD_VH_DESKTOP : TRAILING_HOLD_VH_MOBILE;
+  const leadCards = isDesktop ? LEAD_CARDS_DESKTOP : LEAD_CARDS_MOBILE;
+  const activeVh = (BELIEFS.length - leadCards) * itemDistanceVh;
+  return { leadCards, activeVh, totalVh: activeVh + trailingHoldVh };
+}
+
 // A card enters from this far below (px) and this much smaller, settling
 // to y:0/scale:1 as it becomes current.
 const ENTER_OFFSET_PX = 80;
@@ -315,10 +331,7 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
       const cards = cardRefs.current.filter(Boolean);
       if (cards.length !== BELIEFS.length) return undefined;
 
-      const itemDistanceVh = isDesktop ? ITEM_DISTANCE_VH_DESKTOP : ITEM_DISTANCE_VH_MOBILE;
-      const trailingHoldVh = isDesktop ? TRAILING_HOLD_VH_DESKTOP : TRAILING_HOLD_VH_MOBILE;
-      const activeVh = BELIEFS.length * itemDistanceVh;
-      const totalVh = activeVh + trailingHoldVh;
+      const { leadCards, activeVh, totalVh } = sectionVh(isDesktop);
       const activeFraction = activeVh / totalVh;
 
       const update = () => {
@@ -328,7 +341,7 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
         const rect = section.getBoundingClientRect();
         const scrollableHeight = rect.height - window.innerHeight;
         const scrolled = clamp01(scrollableHeight > 0 ? -rect.top / scrollableHeight : 0);
-        const x = Math.min(scrolled / activeFraction, 1) * BELIEFS.length;
+        const x = leadCards + Math.min(scrolled / activeFraction, 1) * (BELIEFS.length - leadCards);
 
         cards.forEach((card, i) => {
           const { opacity, y, scale, zIndex } = getCardStyle(x, i);
@@ -396,9 +409,7 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
     );
   }
 
-  const itemDistanceVh = isDesktop ? ITEM_DISTANCE_VH_DESKTOP : ITEM_DISTANCE_VH_MOBILE;
-  const trailingHoldVh = isDesktop ? TRAILING_HOLD_VH_DESKTOP : TRAILING_HOLD_VH_MOBILE;
-  const totalVh = BELIEFS.length * itemDistanceVh + trailingHoldVh;
+  const { totalVh } = sectionVh(isDesktop);
 
   return (
     <section
@@ -406,7 +417,11 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
       className="relative w-full"
       style={{ backgroundColor: CREAM, height: `${totalVh}vh` }}
     >
-      <div className="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden px-6 md:px-16">
+      {/* Mobile: heading + stack sit at the top of the pinned frame (pt-28
+          clears the 96px fixed nav) rather than centered in a full screen,
+          which put ~150px of cream above the heading. Desktop stays
+          centered. */}
+      <div className="sticky top-0 flex h-screen w-full flex-col items-center justify-start overflow-hidden px-6 pt-28 md:justify-center md:px-16 md:pt-0">
         <h2
           className="mb-10 text-center text-[32px] md:mb-14 md:text-[48px]"
           style={{ fontFamily: "var(--font-agatho)", color: INK }}
