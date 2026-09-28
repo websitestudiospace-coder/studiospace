@@ -16,7 +16,8 @@ const CREAM = "#F7EFE4";
 // video start-to-end), so the pin's extra scroll distance is sized from the
 // video's real duration -- a fixed height crammed every video, long or
 // short, into the same ~70vh and made longer ones feel fast-forwarded.
-// DEFAULT_SECTION_HEIGHT_VH is only the pre-metadata placeholder.
+// The duration normally comes from the file itself at build time;
+// DEFAULT_SECTION_HEIGHT_VH is only used if that couldn't be read.
 const DEFAULT_SECTION_HEIGHT_VH = 170;
 // Typical continuous wheel/trackpad scroll pace -- tweak if it still feels off.
 const ASSUMED_SCROLL_VH_PER_SEC = 50;
@@ -28,6 +29,37 @@ const MAX_SCROLL_VH = 400;
 // actually carry an audio track -- set false if they're ever re-encoded
 // silent (e.g. with ffmpeg's -an) again.
 const SOUND_ENABLED = true;
+
+function sectionHeightForDuration(duration) {
+  const targetScrollVh = duration * ASSUMED_SCROLL_VH_PER_SEC;
+  return 100 + Math.min(MAX_SCROLL_VH, Math.max(MIN_SCROLL_VH, targetScrollVh));
+}
+
+// Shown over the poster while the full file downloads (scrubbing can't
+// start until it has), so the section reads as loading rather than frozen.
+// Only ever rendered on the desktop scrub path, which is already skipped
+// under prefers-reduced-motion, so the spin needs no separate opt-out.
+function LoadingIndicator() {
+  return (
+    <div
+      role="status"
+      className="pointer-events-none absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2.5 rounded-full px-4 py-2"
+      style={{ backgroundColor: "rgba(43,38,34,0.55)" }}
+    >
+      <span
+        aria-hidden="true"
+        className="h-3.5 w-3.5 animate-spin rounded-full border-2"
+        style={{ borderColor: "rgba(247,239,228,0.3)", borderTopColor: CREAM }}
+      />
+      <span
+        className="text-xs uppercase tracking-[0.15em]"
+        style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
+      >
+        Loading
+      </span>
+    </div>
+  );
+}
 
 function SpeakerIcon({ muted }) {
   return (
@@ -70,7 +102,14 @@ export default function ProjectVideo({ video }) {
   const videoRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const [isDesktop, setIsDesktop] = useState(false);
-  const [sectionHeightVh, setSectionHeightVh] = useState(DEFAULT_SECTION_HEIGHT_VH);
+  // Sized from the duration read off the file at build time (see
+  // readMp4Duration in @/lib/projects), so the pin's scroll range is final
+  // on first render; the default only applies if that lookup failed.
+  const [sectionHeightVh, setSectionHeightVh] = useState(() =>
+    video.duration ? sectionHeightForDuration(video.duration) : DEFAULT_SECTION_HEIGHT_VH
+  );
+  const sectionHeightRef = useRef(sectionHeightVh);
+  const [scrubReady, setScrubReady] = useState(false);
   const [muted, setMuted] = useState(true);
 
   useEffect(() => {
@@ -112,15 +151,20 @@ export default function ProjectVideo({ video }) {
         // proceeds anyway (currentTime updates keep working regardless).
         videoEl.play().then(() => videoEl.pause()).catch(() => {});
 
+        // Normally identical to the build-time height already rendered, so
+        // nothing moves. Only if the build-time duration was missing does
+        // the section resize here -- then the refresh below re-measures
+        // every ScrollTrigger further down the page, which just shifted.
         const duration = Number.isFinite(videoEl.duration) ? videoEl.duration : 0;
-        const targetScrollVh = duration * ASSUMED_SCROLL_VH_PER_SEC;
-        const scrollVh = Math.min(MAX_SCROLL_VH, Math.max(MIN_SCROLL_VH, targetScrollVh));
-        setSectionHeightVh(100 + scrollVh);
+        const heightVh = sectionHeightForDuration(duration);
+        const heightChanged = heightVh !== sectionHeightRef.current;
+        if (heightChanged) {
+          sectionHeightRef.current = heightVh;
+          setSectionHeightVh(heightVh);
+        }
 
-        // Double rAF: the new height has to be committed and laid out
-        // before the pin's start/end are measured. The refresh afterwards
-        // re-measures every other ScrollTrigger below this section too,
-        // since they all just shifted by the height change.
+        // Double rAF: any height change has to be committed and laid out
+        // before the pin's start/end are measured.
         rafId = requestAnimationFrame(() => {
           rafId = requestAnimationFrame(() => {
             if (cancelled) return;
@@ -137,7 +181,8 @@ export default function ProjectVideo({ video }) {
                 },
               });
             }, outerRef);
-            ScrollTrigger.refresh();
+            if (heightChanged) ScrollTrigger.refresh();
+            setScrubReady(true);
           });
         });
       };
@@ -152,24 +197,35 @@ export default function ProjectVideo({ video }) {
       // the rest of the time despite currentTime advancing correctly).
       // Fetching the whole file into memory first and scrubbing that
       // in-memory copy means every seek is zero-latency, no network race.
+      //
+      // This fetch is the ONLY download on this path: the <video> below has
+      // no <source> and preload="none", and gets a src only once the blob is
+      // ready (or the fetch fails). A <source> with preload="auto" used to
+      // make the browser stream the same file in parallel -- two extra
+      // copies racing this fetch for bandwidth, then thrown away.
       fetch(video.src)
         .then((res) => res.blob())
         .then((blob) => {
           if (cancelled) return;
           objectUrl = URL.createObjectURL(blob);
           videoEl.addEventListener("loadedmetadata", bindScrub, { once: true });
+          // preload="none" only exists to stop a download before this
+          // point. Left in place on the in-memory copy it made Chrome keep
+          // its decode pipeline minimal, which measurably slowed scrub
+          // seeks (more stalls); "auto" costs nothing now the data is local.
+          videoEl.preload = "auto";
           videoEl.src = objectUrl;
           videoEl.load();
         })
         .catch(() => {
-          // Network/CSP/CORS failure -- fall back to the streamed <source>
-          // so the video still plays (just without guaranteed-smooth
-          // scrub) instead of showing nothing.
-          if (videoEl.readyState >= 1) {
-            bindScrub();
-          } else {
-            videoEl.addEventListener("loadedmetadata", bindScrub, { once: true });
-          }
+          // Network/CSP/CORS failure -- fall back to streaming the file
+          // directly so the video still scrubs (just without guaranteed-
+          // smooth seeks) instead of showing nothing.
+          if (cancelled) return;
+          videoEl.addEventListener("loadedmetadata", bindScrub, { once: true });
+          videoEl.preload = "auto";
+          videoEl.src = video.src;
+          videoEl.load();
         });
 
       return () => {
@@ -222,16 +278,17 @@ export default function ProjectVideo({ video }) {
   return (
     <section ref={outerRef} className="relative w-full" style={{ height: `${sectionHeightVh}vh` }}>
       <div className="sticky top-0 h-screen w-full overflow-hidden" style={{ backgroundColor: INK }}>
+        {/* No <source> and preload="none" on purpose -- the fetch above is
+            the only download, and sets src itself once the file is ready. */}
         <video
           ref={videoRef}
           poster={video.poster ?? undefined}
           muted={muted}
           playsInline
-          preload="auto"
+          preload="none"
           className="h-full w-full object-cover"
-        >
-          <source src={video.src} type="video/mp4" />
-        </video>
+        />
+        {!scrubReady && <LoadingIndicator />}
         {SOUND_ENABLED && <SoundToggle muted={muted} onToggle={handleToggleSound} />}
       </div>
     </section>

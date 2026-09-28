@@ -153,7 +153,7 @@
       }
     ],
     "hasVideo": true,
-    "posterFile": null
+    "posterFile": "video-poster.webp"
   },
   "the-modern-eclectic-home": {
     "photos": [
@@ -279,7 +279,7 @@
       }
     ],
     "hasVideo": true,
-    "posterFile": null
+    "posterFile": "video-poster.webp"
   },
   "the-modern-neo-classical-home": {
     "photos": [
@@ -712,7 +712,7 @@
       }
     ],
     "hasVideo": true,
-    "posterFile": null
+    "posterFile": "video-poster.webp"
   },
   "the-neo-colonial-home": {
     "photos": [
@@ -918,7 +918,7 @@
       }
     ],
     "hasVideo": true,
-    "posterFile": null
+    "posterFile": "video-poster.webp"
   },
   "the-shraddhas-thinkpad": {
     "photos": [
@@ -1059,6 +1059,6 @@
       }
     ],
     "hasVideo": true,
-    "posterFile": null
+    "posterFile": "video-poster.webp"
   }
 }
