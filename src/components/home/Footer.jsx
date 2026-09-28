@@ -42,8 +42,15 @@ const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://instagram.com/studio_sp_ace" },
 ];
 
-// Intro copy invites a project enquiry (not a newsletter signup -- this
-// used to be one); the form is the full project enquiry form, shared
+// Same "General" inbox the Contact page lists (ContactContent.jsx's
+// GENERAL_INQUIRIES_ENTRIES). Plain text here, not a mailto link.
+const GENERAL_EMAIL = "hello@studiospace.co.in";
+
+const MICRO_LABEL_CLASS = "block text-[11px] uppercase tracking-[0.15em] md:text-xs";
+
+// No intro line under the heading, at the client's request -- this is a
+// project enquiry form, not the newsletter signup it used to be, and the
+// old copy read as one. The form is the full project enquiry form, shared
 // with the Contact page (same fields, validation, /api/contact POST and
 // success popup -- see ContactForm.jsx). "text" keeps the Footer's own
 // underlined submit button rather than the Contact page's filled one.
@@ -59,13 +66,6 @@ function SignupBlock({ blockRef }) {
           of Studio <InlineWordmark text={WORDMARK} />
         </span>
       </h3>
-      <p
-        className="mt-4 max-w-xs text-sm"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
-      >
-        Have a space in mind? Share a few details about your project and
-        we&apos;ll be in touch.
-      </p>
 
       <div className="mt-8">
         <ContactForm submitVariant="text" />
@@ -74,33 +74,30 @@ function SignupBlock({ blockRef }) {
   );
 }
 
-// `contents` on mobile keeps nav/social as two independent grid items (the
-// existing side-by-side half-width columns below the signup block);
-// md:flex stacks them into ONE grid column instead of two at desktop --
-// previously Instagram had its own full-height column matching nav's
-// 5-item height, leaving ~370px of empty space beneath its single link.
-// Stacking them removes that column entirely rather than inventing filler
-// content (no second confirmed social account or studio address/hours
-// exists yet to legitimately fill a real third column).
+// `contents` on mobile keeps nav and the contact block as two independent
+// grid items -- the side-by-side half-width columns below the signup block.
+// At desktop they sit side by side inside the one right-hand grid column.
+// The contact block (email + Instagram, each under a small label, same
+// label/value pattern as the Contact page) is what fills the space beside
+// the nav -- Instagram on its own used to leave that column bare.
 //
 // `fullWidth` (Footer's hideForm case): with no form block beside it, the
-// stacked column would sit in the left half with the right half empty, so
-// at desktop it spans both grid columns with nav left and social right.
+// row spans both grid columns with nav left and the contact block right.
 function LinksColumns({ navRef, socialRef, fullWidth = false }) {
   return (
     <div
       className={
         fullWidth
           ? "contents md:col-span-2 md:flex md:flex-row md:items-start md:justify-between"
-          : "contents md:flex md:flex-col md:items-start md:gap-8"
+          : "contents md:flex md:flex-row md:items-start md:gap-12 lg:gap-24 xl:gap-32"
       }
     >
-      <nav ref={navRef} className="flex flex-col items-start">
+      <nav ref={navRef} className="flex shrink-0 flex-col items-start">
         {NAV_LINKS.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className="flex items-center py-3.5 text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
+            className="flex items-center whitespace-nowrap py-3.5 text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
           >
             {link.label}
@@ -108,19 +105,43 @@ function LinksColumns({ navRef, socialRef, fullWidth = false }) {
         ))}
       </nav>
 
-      <div ref={socialRef} className="flex flex-col items-start">
-        {SOCIAL_LINKS.map((link) => (
-          <a
-            key={link.href}
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center py-3.5 text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
+      {/* pt-3.5 lines each label up with the first nav link's text (the
+          nav links carry py-3.5 tap-target padding). */}
+      <div ref={socialRef} className="flex flex-col items-start gap-7 pt-3.5">
+        <div>
+          <span className={MICRO_LABEL_CLASS} style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}>
+            Email
+          </span>
+          {/* <wbr> lets the address break after the @ in the ~150px mobile
+              half-column instead of overflowing; it stays on one line
+              wherever it fits. */}
+          <p
+            className="mt-2 text-[13px] md:text-sm"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
           >
-            {link.label}
-          </a>
-        ))}
+            {GENERAL_EMAIL.split("@")[0]}@<wbr />
+            {GENERAL_EMAIL.split("@")[1]}
+          </p>
+        </div>
+
+        <div>
+          <span className={MICRO_LABEL_CLASS} style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}>
+            Follow
+          </span>
+          {SOCIAL_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="-my-1.5 flex items-center gap-2 py-3.5 text-xs uppercase tracking-[0.15em] transition-opacity duration-200 ease-out hover:opacity-70 md:text-sm"
+              style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
+            >
+              {link.label}
+              <span aria-hidden="true">↗</span>
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -147,32 +168,39 @@ function Wordmark({ wordmarkRef }) {
   );
 }
 
+// Client layout: Terms left, copyright centered, Privacy right. The middle
+// column is `auto` between two equal 1fr columns, so the copyright sits at
+// the row's true center whatever the two links' widths. Below lg (1024px)
+// the three don't fit on one line (~634px of text at 768px), so mobile and
+// tablet keep the same left/right idea over two rows: Terms left and
+// Privacy right, copyright centered beneath. DOM order
+// matches the desktop left-to-right order for keyboard/screen readers.
+// items-center keeps the copyright level with the links, whose py-3.5 is
+// tap-target padding the plain text doesn't have.
 function LegalRow() {
+  const textStyle = { fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 };
+  const linkClass = "flex items-center whitespace-nowrap py-3.5 transition-opacity duration-200 ease-out hover:opacity-70";
   return (
     <div
-      className="mt-6 grid grid-cols-1 gap-3 border-t py-4 text-center text-xs uppercase tracking-[0.15em] md:mt-8 md:grid-cols-3 md:gap-4 md:py-6 md:text-left"
+      className="mt-6 grid grid-cols-2 items-center gap-x-4 border-t py-4 text-xs uppercase tracking-[0.15em] md:mt-8 md:py-6 lg:grid-cols-[1fr_auto_1fr] lg:gap-x-6"
       style={{ borderColor: "rgba(247, 239, 228, 0.15)" }}
     >
-      <Link
-        href="/terms"
-        className="flex items-center justify-center py-3.5 justify-self-center md:justify-self-start"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
-      >
+      <Link href="/terms" className={`${linkClass} col-start-1 row-start-1 justify-self-start`} style={textStyle}>
         Terms of Service
       </Link>
-      <Link
-        href="/privacy"
-        className="flex items-center justify-center py-3.5 justify-self-center"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
-      >
-        Privacy Policy
-      </Link>
       <span
-        className="justify-self-center md:justify-self-end md:text-right"
-        style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
+        className="col-span-2 row-start-2 pb-2 text-center lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:pb-0"
+        style={textStyle}
       >
         © 2026 Studio SP_ACE. All rights reserved.
       </span>
+      <Link
+        href="/privacy"
+        className={`${linkClass} col-start-2 row-start-1 justify-self-end lg:col-start-3`}
+        style={textStyle}
+      >
+        Privacy Policy
+      </Link>
     </div>
   );
 }
