@@ -279,10 +279,12 @@ export default function About() {
   if (!enhanced) {
     // Shared fallback for both the reduced-motion opt-out and mobile/narrow
     // viewports -- stacks image-over-text (full width) below md, sits side
-    // by side at md and up.
+    // by side at md and up. At md+ the row runs edge to edge like the
+    // pinned version (photo flush to the left edge, no side padding on the
+    // section); only the text panel keeps right padding off the edge.
     return (
       <section
-        className="relative flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-8 md:py-24 lg:px-16"
+        className="relative flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-0 md:py-24"
         style={{
           backgroundColor: CREAM,
           // Same pull-up as the desktop branch below (see its marginTop
@@ -311,7 +313,7 @@ export default function About() {
             className={mobileAnim ? "object-cover" : "object-cover grayscale"}
           />
         </div>
-        <div ref={mobileTextRef} className="w-full md:w-[45%]">
+        <div ref={mobileTextRef} className="w-full md:w-[45%] md:pr-8 lg:pr-16">
           <AboutCopy />
         </div>
       </section>
