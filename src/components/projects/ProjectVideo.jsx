@@ -29,6 +29,12 @@ const MAX_SCROLL_VH = 400;
 // actually carry an audio track -- set false if they're ever re-encoded
 // silent (e.g. with ffmpeg's -an) again.
 const SOUND_ENABLED = true;
+// How far ahead of the viewport the video starts downloading. The section
+// sits below the whole gallery, so fetching at page load (43MB+ on desktop)
+// competed with the hero and gallery images for bandwidth on a file most
+// visitors hadn't reached yet. Two viewports ahead still gives the blob a
+// head start before the pin arrives.
+const LOAD_AHEAD_MARGIN = "200% 0px";
 
 function sectionHeightForDuration(duration) {
   const targetScrollVh = duration * ASSUMED_SCROLL_VH_PER_SEC;
@@ -101,7 +107,12 @@ export default function ProjectVideo({ video }) {
   const outerRef = useRef(null);
   const videoRef = useRef(null);
   const reduceMotion = useReducedMotion();
-  const [isDesktop, setIsDesktop] = useState(false);
+  // null until matchMedia has actually been read. The server render (and
+  // hydration) can't know the viewport, and treating that as "mobile" used
+  // to mount the autoplay fallback with a real src for a moment on desktop
+  // -- a streamed download racing the scrub path's own blob fetch.
+  const [isDesktop, setIsDesktop] = useState(null);
+  const [nearViewport, setNearViewport] = useState(false);
   // Sized from the duration read off the file at build time (see
   // readMp4Duration in @/lib/projects), so the pin's scroll range is final
   // on first render; the default only applies if that lookup failed.
@@ -127,7 +138,45 @@ export default function ProjectVideo({ video }) {
   // at in Hero.jsx (autoplay/loop/muted, no scroll tie-in), just reached
   // via an explicit check here instead of Hero.jsx's simpler always-native
   // approach, since this section additionally needs to skip the pin.
-  const scrubEnabled = !reduceMotion && isDesktop;
+  const scrubEnabled = !reduceMotion && isDesktop === true;
+
+  // Both branches below put outerRef on their <section>, so this re-attaches
+  // if the branch switches; once near, it stays near. Observing only starts
+  // at the first scroll (or straight away if the page opened already
+  // scrolled): at hydration the gallery above hasn't measured its width
+  // yet and is 0px tall, which put this section right under the hero and
+  // tripped the observer on load.
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el || nearViewport) return undefined;
+    let io;
+    const observe = () => {
+      window.removeEventListener("scroll", observe);
+      io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) setNearViewport(true);
+        },
+        { rootMargin: LOAD_AHEAD_MARGIN }
+      );
+      io.observe(el);
+    };
+    if (window.scrollY > 0) observe();
+    else window.addEventListener("scroll", observe, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", observe);
+      io?.disconnect();
+    };
+  }, [scrubEnabled, nearViewport]);
+
+  // Fallback path (mobile / reduced motion): the <video> has no <source>,
+  // so nothing downloads until the device check has resolved and the
+  // section is close. Then it streams as a normal autoplay/loop video.
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl || scrubEnabled || isDesktop === null || !nearViewport) return;
+    videoEl.src = video.src;
+    videoEl.play().catch(() => {});
+  }, [scrubEnabled, isDesktop, nearViewport, video.src]);
 
   usePreloaderGate(
     () => {
@@ -237,7 +286,7 @@ export default function ProjectVideo({ video }) {
       };
     },
     [],
-    scrubEnabled
+    scrubEnabled && nearViewport
   );
 
   // Sets the DOM property directly as well as state so the change is
@@ -257,19 +306,19 @@ export default function ProjectVideo({ video }) {
 
   if (!scrubEnabled) {
     return (
-      <section className="relative w-full">
+      <section ref={outerRef} className="relative w-full">
+        {/* No <source>: the src is set by the fallback effect above, so
+            this element never downloads during the server render /
+            pre-matchMedia pass that every device goes through first. */}
         <video
           ref={videoRef}
           poster={video.poster ?? undefined}
-          autoPlay
           loop
           muted={muted}
           playsInline
           preload="none"
           className="h-[60vh] w-full object-cover md:h-[80vh]"
-        >
-          <source src={video.src} type="video/mp4" />
-        </video>
+        />
         {SOUND_ENABLED && <SoundToggle muted={muted} onToggle={handleToggleSound} />}
       </section>
     );

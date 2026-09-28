@@ -59,6 +59,16 @@ function fitNameFontSize(name, maxWidth, cap) {
   return Math.min(cap, fitted);
 }
 
+// The same fit as a CSS min(), so the server-rendered heading already has
+// its starting size before GSAP runs (window.innerWidth * f == f*100 vw).
+// Without it the name painted at the default size in the top-left corner,
+// then jumped to its centered start once the preloader finished -- a
+// layout shift the CLS metric counted.
+function fitNameFontSizeCss(name, viewportFraction, cap) {
+  const vw = (viewportFraction * 100) / (name.length * AGATHO_AVG_CHAR_WIDTH_RATIO);
+  return `min(${cap}px, ${vw.toFixed(4)}vw)`;
+}
+
 function StatBlock({ label, value }) {
   return (
     <div>
@@ -140,6 +150,11 @@ export default function ProjectHero({ project }) {
       const ctx = gsap.context(() => {
         gsap.set(imageBoxRef.current, { top: "0%", left: "0%", width: "100%", height: "100%" });
         gsap.set(imageFilterRef.current, { filter: "grayscale(0%)" });
+        // The server-rendered translate(-50%, -50%) centering has to go
+        // before xPercent/yPercent take over, or GSAP would parse it as a
+        // pixel offset and apply the centering twice. Reverting the context
+        // restores it.
+        gsap.set(nameRef.current, { clearProps: "transform" });
         gsap.set(nameRef.current, {
           top: "50%",
           left: "50%",
@@ -273,10 +288,17 @@ export default function ProjectHero({ project }) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-black/25" />
           </div>
 
+          {/* Starting position/size mirror the gsap.set() in the effect
+              above, so nothing moves when the preloader gate releases. */}
           <h1
             ref={nameRef}
-            className="pointer-events-none absolute whitespace-nowrap uppercase text-white"
+            className="pointer-events-none absolute whitespace-nowrap uppercase text-white [font-size:var(--name-fs)] md:[font-size:var(--name-fs-md)]"
             style={{
+              "--name-fs": fitNameFontSizeCss(project.name, 0.86, NAME_START_FONT_MOBILE_CAP),
+              "--name-fs-md": fitNameFontSizeCss(project.name, 0.82, NAME_START_FONT_DESKTOP_CAP),
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
               fontFamily: "var(--font-agatho)",
               lineHeight: 1.1,
               textShadow: "0 1px 3px rgba(43,38,34,0.7), 0 2px 12px rgba(43,38,34,0.5)",
@@ -285,14 +307,15 @@ export default function ProjectHero({ project }) {
             {project.name}
           </h1>
 
+          {/* Placement is responsive CSS, not the isDesktop state: that
+              state is false during the server render, so the panel used to
+              paint in its mobile spot and jump to the desktop column on
+              hydration (0.37 CLS). Starts hidden -- the timeline reveals it,
+              and it no longer flashes over the photo before GSAP runs. */}
           <div
             ref={detailsRef}
-            className="absolute"
-            style={
-              isDesktop
-                ? { top: 0, right: 0, width: "54%", height: "100%" }
-                : { top: "42%", left: 0, width: "100%", height: "58%" }
-            }
+            className="absolute left-0 top-[42%] h-[58%] w-full md:left-auto md:right-0 md:top-0 md:h-full md:w-[54%]"
+            style={{ opacity: 0 }}
           >
             <DetailsPanelContent project={project} onReadMore={() => setModalOpen(true)} />
           </div>

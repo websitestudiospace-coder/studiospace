@@ -142,7 +142,12 @@ function GalleryLightbox({ photo, alt, onClose }) {
 // additionally requires res.cloudinary.com in next.config.js's
 // remotePatterns (a config change out of scope here), which CldImage needs
 // too. A plain <img loading="lazy"> has neither requirement.
-function GalleryItem({ photo, alt, itemRef, onOpen, onMouseEnter, onMouseLeave }) {
+//
+// `placed` gates the <img> itself: until the masonry effect below has run,
+// every item is an unsized box stacked at the grid's top-left corner, which
+// put all of them inside the browser's lazy-load distance at once -- every
+// photo in the gallery downloaded at page load despite loading="lazy".
+function GalleryItem({ photo, alt, placed, itemRef, onOpen, onMouseEnter, onMouseLeave }) {
   return (
     <div
       ref={itemRef}
@@ -152,8 +157,10 @@ function GalleryItem({ photo, alt, itemRef, onOpen, onMouseEnter, onMouseLeave }
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo.src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
+      {placed && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={photo.src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
+      )}
     </div>
   );
 }
@@ -170,6 +177,7 @@ export default function ProjectGallery({ name, photos = [] }) {
   const hasMountedRef = useRef(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [placed, setPlaced] = useState(false);
   const reduceMotion = useReducedMotion();
 
   // Plain, always-on measurement (not preloader-gated) -- same pattern
@@ -267,6 +275,7 @@ export default function ProjectGallery({ name, photos = [] }) {
       }, containerRef);
 
       hasMountedRef.current = true;
+      setPlaced(true);
 
       return () => ctx.revert();
     },
@@ -310,6 +319,7 @@ export default function ProjectGallery({ name, photos = [] }) {
             key={photo.file ?? photo.src}
             photo={photo}
             alt={`${name} — photo ${i + 1}`}
+            placed={placed}
             itemRef={(el) => {
               itemRefs.current[i] = el;
             }}
