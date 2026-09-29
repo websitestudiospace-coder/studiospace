@@ -27,18 +27,15 @@ const CAREERS_MAROON = "rgb(73, 13, 15)";
 // (About/Projects/Press all share this).
 const HEADING_CLASS = "text-[32px] md:text-[48px]";
 
-// TODO: phone not yet provided by the client -- do not fabricate a
-// plausible-looking number, it would be mistaken for real contact info.
-// Email is now real (client-provided, 2026-09-21): hello@studiospace.co.in.
-const CONTACT_COMING_SOON = "Coming soon — reach us on Instagram for now";
-
 // Studio Location mirrors the Instagram bio and is real. Labeled "Studio
 // Location" (not just "Location") to disambiguate from the form's own
 // "Location" field, which asks for the client's project location instead.
+// Email is real (client-provided, 2026-09-21). The "Phone -- coming soon"
+// row was removed at the client's request; if a real number is provided
+// later, add it back here (never a placeholder number).
 const STUDIO_INFO = [
   { label: "Studio Location", value: "Bangalore, India" },
   { label: "Email", value: "hello@studiospace.co.in", href: "mailto:hello@studiospace.co.in" },
-  { label: "Phone", value: CONTACT_COMING_SOON },
 ];
 
 const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
