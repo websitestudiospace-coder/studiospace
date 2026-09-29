@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -11,6 +12,9 @@ if (typeof window !== "undefined") {
 }
 
 export default function SmoothScroll({ children }) {
+  const lenisRef = useRef(null);
+  const pathname = usePathname();
+
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.1,
@@ -25,6 +29,7 @@ export default function SmoothScroll({ children }) {
     // to its scroll events via src/lib/lenis.js instead of ever creating
     // their own instance.
     setLenis(lenis);
+    lenisRef.current = lenis;
 
     lenis.on("scroll", ScrollTrigger.update);
 
@@ -76,8 +81,25 @@ export default function SmoothScroll({ children }) {
       gsap.ticker.remove(syncLenis);
       lenis.destroy();
       setLenis(null);
+      lenisRef.current = null;
     };
   }, []);
+
+  // Cancel any in-flight smooth-scroll glide on every route change. This
+  // Lenis instance outlives navigations (see above), so clicking a link
+  // (e.g. a project page's "Next Project") while a wheel/touch glide was
+  // still easing toward the old page's bottom let Lenis keep animating after
+  // the App Router had already scrolled the new page to the top -- its next
+  // frame wrote the old target straight back, landing the new page near its
+  // bottom. reset() stops that animation and re-syncs Lenis to wherever the
+  // page actually is now. A layout effect in this parent runs after the
+  // router's own scroll-to-top (done in its descendant layout-phase
+  // handlers) in the same commit, before Lenis's next frame. It only syncs
+  // to the current position rather than forcing 0, so back/forward scroll
+  // restoration still works.
+  useLayoutEffect(() => {
+    lenisRef.current?.reset();
+  }, [pathname]);
 
   return children;
 }
