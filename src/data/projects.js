@@ -52,17 +52,6 @@ export const PROJECTS = [
     squareFootage: "2,000 sq. ft.",
     completion: "2025",
   },
-  {
-    slug: "the-modern-transitional-home",
-    name: "The Modern Transitional Home",
-    description:
-      "A warm and playful transitional home in Hyderabad, designed for a young family returning to their Indian roots. Classic details, expressive colours, and patterns come together with a fresh, contemporary feel.",
-    longDescription: `Designed for a young family making the move from the States to Hyderabad, this 4 BHK home brings together the familiarity of their life abroad with subtle references to their Indian roots. The brief was to create a space that felt warm, relaxed, and welcoming, while still having a sense of formality and detail. The interiors take a transitional approach, combining contemporary forms with more classic elements. A mix of colours, patterns, and prints brings a playful energy to the home, while ornate wood and glass details add a more timeless layer. As an outstation project, the home came together through many conversations and careful coordination across the distance. The result is a cosy, vibrant space that feels personal to the family and is designed to grow and evolve with them over time.`,
-    typology: "Residential",
-    location: "Hyderabad",
-    squareFootage: "2,600 sq. ft.",
-    completion: "2025",
-  },
   // Working title as provided by the client -- doesn't match the "The [Style]
   // Home" naming pattern of the other projects, kept as-is rather than
   // renamed to fit.
@@ -76,6 +65,17 @@ export const PROJECTS = [
     location: "Bangalore",
     squareFootage: "1,100 sq. ft.",
     completion: "2024",
+  },
+  {
+    slug: "the-modern-transitional-home",
+    name: "The Modern Transitional Home",
+    description:
+      "A warm and playful transitional home in Hyderabad, designed for a young family returning to their Indian roots. Classic details, expressive colours, and patterns come together with a fresh, contemporary feel.",
+    longDescription: `Designed for a young family making the move from the States to Hyderabad, this 4 BHK home brings together the familiarity of their life abroad with subtle references to their Indian roots. The brief was to create a space that felt warm, relaxed, and welcoming, while still having a sense of formality and detail. The interiors take a transitional approach, combining contemporary forms with more classic elements. A mix of colours, patterns, and prints brings a playful energy to the home, while ornate wood and glass details add a more timeless layer. As an outstation project, the home came together through many conversations and careful coordination across the distance. The result is a cosy, vibrant space that feels personal to the family and is designed to grow and evolve with them over time.`,
+    typology: "Residential",
+    location: "Hyderabad",
+    squareFootage: "2,600 sq. ft.",
+    completion: "2025",
   },
   {
     slug: "the-modern-neo-classical-home",
