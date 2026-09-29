@@ -20,10 +20,12 @@ const INK = "#2B2622";
 // Curated cover images for these 3 featured cards (distinct from each
 // project's own gallery cover) -- slug is looked up from @/data/projects by
 // name so each card links to its real /projects/[slug] page instead of
-// duplicating slugs here by hand.
+// duplicating slugs here by hand. Each image is a copy of a photo from that
+// project's own gallery (project-2 = Neo Colonial #3, project-3 = Modern
+// Organic #2, project-1 = Modern Classical #8) -- keep name and image paired.
 const PROJECTS = [
-  { name: "The Modern Organic Home", image: "/images/projects/project-2.jpg" },
-  { name: "The Neo Colonial Home", image: "/images/projects/project-3.jpg" },
+  { name: "The Neo Colonial Home", image: "/images/projects/project-2.jpg" },
+  { name: "The Modern Organic Home", image: "/images/projects/project-3.jpg" },
   { name: "The Modern Classical Home", image: "/images/projects/project-1.jpg" },
 ].map((project) => {
   const data = PROJECT_DATA.find((p) => p.name === project.name);
