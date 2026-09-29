@@ -58,10 +58,6 @@ function getManifestEntry(slug) {
   return loadPhotoManifest()[slug] ?? { photos: [], hasVideo: false, posterFile: null };
 }
 
-function listProjectPhotoFilenames(slug) {
-  return getManifestEntry(slug).photos.map((photo) => photo.file);
-}
-
 // Returns every photo in a project's folder, natural-sorted, each carrying
 // its own pixel dimensions so callers (e.g. ProjectGallery's masonry grid)
 // can compute proportional layout from the real aspect ratio without any
@@ -73,6 +69,26 @@ function listProjectPhotos(slug) {
     width: width ?? null,
     height: height ?? null,
   }));
+}
+
+// Splits a project's photos into its cover (listing card, detail-page hero,
+// Next Project preview, share image) and its on-page gallery. Default rule:
+// the manifest's first photo is the cover and is left out of the gallery.
+// A manifest entry can instead name its cover explicitly with `coverFile`
+// -- then the whole `photos` list is the gallery, in order, cover included
+// at wherever it falls. That's for projects where the client gave a full
+// gallery order but wanted to keep a different photo as the cover (see
+// the-modern-eclectic-home, the-modern-neo-classical-home,
+// the-shraddhas-thinkpad in scripts/photo-manifest.json).
+function splitCoverAndGallery(slug) {
+  const photos = listProjectPhotos(slug);
+  const { coverFile } = getManifestEntry(slug);
+  if (coverFile) {
+    const cover = photos.find((photo) => photo.file === coverFile) ?? photos[0] ?? null;
+    return { cover, galleryPhotos: photos };
+  }
+  const [cover = null, ...galleryPhotos] = photos;
+  return { cover, galleryPhotos };
 }
 
 // A compressed project video is expected at
@@ -163,13 +179,10 @@ async function fetchSanityProjects() {
 }
 
 export async function getAllProjects() {
-  const staticProjects = PROJECTS.map((project) => {
-    const [firstFile] = listProjectPhotoFilenames(project.slug);
-    return {
-      ...project,
-      cover: firstFile ? toCloudinaryUrl(`/images/projects/${project.slug}/${firstFile}`) : null,
-    };
-  });
+  const staticProjects = PROJECTS.map((project) => ({
+    ...project,
+    cover: splitCoverAndGallery(project.slug).cover?.src ?? null,
+  }));
   const sanityProjects = await fetchSanityProjects();
   return [...staticProjects, ...sanityProjects];
 }
@@ -177,8 +190,7 @@ export async function getAllProjects() {
 export async function getProjectBySlug(slug) {
   const meta = PROJECTS.find((project) => project.slug === slug);
   if (meta) {
-    const photos = listProjectPhotos(slug);
-    const [cover, ...galleryPhotos] = photos;
+    const { cover, galleryPhotos } = splitCoverAndGallery(slug);
     return {
       ...meta,
       cover: cover?.src ?? null,

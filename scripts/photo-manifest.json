@@ -156,16 +156,62 @@
     "posterFile": "video-poster.webp"
   },
   "the-modern-eclectic-home": {
+    "coverFile": "3H4A2404.webp",
     "photos": [
+      {
+        "file": "3H4A2447.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "3H4A2418.webp",
+        "width": 1600,
+        "height": 2400
+      },
       {
         "file": "3H4A2404.webp",
         "width": 2400,
         "height": 1600
       },
       {
-        "file": "3H4A2226-1.webp",
-        "width": 2400,
-        "height": 1600
+        "file": "3H4A2522.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "3H4A2779.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "3H4A2476.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "3H4A2732.webp",
+        "width": 1574,
+        "height": 2400
+      },
+      {
+        "file": "3H4A2717.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "3H4A2744.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "3H4A2574-1.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "3H4A2567.webp",
+        "width": 1600,
+        "height": 2400
       },
       {
         "file": "3H4A2242-1.webp",
@@ -178,7 +224,12 @@
         "height": 2400
       },
       {
-        "file": "3H4A2309.webp",
+        "file": "3H4A2226-1.webp",
+        "width": 2400,
+        "height": 1600
+      },
+      {
+        "file": "3H4A2356.webp",
         "width": 1600,
         "height": 2400
       },
@@ -188,37 +239,7 @@
         "height": 2400
       },
       {
-        "file": "3H4A2356.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "3H4A2418.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "3H4A2447.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "3H4A2476.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "3H4A2522.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "3H4A2567.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "3H4A2574-1.webp",
+        "file": "3H4A2309.webp",
         "width": 1600,
         "height": 2400
       },
@@ -228,37 +249,17 @@
         "height": 2400
       },
       {
-        "file": "3H4A2640.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
         "file": "3H4A2675.webp",
         "width": 2400,
         "height": 1600
       },
       {
-        "file": "3H4A2700.webp",
+        "file": "3H4A2640.webp",
         "width": 1600,
         "height": 2400
       },
       {
-        "file": "3H4A2717.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "3H4A2732.webp",
-        "width": 1574,
-        "height": 2400
-      },
-      {
-        "file": "3H4A2744.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "3H4A2779.webp",
+        "file": "3H4A2878.webp",
         "width": 1600,
         "height": 2400
       },
@@ -273,7 +274,7 @@
         "height": 2400
       },
       {
-        "file": "3H4A2878.webp",
+        "file": "3H4A2700.webp",
         "width": 1600,
         "height": 2400
       }
@@ -282,74 +283,10 @@
     "posterFile": "video-poster.webp"
   },
   "the-modern-neo-classical-home": {
+    "coverFile": "IMG_1391.webp",
     "photos": [
       {
-        "file": "IMG_1391.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1375.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1376.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1377.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1378.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1379.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1380.webp",
-        "width": 2400,
-        "height": 1601
-      },
-      {
-        "file": "IMG_1381.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1382.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1383.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1384.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1385.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
         "file": "IMG_1386.webp",
-        "width": 1601,
-        "height": 2400
-      },
-      {
-        "file": "IMG_1387.webp",
         "width": 1601,
         "height": 2400
       },
@@ -365,6 +302,11 @@
       },
       {
         "file": "IMG_1390.webp",
+        "width": 1601,
+        "height": 2400
+      },
+      {
+        "file": "IMG_1391.webp",
         "width": 1601,
         "height": 2400
       },
@@ -391,6 +333,46 @@
       {
         "file": "IMG_1396.webp",
         "width": 1603,
+        "height": 2400
+      },
+      {
+        "file": "IMG_1375.webp",
+        "width": 1601,
+        "height": 2400
+      },
+      {
+        "file": "IMG_1376.webp",
+        "width": 1601,
+        "height": 2400
+      },
+      {
+        "file": "IMG_1377.webp",
+        "width": 1601,
+        "height": 2400
+      },
+      {
+        "file": "IMG_1378.webp",
+        "width": 1601,
+        "height": 2400
+      },
+      {
+        "file": "IMG_1380.webp",
+        "width": 2400,
+        "height": 1601
+      },
+      {
+        "file": "IMG_1385.webp",
+        "width": 1601,
+        "height": 2400
+      },
+      {
+        "file": "IMG_1387.webp",
+        "width": 1601,
+        "height": 2400
+      },
+      {
+        "file": "IMG_1384.webp",
+        "width": 1601,
         "height": 2400
       }
     ],
@@ -921,59 +903,30 @@
     "posterFile": "video-poster.webp"
   },
   "the-shraddhas-thinkpad": {
+    "coverFile": "_H4A3710.webp",
     "photos": [
       {
+        "file": "_H4A3773.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3848.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3861.webp",
+        "width": 1699,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3764.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
         "file": "_H4A3710.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3541.webp",
-        "width": 1598,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3574.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3581.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3595.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3604.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3624.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3636.webp",
-        "width": 1671,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3651.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3655.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3673.webp",
         "width": 1600,
         "height": 2400
       },
@@ -988,17 +941,12 @@
         "height": 2400
       },
       {
+        "file": "_H4A3812.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
         "file": "_H4A3751.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3764.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3773.webp",
         "width": 1600,
         "height": 2400
       },
@@ -1023,7 +971,27 @@
         "height": 2400
       },
       {
-        "file": "_H4A3812.webp",
+        "file": "_H4A3837.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3581.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3595.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3604.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3624.webp",
         "width": 1600,
         "height": 2400
       },
@@ -1033,28 +1001,43 @@
         "height": 2400
       },
       {
+        "file": "_H4A3541.webp",
+        "width": 1598,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3574.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3636.webp",
+        "width": 1671,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3673.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3651.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
         "file": "_H4A3823.webp",
         "width": 1705,
         "height": 2400
       },
       {
+        "file": "_H4A3655.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
         "file": "_H4A3832.webp",
         "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3837.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3848.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3861.webp",
-        "width": 1699,
         "height": 2400
       }
     ],
