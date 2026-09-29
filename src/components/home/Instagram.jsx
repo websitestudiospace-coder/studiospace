@@ -96,24 +96,11 @@ function InstagramGlyph() {
   );
 }
 
-function ProfileRow({ profileRef, avatarFailed, setAvatarFailed }) {
+// Handle only -- the circular profile-photo avatar that sat to its left was
+// removed at the client's request.
+function ProfileRow({ profileRef }) {
   return (
-    <div ref={profileRef} className="flex items-center gap-4">
-      <div
-        className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full md:h-16 md:w-16"
-        style={{ backgroundColor: INK }}
-      >
-        {!avatarFailed && (
-          <Image
-            src="/images/instagram/avatar.jpg"
-            alt={`@${HANDLE}`}
-            fill
-            sizes="64px"
-            className="object-cover"
-            onError={() => setAvatarFailed(true)}
-          />
-        )}
-      </div>
+    <div ref={profileRef} className="flex items-center">
       <span
         className="text-base md:text-lg"
         style={{ fontFamily: "var(--font-manrope)", color: INK }}
@@ -211,7 +198,6 @@ export default function Instagram() {
   const gridWrapRef = useRef(null);
   const colorLayerRefs = useRef([]);
   const radiusRef = useRef(260);
-  const [avatarFailed, setAvatarFailed] = useState(false);
   const reduceMotion = useReducedMotion();
   const [canHover, setCanHover] = useState(false);
   const [entranceDone, setEntranceDone] = useState(false);
@@ -386,11 +372,7 @@ export default function Instagram() {
       style={{ backgroundColor: CREAM }}
     >
       <div className="mx-auto w-full max-w-[1100px]">
-        <ProfileRow
-          profileRef={profileRef}
-          avatarFailed={avatarFailed}
-          setAvatarFailed={setAvatarFailed}
-        />
+        <ProfileRow profileRef={profileRef} />
         <PostGrid
           gridWrapRef={gridWrapRef}
           gridRefs={gridRefs}
