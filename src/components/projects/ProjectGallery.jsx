@@ -11,69 +11,65 @@ const CREAM = "#F7EFE4";
 // below (for opacity), not this named constant -- no solid-ink usage in
 // this file otherwise.
 
-// Fallback aspect ratio (height / width) for the rare photo missing manifest
-// dimensions -- matches the old GalleryImage's "4 / 5" CSS aspect-ratio
-// fallback exactly, just expressed as a height multiplier instead of a CSS
-// aspect-ratio string, since masonry needs a real pixel height up front.
-const FALLBACK_HEIGHT_RATIO = 5 / 4;
+// Every cell is the same 2:3 portrait box (height = 1.5 x width), so each row
+// lines up edge to edge regardless of the photos' own orientation; photos are
+// cropped into it with object-fit: cover (the lightbox still shows the full,
+// uncropped photo). 2:3 because that's the native shape of nearly every photo
+// in scripts/photo-manifest.json, so those fill the cell with no crop -- only
+// the occasional landscape shot is cropped to its centre.
+const CELL_HEIGHT_RATIO = 3 / 2;
 
 // Column-count breakpoints, keyed off the actual measured container width
-// (via ResizeObserver on the grid itself). The gallery now renders edge-to-
-// edge of the viewport (see the section markup below), not this site's
-// usual max-w-[1100px] content column, so containerWidth is effectively the
-// real viewport width -- these tiers are tuned against that full range
+// (via ResizeObserver on the grid itself). The gallery spans the full
+// viewport minus the site's side gutter (see the section markup below), not
+// this site's usual max-w-[1100px] content column, so containerWidth tracks
+// the viewport width -- these tiers are tuned against that full range
 // (~327px on a 375px phone up through ultra-wide desktops), not the old
 // ~1100px-capped inner widths. More tiers than before for exactly that
 // reason: a fixed "4 columns and done" cap that was fine capped at 1100px
 // reads as absurdly wide individual photos once the container can be
 // 1920px+, so column count keeps climbing (capped at 6) rather than a
-// handful of images stretching edge to edge.
+// handful of images stretching edge to edge. The 3-column tier (and the
+// wide gap) start at 600, not 640, so a 768px tablet always gets 3 columns
+// once the md:px-8 gutter and scrollbar are subtracted (~689px of grid).
 const COLUMN_BREAKPOINTS = [
   { minWidth: 2200, columns: 6 },
   { minWidth: 1900, columns: 5 },
   { minWidth: 1024, columns: 4 },
-  { minWidth: 640, columns: 3 },
+  { minWidth: 600, columns: 3 },
   { minWidth: 0, columns: 2 },
 ];
 const GAP_WIDE = 24;
 const GAP_NARROW = 12;
-const GAP_BREAKPOINT = 640;
+const GAP_BREAKPOINT = 600;
 
 function getColumnCount(containerWidth) {
   const tier = COLUMN_BREAKPOINTS.find((b) => containerWidth >= b.minWidth);
   return tier.columns;
 }
 
-// Places `photos` row by row, strictly left to right: photo i goes in column
-// i % columns, stacked under that column's previous photo. The manifest
+// Places `photos` in a uniform grid, strictly left to right, top to bottom:
+// photo i goes in column i % columns, row floor(i / columns). The manifest
 // order (scripts/photo-manifest.json, see @/lib/projects) is the client's
-// chosen sequence, so it has to read exactly left-to-right, top-to-bottom.
-// This replaced shortest-column masonry packing, which balanced column
-// heights but put photos in whichever column was shortest, so rows read out
-// of order. Each photo still keeps its real proportions (height from its
-// width/height at the column width), so portraits and landscapes read as
-// taller/wider than each other -- which is also why column bottoms end
-// unevenly on projects mixing in landscape photos. Accepted by the client
-// in exchange for the exact order; don't rebalance.
-function computeMasonryLayout(photos, containerWidth) {
+// chosen sequence, so it has to read exactly in that order. Every cell has
+// the same size (see CELL_HEIGHT_RATIO), so rows are evenly aligned; this
+// replaced a masonry layout where each photo kept its natural height and
+// columns ended unevenly.
+function computeGridLayout(photos, containerWidth) {
   const columns = getColumnCount(containerWidth);
   const gap = containerWidth >= GAP_BREAKPOINT ? GAP_WIDE : GAP_NARROW;
-  const columnWidth = columns > 0 ? (containerWidth - (columns - 1) * gap) / columns : 0;
-  const colHeights = new Array(columns).fill(0);
+  const cellWidth = columns > 0 ? (containerWidth - (columns - 1) * gap) / columns : 0;
+  const cellHeight = cellWidth * CELL_HEIGHT_RATIO;
 
-  const items = photos.map((photo, i) => {
-    const col = i % columns;
-    const ratio = photo.width && photo.height ? photo.height / photo.width : FALLBACK_HEIGHT_RATIO;
-    const height = columnWidth * ratio;
-    const x = col * (columnWidth + gap);
-    const y = colHeights[col];
+  const items = photos.map((_, i) => ({
+    x: (i % columns) * (cellWidth + gap),
+    y: Math.floor(i / columns) * (cellHeight + gap),
+    width: cellWidth,
+    height: cellHeight,
+  }));
 
-    colHeights[col] += height + gap;
-
-    return { x, y, width: columnWidth, height };
-  });
-
-  const totalHeight = colHeights.length > 0 ? Math.max(...colHeights) - gap : 0;
+  const rows = Math.ceil(photos.length / columns);
+  const totalHeight = rows > 0 ? rows * (cellHeight + gap) - gap : 0;
 
   return { items, totalHeight: Math.max(totalHeight, 0) };
 }
@@ -170,13 +166,12 @@ function GalleryItem({ photo, alt, placed, itemRef, onOpen, onMouseEnter, onMous
   );
 }
 
-// Masonry grid (adapted from React Bits' "Masonry" pattern) replacing the
-// old row-grouped layout (landscape-full-width / portrait-clustered rows,
-// see @/lib/projects's now-removed groupGalleryRows), now filled strictly
-// left to right rather than shortest-column (see computeMasonryLayout above). Real project photos,
-// full color throughout -- no grayscale/filter anywhere in this component
-// (unlike the site's Google Maps embeds, which are intentionally
-// black-and-white; that's a different, unrelated convention).
+// Uniform photo grid (animation adapted from React Bits' "Masonry" pattern),
+// filled strictly left to right into same-size cells (see computeGridLayout
+// above). Real project photos, full color throughout -- no grayscale/filter
+// anywhere in this component (unlike the site's Google Maps embeds, which
+// are intentionally black-and-white; that's a different, unrelated
+// convention).
 export default function ProjectGallery({ name, photos = [] }) {
   const containerRef = useRef(null);
   const itemRefs = useRef([]);
@@ -202,7 +197,7 @@ export default function ProjectGallery({ name, photos = [] }) {
   }, []);
 
   const layout = useMemo(
-    () => computeMasonryLayout(photos, containerWidth),
+    () => computeGridLayout(photos, containerWidth),
     [photos, containerWidth]
   );
 
@@ -304,17 +299,14 @@ export default function ProjectGallery({ name, photos = [] }) {
   if (photos.length === 0) return null;
 
   return (
-    <section className="w-full px-6 py-16 md:px-0 md:py-24" style={{ backgroundColor: CREAM }}>
-      {/* Full-width relative to the viewport, not this page's usual
-          max-w-[1100px] content column -- same override IndiaMap.jsx uses
-          for its own full-bleed map (no horizontal padding on the section,
-          no max-w/mx-auto on this grid itself), so photos actually run edge
-          to edge instead of sitting in a narrower centered block with dead
-          cream space on either side. Mobile only keeps the site's 24px
-          gutter (px-6) -- at phone width, photos flush against the screen
-          edges read as a layout bug next to the gutter-aligned text around
-          them. The ResizeObserver below measures this div's own width, so
-          the columns reflow to fit inside that padding. */}
+    <section className="w-full px-6 py-16 md:px-8 md:py-24" style={{ backgroundColor: CREAM }}>
+      {/* Wider than this page's usual max-w-[1100px] content column (no
+          max-w/mx-auto on the grid), but inset by a side gutter (px-6 /
+          md:px-8 -- half the md:px-16 NextProjectLink and ProjectsGrid use,
+          per the client) so the outer columns never sit flush against the
+          viewport edge.
+          The ResizeObserver below measures this div's own width, so the
+          columns reflow to fit inside that padding. */}
       <div
         ref={containerRef}
         className="relative w-full"
