@@ -906,21 +906,6 @@
     "coverFile": "_H4A3710.webp",
     "photos": [
       {
-        "file": "_H4A3773.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3848.webp",
-        "width": 1600,
-        "height": 2400
-      },
-      {
-        "file": "_H4A3861.webp",
-        "width": 1699,
-        "height": 2400
-      },
-      {
         "file": "_H4A3764.webp",
         "width": 1600,
         "height": 2400
@@ -1038,6 +1023,21 @@
       {
         "file": "_H4A3832.webp",
         "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3773.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3848.webp",
+        "width": 1600,
+        "height": 2400
+      },
+      {
+        "file": "_H4A3861.webp",
+        "width": 1699,
         "height": 2400
       }
     ],
