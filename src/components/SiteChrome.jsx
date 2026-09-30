@@ -10,8 +10,10 @@ import ScrollProgress from "@/components/ScrollProgress";
 export default function SiteChrome({ children }) {
   const pathname = usePathname();
   const isStudio = pathname?.startsWith("/studio");
+  // TEMPORARY: the pre-launch holding page at "/" is a single static screen.
+  const isHoldingPage = pathname === "/";
 
-  if (isStudio) return children;
+  if (isStudio || isHoldingPage) return children;
 
   return (
     <>
