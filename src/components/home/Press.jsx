@@ -298,7 +298,7 @@ export default function Press({ items }) {
       window.removeEventListener("pointerup", handlePointerUp);
       track.removeEventListener("click", handleClickCapture, true);
     };
-  }, [goTo]);
+  }, [goTo, items.length]);
 
   // Real mouse hover only -- a touch tap fires an emulated mouseenter with
   // no matching mouseleave on most mobile browsers, which would leave
@@ -347,7 +347,7 @@ export default function Press({ items }) {
       goTo((indexRef.current + 1) % items.length, true);
     }, AUTO_ADVANCE_MS);
     return () => clearInterval(id);
-  }, [reduceMotion, inView, goTo]);
+  }, [reduceMotion, inView, goTo, items.length]);
 
   // One-shot reveal (not scroll-scrubbed): this section doesn't need to
   // feel scroll-locked, so it just plays once as it enters the viewport.

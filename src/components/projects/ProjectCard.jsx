@@ -66,7 +66,6 @@ export default function ProjectCard({
       : "opacity-0 translate-y-3 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:translate-y-0 group-focus:opacity-100 group-focus:translate-y-0";
 
   const imageProps = {
-    alt: name,
     fill: true,
     sizes: "(max-width: 768px) 100vw, 33vw",
     className: "object-cover transition-transform duration-200 ease-out group-hover:scale-[1.03]",
@@ -88,9 +87,9 @@ export default function ProjectCard({
           }}
         />
       ) : image.startsWith("/") ? (
-        <Image src={image} priority={priority} {...imageProps} />
+        <Image src={image} alt={name} priority={priority} {...imageProps} />
       ) : (
-        <CldImage src={image} priority={priority} {...imageProps} />
+        <CldImage src={image} alt={name} priority={priority} {...imageProps} />
       )}
       {/* Clean by default -- no visible scrim/text until hover (or
           focus/touch, see overlayVisibilityClass above). Height is

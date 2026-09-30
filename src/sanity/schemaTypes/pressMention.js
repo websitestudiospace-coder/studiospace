@@ -5,7 +5,7 @@
 // on the home page's Press carousel and the /media grid, so the client
 // doesn't need a developer to touch code to add a new one. Mirrors
 // project.js's own shape/conventions.
-export default {
+const pressMention = {
   name: "pressMention",
   title: "Press Mention",
   type: "document",
@@ -47,3 +47,5 @@ export default {
     select: { title: "headline", subtitle: "publication" },
   },
 };
+
+export default pressMention;

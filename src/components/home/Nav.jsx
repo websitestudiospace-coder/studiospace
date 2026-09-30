@@ -51,16 +51,20 @@ export default function Nav({ lightHero = false }) {
       ticking = false;
     };
 
+    let frame = 0;
     const onScroll = () => {
       if (!ticking) {
-        window.requestAnimationFrame(update);
+        frame = window.requestAnimationFrame(update);
         ticking = true;
       }
     };
 
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   // While the full-screen mobile overlay is open, the ink panel sits

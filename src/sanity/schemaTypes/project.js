@@ -6,7 +6,7 @@
 // /projects grid, so the client doesn't need a developer to run any scripts
 // to add a new one -- photos/video upload directly through Sanity's own
 // asset storage.
-export default {
+const project = {
   name: "project",
   title: "Project",
   type: "document",
@@ -76,3 +76,5 @@ export default {
     select: { title: "name", subtitle: "location", media: "coverImage" },
   },
 };
+
+export default project;
