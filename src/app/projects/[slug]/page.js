@@ -4,20 +4,10 @@ import Footer from "@/components/home/Footer";
 import ProjectDetail from "@/components/projects/ProjectDetail";
 import { PROJECTS } from "@/data/projects";
 import { getProjectBySlug, getNextProject } from "@/lib/projects";
+import { toShareImage } from "@/lib/site";
 
 export function generateStaticParams() {
   return PROJECTS.map((project) => ({ slug: project.slug }));
-}
-
-// Share cards want a ~1.91:1 JPEG/PNG; the cover is a full-size WebP. For
-// Cloudinary covers, ask Cloudinary for that crop directly. Anything else
-// (Sanity CDN, a local /images path) is used as-is.
-function toShareImage(cover) {
-  if (!cover) return null;
-  return cover.replace(
-    /(res\.cloudinary\.com\/[^/]+\/image\/upload\/)/,
-    "$1c_fill,g_auto,w_1200,h_630/f_jpg/q_auto/"
-  );
 }
 
 export async function generateMetadata({ params }) {

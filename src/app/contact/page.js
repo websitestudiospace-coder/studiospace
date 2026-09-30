@@ -2,6 +2,7 @@ import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import ContactContent from "@/components/contact/ContactContent";
 import { getProjectPhoto } from "@/lib/projects";
+import { DEFAULT_SHARE_IMAGE } from "@/lib/site";
 
 // Was "/images/contact/8.webp" via a flat toCloudinaryUrl() call (that
 // source file/folder no longer exists under public/images/contact/ at
@@ -24,12 +25,6 @@ const CONTACT_HERO_PHOTO = {
   alt: "A warm, arched bedroom nook with a cane-panelled wardrobe, terracotta bedding, and pleated bedside lamps, opening onto a neutral linen sofa",
 };
 
-// TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
-// doesn't deep-merge nested `openGraph`/`twitter` objects, so a page that
-// sets its own must repeat `images` or it silently loses the root layout's
-// default. Swap for a purpose-made image from the client before launch.
-const DEFAULT_OG_IMAGE = "/images/projects/the-modern-eclectic-home/3H4A2226-1.webp";
-
 export const metadata = {
   title: "Contact | Studio SP_ACE",
   description: "Get in touch with Studio SP_ACE to start your architecture and interior design project.",
@@ -37,14 +32,14 @@ export const metadata = {
     title: "Contact | Studio SP_ACE",
     description: "Get in touch with Studio SP_ACE to start your architecture and interior design project.",
     siteName: "Studio SP_ACE",
-    images: [{ url: DEFAULT_OG_IMAGE }],
+    images: [{ url: DEFAULT_SHARE_IMAGE }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Contact | Studio SP_ACE",
     description: "Get in touch with Studio SP_ACE to start your architecture and interior design project.",
-    images: [DEFAULT_OG_IMAGE],
+    images: [DEFAULT_SHARE_IMAGE],
   },
 };
 

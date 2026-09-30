@@ -1,5 +1,4 @@
-// Production domain (kept in sync with src/app/sitemap.js and layout.js).
-const BASE_URL = "https://studiospace.co.in";
+import { SITE_URL } from "@/lib/site";
 
 export default function robots() {
   return {
@@ -7,6 +6,6 @@ export default function robots() {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

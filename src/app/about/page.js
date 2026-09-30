@@ -5,6 +5,7 @@ import MeetFounders from "@/components/about/MeetFounders";
 import WhatWeBelieve from "@/components/about/WhatWeBelieve";
 import IndiaMap from "@/components/about/IndiaMap";
 import { getProjectPhoto } from "@/lib/projects";
+import { DEFAULT_SHARE_IMAGE } from "@/lib/site";
 
 // WhatWeBelieve's scroll-stack needs a real photo per belief, but it's a
 // "use client" component (GSAP/Lenis/DOM refs) and getProjectPhoto() reads
@@ -54,12 +55,6 @@ const BELIEF_IMAGES = [
   },
 ];
 
-// TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
-// doesn't deep-merge nested `openGraph`/`twitter` objects, so a page that
-// sets its own must repeat `images` or it silently loses the root layout's
-// default. Swap for a purpose-made image from the client before launch.
-const DEFAULT_OG_IMAGE = "/images/projects/the-modern-eclectic-home/3H4A2226-1.webp";
-
 const ABOUT_DESCRIPTION =
   "Meet the founders behind Studio SP_ACE and discover our approach to architecture and interior design built around the way you live.";
 
@@ -70,14 +65,14 @@ export const metadata = {
     title: "About | Studio SP_ACE",
     description: ABOUT_DESCRIPTION,
     siteName: "Studio SP_ACE",
-    images: [{ url: DEFAULT_OG_IMAGE }],
+    images: [{ url: DEFAULT_SHARE_IMAGE }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "About | Studio SP_ACE",
     description: ABOUT_DESCRIPTION,
-    images: [DEFAULT_OG_IMAGE],
+    images: [DEFAULT_SHARE_IMAGE],
   },
 };
 

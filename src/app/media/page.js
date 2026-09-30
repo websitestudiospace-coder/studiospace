@@ -4,6 +4,7 @@ import MediaHero from "@/components/media/MediaHero";
 import MediaGrid from "@/components/media/MediaGrid";
 import { getProjectPhoto } from "@/lib/projects";
 import { getAllPressItems } from "@/lib/press";
+import { DEFAULT_SHARE_IMAGE } from "@/lib/site";
 
 // MediaHero is a "use client" component (GSAP/DOM refs) and
 // getProjectPhoto() reads scripts/photo-manifest.json + cloudinary-url-map
@@ -30,12 +31,6 @@ const MEDIA_HERO_PHOTO = {
   alt: "A round dining table with navy chairs beneath a wood-beamed ceiling, opening through arched glass doors into a living room with built-in blue cabinetry",
 };
 
-// TODO: placeholder OG/Twitter share image, same as layout.js -- Next.js
-// doesn't deep-merge nested `openGraph`/`twitter` objects, so a page that
-// sets its own must repeat `images` or it silently loses the root layout's
-// default. Swap for a purpose-made image from the client before launch.
-const DEFAULT_OG_IMAGE = "/images/projects/the-modern-eclectic-home/3H4A2226-1.webp";
-
 export const metadata = {
   title: "Media | Studio SP_ACE",
   description:
@@ -45,7 +40,7 @@ export const metadata = {
     description:
       "Studio SP_ACE's work as featured in architecture and design press.",
     siteName: "Studio SP_ACE",
-    images: [{ url: DEFAULT_OG_IMAGE }],
+    images: [{ url: DEFAULT_SHARE_IMAGE }],
     type: "website",
   },
   twitter: {
@@ -53,7 +48,7 @@ export const metadata = {
     title: "Media | Studio SP_ACE",
     description:
       "Studio SP_ACE's work as featured in architecture and design press.",
-    images: [DEFAULT_OG_IMAGE],
+    images: [DEFAULT_SHARE_IMAGE],
   },
 };
 
