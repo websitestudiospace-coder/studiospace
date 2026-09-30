@@ -48,27 +48,47 @@ function getColumnCount(containerWidth) {
   return tier.columns;
 }
 
-// Places `photos` in a uniform grid, strictly left to right, top to bottom:
-// photo i goes in column i % columns, row floor(i / columns). The manifest
-// order (scripts/photo-manifest.json, see @/lib/projects) is the client's
-// chosen sequence, so it has to read exactly in that order. Every cell has
-// the same size (see CELL_HEIGHT_RATIO), so rows are evenly aligned; this
-// replaced a masonry layout where each photo kept its natural height and
-// columns ended unevenly.
+// Places `photos` in a uniform grid, strictly left to right, top to bottom.
+// The manifest order (scripts/photo-manifest.json, see @/lib/projects) is
+// the client's chosen sequence, so it has to read exactly in that order.
+// Every row has the same height and every cell is one column wide (see
+// CELL_HEIGHT_RATIO), so rows are evenly aligned; this replaced a masonry
+// layout where each photo kept its natural height and columns ended
+// unevenly. The one exception: a photo flagged `wide` in the manifest (a
+// landscape shot the client wants shown as landscape, e.g. the Modern
+// Organic Home's PAS_0754) spans two columns at the same row height. If
+// fewer than two columns are left in the current row it starts the next row
+// instead, leaving that slot empty, since the order can't be shuffled to
+// fill it.
 function computeGridLayout(photos, containerWidth) {
   const columns = getColumnCount(containerWidth);
   const gap = containerWidth >= GAP_BREAKPOINT ? GAP_WIDE : GAP_NARROW;
   const cellWidth = columns > 0 ? (containerWidth - (columns - 1) * gap) / columns : 0;
   const cellHeight = cellWidth * CELL_HEIGHT_RATIO;
 
-  const items = photos.map((_, i) => ({
-    x: (i % columns) * (cellWidth + gap),
-    y: Math.floor(i / columns) * (cellHeight + gap),
-    width: cellWidth,
-    height: cellHeight,
-  }));
+  let row = 0;
+  let col = 0;
+  const items = photos.map((photo) => {
+    const span = photo.wide ? Math.min(2, columns) : 1;
+    if (col + span > columns) {
+      row += 1;
+      col = 0;
+    }
+    const item = {
+      x: col * (cellWidth + gap),
+      y: row * (cellHeight + gap),
+      width: span * cellWidth + (span - 1) * gap,
+      height: cellHeight,
+    };
+    col += span;
+    if (col >= columns) {
+      row += 1;
+      col = 0;
+    }
+    return item;
+  });
 
-  const rows = Math.ceil(photos.length / columns);
+  const rows = col === 0 ? row : row + 1;
   const totalHeight = rows > 0 ? rows * (cellHeight + gap) - gap : 0;
 
   return { items, totalHeight: Math.max(totalHeight, 0) };

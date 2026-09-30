@@ -63,11 +63,14 @@ function getManifestEntry(slug) {
 // can compute proportional layout from the real aspect ratio without any
 // client-side measuring.
 function listProjectPhotos(slug) {
-  return getManifestEntry(slug).photos.map(({ file, width, height }) => ({
+  return getManifestEntry(slug).photos.map(({ file, width, height, wide }) => ({
     file,
     src: toCloudinaryUrl(`/images/projects/${slug}/${file}`),
     width: width ?? null,
     height: height ?? null,
+    // Optional manifest flag: show this photo in a two-column landscape
+    // cell in ProjectGallery instead of the standard portrait cell.
+    wide: wide === true,
   }));
 }
 

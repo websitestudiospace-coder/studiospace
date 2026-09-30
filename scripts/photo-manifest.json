@@ -534,7 +534,8 @@
       {
         "file": "PAS_0754.webp",
         "width": 2400,
-        "height": 1601
+        "height": 1601,
+        "wide": true
       }
     ],
     "hasVideo": true,
