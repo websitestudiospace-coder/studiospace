@@ -65,7 +65,6 @@ scripts/
   cloudinary-url-map.json   Local path -> Cloudinary URL for every uploaded file
   convert-to-webp.js        Compress new photos before upload
   upload-to-cloudinary.js   Upload a project folder and update the URL map
-  build-photo-manifest.js   DO NOT RUN (see section 4)
 public/
   images/, videos/, logos/  Home/About images, hero video, logo. Project photos are
                             NOT here; they live on Cloudinary.
@@ -112,7 +111,7 @@ The gallery (`ProjectGallery.jsx`) is a uniform grid: every cell is 2:3 portrait
 
 ### Changing gallery order or covers
 
-Edit `scripts/photo-manifest.json` by hand (reorder the objects in `photos`, add or remove `coverFile` / `wide`), then rebuild. **Never run `scripts/build-photo-manifest.js`**: it regenerates the manifest from local photo files that no longer exist, which would empty every gallery and throw away the hand-set orders and flags.
+Edit `scripts/photo-manifest.json` by hand (reorder the objects in `photos`, add or remove `coverFile` / `wide`), then rebuild. The manifest is maintained by hand only: there is no script that regenerates it (the local photo files it was first built from no longer exist).
 
 ### Adding photos to an existing project
 
