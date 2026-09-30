@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import gsap from "gsap";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
+import { responsiveImageProps } from "@/lib/cloudinaryImage";
 
 const CREAM = "#F7EFE4";
 // Lightbox scrim/close-button use ink (#2B2622) directly as rgba() literals
@@ -141,8 +142,7 @@ function GalleryLightbox({ photo, alt, onClose }) {
         >
           <CloseIcon />
         </button>
-        {/* eslint-disable-next-line @next/next/no-img-element -- see the
-            file-level comment on GalleryItem for why this is a plain <img>. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- full-size original on purpose */}
         <img
           src={photo.src}
           alt={alt}
@@ -154,21 +154,16 @@ function GalleryLightbox({ photo, alt, onClose }) {
   );
 }
 
-// Individual masonry item -- position/size are driven entirely by GSAP
-// (see the layout effect below), never by this element's own CSS, so it's
-// just an absolutely-positioned box with a real <img> filling it. Plain
-// <img>, not CldImage/next/image -- same reasoning WhatWeBelieve's stack
-// cards already established on this site: the box's pixel width/height are
-// already resolved by JS-driven masonry math, and next/image's <Image fill>
-// additionally requires res.cloudinary.com in next.config.js's
-// remotePatterns (a config change out of scope here), which CldImage needs
-// too. A plain <img loading="lazy"> has neither requirement.
+// Position/size are driven entirely by GSAP (see the layout effect below),
+// so this is just an absolutely-positioned box with an <img> filling it.
+// Plain <img> rather than next/image: the box is sized by JS, and
+// responsiveImageProps supplies Cloudinary-resized variants.
 //
-// `placed` gates the <img> itself: until the masonry effect below has run,
-// every item is an unsized box stacked at the grid's top-left corner, which
-// put all of them inside the browser's lazy-load distance at once -- every
-// photo in the gallery downloaded at page load despite loading="lazy".
-function GalleryItem({ photo, alt, placed, itemRef, onOpen, onMouseEnter, onMouseLeave }) {
+// `placed` gates the <img>: until the layout effect has run, every item is
+// an unsized box at the grid's top-left corner, all inside the browser's
+// lazy-load distance at once, so every photo would download at page load
+// despite loading="lazy".
+function GalleryItem({ photo, alt, placed, cellWidth, itemRef, onOpen, onMouseEnter, onMouseLeave }) {
   return (
     <div
       ref={itemRef}
@@ -180,7 +175,13 @@ function GalleryItem({ photo, alt, placed, itemRef, onOpen, onMouseEnter, onMous
     >
       {placed && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={photo.src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
+        <img
+          {...responsiveImageProps(photo.src, `${Math.ceil(cellWidth)}px`)}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
       )}
     </div>
   );
@@ -338,6 +339,7 @@ export default function ProjectGallery({ name, photos = [] }) {
             photo={photo}
             alt={`${name} — photo ${i + 1}`}
             placed={placed}
+            cellWidth={layout.items[i]?.width ?? 0}
             itemRef={(el) => {
               itemRefs.current[i] = el;
             }}

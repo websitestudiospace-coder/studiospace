@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { getLenis } from "@/lib/lenis";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
+import { responsiveImageProps } from "@/lib/cloudinaryImage";
 
 const CREAM = "#F7EFE4";
 const CARD_SURFACE = "#FBF6EE";
@@ -218,18 +219,11 @@ function CardBody({ index, belief, image, isDesktop }) {
     <>
       <div className="relative h-52 w-full shrink-0 md:h-full md:w-[58%]">
         {image?.src && (
-          // Plain <img>, not next/image -- the resolved Cloudinary URL
-          // arrives fully-formed as a prop from about/page.js (see the
-          // file-level comment above), and next/image would additionally
-          // require res.cloudinary.com in next.config.js's remotePatterns
-          // (confirmed via a live "Invalid src prop" crash) -- a config
-          // change outside this task's scoped file list. Every other
-          // Cloudinary image on this site goes through CldImage instead,
-          // which sidesteps that requirement; this component intentionally
-          // doesn't need CldImage's own server-side resolution since the
-          // URL is already resolved by the time it gets here.
+          // Plain <img>: the Cloudinary URL arrives already resolved from
+          // about/page.js; responsiveImageProps adds resized variants.
+          // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={image.src}
+            {...responsiveImageProps(image.src, "(min-width: 768px) 372px, min(100vw, 640px)")}
             alt={image.alt || belief.title}
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover"
