@@ -17,9 +17,8 @@ const INK = "#2B2622";
 const HANDLE = "studio_sp_ace";
 const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
 
-// isVideo / isCarousel are per-post flags for the reel play-icon and
-// carousel-corner overlays -- none of the current 8 posts are reels or
-// carousels, but the grid still supports both for whenever they are.
+// isVideo / isCarousel drive the reel and carousel overlays (supported,
+// though none of the current posts use them).
 const POSTS = [
   { image: "/images/instagram/post-1.jpg", isVideo: false, isCarousel: false },
   { image: "/images/instagram/post-2.jpg", isVideo: false, isCarousel: false },
@@ -62,9 +61,8 @@ function PlayIcon() {
   );
 }
 
-// The bundled Agatho font's underscore glyph is a "buy font" watermark, not
-// a real underscore (see Footer.jsx's InlineWordmark) -- draw it as a small
-// decorative bar instead of relying on the font's own glyph.
+// Agatho's underscore glyph is a "buy font" watermark, so draw a small bar
+// instead.
 function InlineHandle({ text }) {
   return text.split("").map((char, i) =>
     char === "_" ? (
@@ -201,10 +199,8 @@ export default function Instagram() {
   const reduceMotion = useReducedMotion();
   const [canHover, setCanHover] = useState(false);
   const [entranceDone, setEntranceDone] = useState(false);
-  // Spotlight/Follow-button transition should be live once either the GSAP
-  // entrance timeline has actually finished, or (under reduced motion, where
-  // no timeline ever runs) unconditionally -- derived at render time instead
-  // of mirrored into state via an effect.
+  // Spotlight and Follow-button transition go live once the entrance has
+  // finished (immediately under reduced motion, where nothing animates).
   const spotlightReady = entranceDone || reduceMotion;
 
   useEffect(() => {
@@ -215,20 +211,13 @@ export default function Instagram() {
     return () => hoverMql.removeEventListener("change", update);
   }, []);
 
-  // Grayscale spotlight -- purely a hover layer above the grid, kept out of
-  // React state per pointermove so it never triggers a re-render. Each card
-  // is grayscale by default; a full-color duplicate is clipped to a growing
-  // circle (clip-path, not mask-image -- mask-image silently fails to paint
-  // past the first of several simultaneous instances on this renderer) that
-  // reveals it under the cursor. Each card's --x/--y are the cursor position
-  // in that card's own local space, so the circle still reads as one
-  // continuous spotlight sweeping across grid boundaries. Radius is measured
-  // from the actual card width so it stays proportional whether the grid is
-  // 2- or 4-columns.
+  // Hover spotlight: cards are grayscale, and a full-colour copy is revealed
+  // inside a circle under the cursor (clip-path; mask-image failed to paint
+  // on multiple instances). Each card's --x/--y is the cursor in its own
+  // coordinates so the circle reads as one spotlight across cards. Written
+  // straight to the DOM on pointermove, never through React state.
   useEffect(() => {
-    // No entrance timeline plays in the reduced-motion fallback (items are
-    // rendered already-settled), so there's nothing for the spotlight to
-    // wait on there.
+    // Reduced motion: no entrance to wait for.
     if (!canHover || !spotlightReady) return;
     const wrap = gridWrapRef.current;
     const layers = colorLayerRefs.current.filter(Boolean);
@@ -287,10 +276,7 @@ export default function Instagram() {
         ease: "power2.out",
         overwrite: true,
         onComplete: () => {
-          // Belt-and-suspenders: with --r back at 0 the circle is already
-          // invisible regardless of --x/--y, but snap the position fully
-          // off-canvas too so there's no leftover coordinate sitting on the
-          // element between hovers.
+          // Also move the circle off-canvas between hovers.
           setters.forEach(({ setX, setY }) => {
             setX(-9999);
             setY(-9999);
@@ -312,11 +298,8 @@ export default function Instagram() {
     };
   }, [canHover, spotlightReady]);
 
-  // One-shot reveal (not scroll-scrubbed): this section doesn't need to
-  // feel scroll-locked, so it just plays once as it enters the viewport.
-  // Still waits for "preloader:complete" since "top 80%" is calculated
-  // against this section's own position, which depends on every section
-  // above it already being in its final, settled layout.
+  // One-shot reveal; waits for the preloader so "top 80%" is measured
+  // against settled layout.
   usePreloaderGate(
     () => {
       const items = gridRefs.current.filter(Boolean);
@@ -338,10 +321,7 @@ export default function Instagram() {
               y: 0,
               willChange: "auto",
             });
-            // Spotlight hover is gated behind this: the grid should only
-            // show its plain fade+translateY entrance (no interaction
-            // layered on top) until every post has actually finished
-            // entering.
+            // Enable the spotlight only after every post has entered.
             setEntranceDone(true);
           },
         });

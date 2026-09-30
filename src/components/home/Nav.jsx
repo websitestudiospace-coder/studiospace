@@ -67,21 +67,9 @@ export default function Nav({ lightHero = false }) {
     };
   }, []);
 
-  // While the full-screen mobile overlay is open, the ink panel sits
-  // directly behind this bar -- keep the bar itself transparent with
-  // cream logo/text (same as the un-scrolled state) instead of switching
-  // to the solid cream treatment, so it reads as one continuous ink
-  // takeover rather than a cream bar sitting on top of an ink panel.
-  // `lightHero` is for a page whose hero content is cream-on-cream from
-  // y=0 -- unlike Home/Projects (a dark video/image hero for the
-  // un-scrolled cream text to sit on), such a page has nothing dark for
-  // cream text to read against until the user scrolls, so the solid/ink
-  // treatment applies from the start. No current page passes this --
-  // About used to (its mobile/reduced-motion fallback is still
-  // cream-on-cream at y=0, a real gap flagged in about/page.js's own
-  // comment) but its desktop hero is now a full-bleed photo like Home's,
-  // so it dropped the prop in favor of the same scroll-based default.
-  // Left here for whichever page needs it next, not dead code to prune.
+  // With the mobile menu open, keep the bar transparent with cream text so it
+  // reads as one continuous ink overlay. `lightHero` makes the bar solid from
+  // y=0, for a page whose hero is cream (no page uses it right now).
   const solid = (scrolled || lightHero) && !menuOpen;
   const textColor = solid ? INK : CREAM;
 
@@ -175,19 +163,11 @@ export default function Nav({ lightHero = false }) {
         </div>
       </header>
 
-      {/* Full-screen mobile menu overlay. Rendered as a sibling of <header>,
-          not a descendant -- header has its own inline `transform` (for the
-          hide-on-scroll slide), and per spec a `position: fixed` descendant
-          of a transformed ancestor sizes itself against that ancestor's box
-          instead of the viewport. Nesting this inside header collapsed it
-          to the header's own ~72px content height instead of covering the
-          screen; living outside it, this is fixed straight to the
-          viewport. Always mounted (not conditionally rendered) so the
-          fade/slide is a real CSS transition rather than a hard
-          mount/unmount cut -- pointer-events + aria-hidden keep it out of
-          the way (click-through and screen readers) while closed. The
-          close affordance is the same hamburger button above morphing into
-          an X, not a separate icon. */}
+      {/* Mobile menu overlay, rendered outside <header>: header is
+          transformed (hide-on-scroll), and a fixed child of a transformed
+          element sizes to that element instead of the viewport. Always
+          mounted so open/close is a CSS transition; pointer-events and
+          aria-hidden take it out of the way when closed. */}
       <div
         className="fixed inset-0 z-[99] flex flex-col items-center justify-center gap-8 px-6 lg:hidden"
         style={{

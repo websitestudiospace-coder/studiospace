@@ -15,22 +15,13 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
-// Image width keyframes (percent of the pinned viewport) across the five
-// choreographed phases of the scroll timeline -- percentages below are the
-// ACTUAL tween positions/durations from the timeline further down (the
-// original values here had drifted out of sync with those; corrected
-// alongside the Phase 4 retiming below).
+// Image width keyframes (percent of the pinned frame) for the desktop scroll
+// timeline below.
 const IMAGE_PHASE1_WIDTH = 28; // 0%-8%: grows from nothing
 const IMAGE_SETTLE_WIDTH = 46; // 8%-35%: grows toward the settled layout
-// Also doubles as the text panel's fixed left offset/width (see the
-// `textRef` style below) -- that's a layout position, not an image-growth
-// keyframe, and must NOT change independently of a deliberate text-column
-// reflow decision. The image itself barely reaches this value (46->48,
-// see Phase 3 below) and isn't allowed to grow past it until Phase 4,
-// since the text panel sits fully opaque and static at exactly this left
-// edge until then -- letting the image cross earlier would visibly creep
-// a grayscale image behind fully-legible text.
-const IMAGE_HOLD_WIDTH = 48; // 35%-65%: settled, barely creeps (this window is a text-reading hold, not an image animation -- same role as Quote.jsx's holds)
+// Also the text panel's fixed left edge/width. The image must not grow past
+// it until Phase 4, while the text is fully visible on top.
+const IMAGE_HOLD_WIDTH = 48; // 35%-65%: reading hold, image barely moves
 const IMAGE_FULL_WIDTH = 100; // 65%-95%: resumes growth to full-bleed, gradually
 
 const TEXT_SLIDE_X = 40; // px slide distance used on both the in and out tweens
@@ -103,38 +94,18 @@ export default function About() {
     return () => mql.removeEventListener("change", update);
   }, []);
 
-  // Desktop-only, same rule as Projects.jsx: the pinned sequence relies on
-  // an absolutely-positioned image/text split (image width tweened as a %,
-  // text box pinned at a fixed left offset) that has no mobile-width
-  // equivalent -- squeezing it into a narrow viewport is what clipped the
-  // heading, cut the body text off mid-paragraph, and pushed the "About Us"
-  // link off-screen. Mobile always falls through to the plain stacked
-  // "!enhanced" branch below instead.
+  // The pinned image/text split only works at desktop widths; mobile and
+  // reduced motion use the stacked layout in the `!enhanced` branch below.
   const enhanced = !reduceMotion && isDesktop;
 
-  // HeroQuoteTransition's hero pin and Quote's own scroll triggers default
-  // to their unpinned/simple layout on first render and only upgrade to
-  // the pinned/complex layout a commit later, once their own matchMedia
-  // checks resolve. If this section's ScrollTrigger is created immediately
-  // on mount (same as previous attempts here), it measures its position
-  // against that pre-upgrade layout, and calling ScrollTrigger.refresh()
-  // afterward does not correct it — confirmed by direct testing: even a
-  // native "resize" event (which ScrollTrigger listens to for its own
-  // auto-refresh) left `start` locked at the stale value. The reliable
-  // fix is to not create the trigger until layout has already settled,
-  // rather than trying to patch a wrong initial measurement after the
-  // fact. Preloader.jsx dispatches "preloader:complete" (and sets
-  // window.__preloaderDone) once its own ~3.8s intro finishes and unlocks
-  // body scroll — by then every other component's mount-time layout
-  // change has long since happened, so it's a reliable point to measure
-  // from for the first time.
+  // Waits for the preloader: sections above (hero pin, Quote) settle their
+  // layout a commit after mount, and a trigger created earlier keeps a stale
+  // `start` that ScrollTrigger.refresh() doesn't correct.
   usePreloaderGate(
     () => {
       const ctx = gsap.context(() => {
-        // Single ScrollTrigger owns this whole section's timeline: every
-        // phase below is a tween on this one scrub, positioned at an
-        // absolute fraction of the timeline, so the choreography can't
-        // drift out of sync the way separate triggers would.
+        // One scrubbed timeline for the whole section; every phase is placed
+        // at an absolute fraction of it so the phases can't drift apart.
         gsap.set(imageRef.current, { width: "0%" });
         gsap.set(textRef.current, { opacity: 0, x: TEXT_SLIDE_X });
 
@@ -147,24 +118,19 @@ export default function About() {
           },
         });
 
-        // Anchor the timeline's total length to 1 "unit" so every position
-        // argument below reads as a literal fraction of the scroll range —
-        // including the trailing 90%-100% hold, where nothing animates but
-        // the full-bleed image still needs to occupy scroll distance.
+        // Pin the timeline length to 1 so positions below read as fractions
+        // of the scroll range (including the final hold where nothing moves).
         tl.to({}, { duration: 1 }, 0);
 
-        // Phase 1 (0%-8%): image grows from nothing; text stays hidden.
-        // Kept short — this is the only phase where the section reads as
-        // "empty," so it shouldn't consume much scroll distance.
+        // Phase 1 (0%-8%): image grows from nothing; text hidden.
         tl.to(
           imageRef.current,
           { width: `${IMAGE_PHASE1_WIDTH}%`, ease: "none", duration: 0.08 },
           0
         );
 
-        // Phase 2 (8%-35%): image keeps growing toward its settled width
-        // while text slides and fades in, as if pulled into view by the
-        // image's advancing right edge.
+        // Phase 2 (8%-35%): image grows toward its settled width while the
+        // text slides/fades in.
         tl.to(
           imageRef.current,
           { width: `${IMAGE_SETTLE_WIDTH}%`, ease: "none", duration: 0.27 },
@@ -176,30 +142,15 @@ export default function About() {
           0.08
         );
 
-        // Phase 3 (35%-65%): settled state — image barely creeps, text
-        // holds fully visible. No text tween here; it simply holds its
-        // Phase 2 end value.
+        // Phase 3 (35%-65%): settled; image barely creeps, text holds.
         tl.to(
           imageRef.current,
           { width: `${IMAGE_HOLD_WIDTH}%`, ease: "none", duration: 0.3 },
           0.35
         );
 
-        // Phase 4 (65%-95%): image resumes growing to full-bleed; text
-        // fades and slides out, finishing at 0.8, well before the image
-        // reaches 100% width at 0.95.
-        //
-        // This is the phase that used to read as an abrupt jump: it was
-        // previously only 20% of the scroll range (0.65-0.85) carrying 52
-        // of the image's 100 total width points -- over half the image's
-        // entire growth compressed into a fifth of the scroll, right after
-        // Phase 3's plateau. Extending it to 30% (duration 0.2 -> 0.3)
-        // reclaims scroll distance from Phase 5 below, which was pure dead
-        // weight (full-bleed already reached, nothing left to animate) --
-        // Phases 1-3 and the text fade timing are untouched, so the
-        // text-reading hold (Phase 3) and the no-overlap-before-fade-out
-        // guarantee (see IMAGE_HOLD_WIDTH above) both still hold exactly
-        // as before.
+        // Phase 4 (65%-95%): image grows to full-bleed and turns to colour;
+        // text fades out by 0.8, before the image passes under it.
         tl.to(
           imageRef.current,
           {
@@ -217,12 +168,8 @@ export default function About() {
           0.65
         );
 
-        // Phase 5 (95%-100%): full-bleed image holds, text long gone — no
-        // tweens needed, just the scroll distance reserved by the anchor
-        // above. Kept short but non-zero (not 0%) so the settled full-bleed
-        // state gets a real, if brief, dwell before the pin releases,
-        // rather than reading as "stuck" for a single frame -- same
-        // reasoning as Quote.jsx's own closing hold.
+        // Phase 5 (95%-100%): brief hold on the full-bleed image before the
+        // pin releases (reserved by the length anchor above).
       }, outerRef);
 
       return () => ctx.revert();
@@ -231,12 +178,8 @@ export default function About() {
     enhanced
   );
 
-  // Mobile's own, non-pinned version of the reveal (the pinned split above
-  // doesn't fit a phone): the photo scales up from 0.9 and goes grayscale
-  // to color, scrubbed across its entry into the viewport, and the copy
-  // fades/slides up once as it arrives. Reduced motion keeps the static
-  // grayscale layout. Waits for the preloader for the same reason as the
-  // desktop trigger above (layout above settles late).
+  // Mobile: no pin. The photo scales up from 0.9 and goes grayscale -> colour
+  // as it scrolls in; the copy fades up once. Reduced motion stays static.
   const mobileAnim = !reduceMotion && !isDesktop;
 
   usePreloaderGate(
@@ -277,33 +220,21 @@ export default function About() {
   );
 
   if (!enhanced) {
-    // Shared fallback for both the reduced-motion opt-out and mobile/narrow
-    // viewports -- stacks image-over-text (full width) below md, sits side
-    // by side at md and up. At md+ the row runs edge to edge like the
-    // pinned version (photo flush to the left edge, no side padding on the
-    // section); only the text panel keeps right padding off the edge.
+    // Mobile and reduced motion: image over text below md, side by side
+    // (edge to edge) from md up.
     return (
       <section
         className="relative flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-0 md:py-24"
         style={{
           backgroundColor: CREAM,
-          // Pull-up so this section's content starts just under Quote's
-          // text when Quote's pin releases, instead of after the rest of
-          // Quote's sticky frame (relative, so it paints above that frame).
-          // Quote's mobile frame is 65svh with its text centered, and its
-          // section is 35svh taller than the frame, so at release this
-          // section's top sits at 65svh minus the pull-up. Pulling up by
-          // (32.5svh - 117px) puts this section's py-16 content ~50-75px
-          // below the quote's last line (text block ~210-250px tall), the
-          // same gap as before Quote's frame was shortened. Only on the
-          // animated mobile path: under reduced motion Quote renders as
-          // plain stacked text with no sticky box.
+          // Mobile only: pull up under Quote's 65svh pinned frame so this
+          // content starts ~50-75px below the quote's last line. Tied to
+          // Quote.jsx's frame/section heights -- change them together.
           ...(mobileAnim ? { marginTop: "calc(117px - 32.5svh)" } : undefined),
         }}
       >
         {/* On the animated mobile path the grayscale lives on this wrapper
-            (inline, as GSAP's tween start state) instead of the image's
-            static `grayscale` class, which would otherwise pin it gray. */}
+            (GSAP's start state), not on the image's `grayscale` class. */}
         <div
           ref={mobileImageRef}
           className="relative h-[50vh] w-full overflow-hidden md:h-[70vh] md:w-[55%]"
@@ -329,28 +260,12 @@ export default function About() {
       ref={outerRef}
       className="relative w-full"
       style={{
-        // svh (not vh) throughout this section's geometry -- vh resolves to
-        // the LARGEST possible mobile-Safari viewport (address bar
-        // collapsed), taller than what's actually on screen whenever the
-        // bar is showing. That mismatch between the sticky box's CSS height
-        // and ScrollTrigger's own window.innerHeight-based measurement is
-        // what let the "About Us" link land outside the reachable/tappable
-        // area on real mobile devices, even though the <Link> itself was
-        // always correctly wired to /about -- headless/devtools mobile
-        // emulation doesn't reproduce the dynamic toolbar, which is why
-        // that particular failure mode didn't show up in automated testing.
-        // Hero.jsx already solved this identical class of bug with
-        // h-[100svh]; mixing vh and svh across this section's own
-        // height/marginTop/sticky-child trio would just relocate the same
-        // desync, so all three switch together.
+        // svh, not vh: on mobile Safari vh is the toolbar-collapsed height,
+        // which desyncs the sticky box from ScrollTrigger's measurements and
+        // pushed the "About Us" link out of reach. Keep all three in svh.
         height: "125svh",
-        // Quote's sticky reveal above (Quote.jsx) fully finishes its own
-        // scrub well before its sticky child naturally scrolls itself out
-        // of view — CSS `sticky` requires a full extra 100svh of scroll for
-        // that, and Quote's text is done and gone roughly 35svh into it,
-        // leaving the remainder as blank cream. Pulling this section up to
-        // start there removes that gap without touching Quote's own
-        // (working) sticky mechanics.
+        // Starts 35svh early, where Quote's text has already finished, to
+        // skip the blank tail of Quote's sticky frame.
         marginTop: "-35svh",
       }}
     >
@@ -367,27 +282,14 @@ export default function About() {
             src="/images/about/about-hero.jpg"
             alt="Studio SP_ACE"
             fill
-            // The box this sits in is animated by GSAP directly on
-            // imageRef's inline style.width, growing from 0% up to 100%
-            // (see IMAGE_PHASE1_WIDTH.../IMAGE_FULL_WIDTH above) -- `sizes`
-            // is a static CSS-length hint the browser evaluates once
-            // against viewport width, with no awareness of that later
-            // GSAP-driven animation, so a value matching only the
-            // "settled" ~48% phase (this was "50vw") under-requests
-            // resolution once the image grows toward full-bleed,
-            // producing real upscaling softness at that phase on
-            // high-DPR displays. ProjectHero.jsx's own pinned/animated
-            // image (an identical GSAP-width-tween pattern) already
-            // solves this the same way: request the safe upper bound,
-            // 100vw, for any branch where width isn't a fixed static
-            // value.
+            // Width is tweened from 0% to 100%, so request full-width
+            // resolution (a static `sizes` can't follow the animation).
             sizes="100vw"
             className="object-cover"
           />
         </div>
 
-        {/* Box stays fixed at the settled-layout position for the whole
-            timeline — only opacity/x (the entrance/exit slide) animate. */}
+        {/* Fixed at the settled position; only opacity/x animate. */}
         <div
           ref={textRef}
           className="absolute top-0 flex h-full flex-col justify-center px-8 md:px-12 lg:px-16"

@@ -2,12 +2,8 @@ import { NextResponse } from "next/server";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { EMAIL_RE, SMTP_NOT_CONFIGURED_LOG, escapeHtml, getMailer } from "@/lib/mailer";
 
-// Must match ContactForm's `name` attributes and field order in
-// ContactContent.jsx exactly -- this is the server-side mirror of that
-// form's required-field list, since a direct POST can skip the browser's
-// own `required` validation entirely. `maxLength` caps abuse (a scripted
-// submission padding a field with megabytes of text) -- generous enough
-// that no real visitor could ever hit it.
+// Server-side mirror of ContactForm's fields (a direct POST can skip browser
+// validation). maxLength caps abuse; no real visitor comes close.
 const FIELDS = [
   { key: "name", label: "Name", maxLength: 200 },
   { key: "email", label: "Email", maxLength: 200 },
@@ -66,9 +62,7 @@ export async function POST(request) {
     );
   }
 
-  // Never tell the client which specific env var is missing -- that's
-  // internal deployment detail, not something a site visitor should see.
-  // The real reason goes to the server log only.
+  // Which env var is missing goes to the server log only, never the visitor.
   const mailer = getMailer();
   if (!mailer) {
     console.error(`[/api/contact] ${SMTP_NOT_CONFIGURED_LOG}`);
@@ -101,12 +95,8 @@ export async function POST(request) {
       html: htmlBody,
     });
   } catch (err) {
-    // A failed send would otherwise lose the enquiry entirely -- the only
-    // record was the technical error, not what the visitor actually wrote.
-    // Logging the submission itself alongside the error means whoever
-    // checks server logs can still manually follow up on a lost lead,
-    // without standing up a full retry/queue system for a failure mode
-    // this rare.
+    // Log the enquiry itself so a failed send can still be followed up by
+    // hand from the server logs.
     console.error("[/api/contact] sendMail failed:", err);
     console.error("[/api/contact] lost enquiry, recover manually:", JSON.stringify(data));
     return NextResponse.json(

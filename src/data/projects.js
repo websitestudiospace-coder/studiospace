@@ -1,23 +1,7 @@
-// Static project roster. Photo lists, cover image, gallery layout, and video
-// availability are all resolved from the filesystem at request time (see
-// @/lib/projects) so dropping/removing files in public/images just works
-// without touching this file.
-//
-// Text copy (description/longDescription/typology/location/squareFootage/
-// completion) is real client-provided content, verified field-by-field
-// against the client's spec again in this pass -- every field already
-// matched verbatim, so nothing in the copy itself needed to change. Cover/
-// gallery photos are untouched -- the client only shared Google Drive links
-// for those, not actual image files, so there's nothing to process yet.
-//
-// Array order is the client's explicit, required display order (confirmed
-// this pass) -- both getAllProjects() (the /projects grid) and
-// getNextProject() (the "next project" link on a project detail page) walk
-// this array directly with no separate sort, so this literal order is the
-// single source of truth for both. Previously in a different order (closer
-// to original insertion order than anything the client specified) -- that
-// was the actual bug behind the "content wasn't written in as expected"
-// report, not the copy itself.
+// Static project roster: copy and metadata for the original projects (photos,
+// cover and video come from scripts/photo-manifest.json via @/lib/projects).
+// Array order is the client's display order for the /projects grid AND the
+// "Next Project" chain -- nothing re-sorts it.
 export const PROJECTS = [
   {
     slug: "the-neo-colonial-home",
@@ -52,9 +36,7 @@ export const PROJECTS = [
     squareFootage: "2,000 sq. ft.",
     completion: "2025",
   },
-  // Working title as provided by the client -- doesn't match the "The [Style]
-  // Home" naming pattern of the other projects, kept as-is rather than
-  // renamed to fit.
+  // Client's working title; intentionally not "The [Style] Home".
   {
     slug: "the-shraddhas-thinkpad",
     name: "Shraddha's Thinkpad",

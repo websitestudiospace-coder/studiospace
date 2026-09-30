@@ -15,15 +15,8 @@ const INK = "#2B2622";
 const MAROON = "#6E1F24";
 const CARD_BG = "rgba(43,38,34,0.04)";
 
-// Derives the outlet's bare domain from its article URL (strips "www."),
-// used to request that outlet's real favicon via the same Google
-// favicon-service approach home/Press.jsx's OutletAvatar already uses.
-// Duplicated locally rather than extracted to a shared component -- both
-// copies are a handful of lines each and the actual content (static
-// PRESS_ITEMS + any Sanity-added mentions, merged by @/lib/press's
-// getAllPressItems()) is what's genuinely worth keeping in one place, not
-// this rendering helper -- this component just renders whatever `items`
-// its caller (src/app/media/page.js) passes down as a prop.
+// Bare domain of an article URL, used to fetch the outlet's favicon (same
+// approach as home/Press.jsx).
 function getDomain(pageUrl) {
   try {
     return new URL(pageUrl).hostname.replace(/^www\./, "");
@@ -60,17 +53,8 @@ function OutletAvatar({ publication, url }) {
   );
 }
 
-// Same grid/breakpoint/reveal conventions as projects/ProjectsGrid.jsx
-// (max-w-[1100px] mx-auto px-6/md:px-16 container, grid-cols-1
-// md:grid-cols-3 gap-8, same power2.out/stagger-0.12 one-shot reveal
-// gated behind "top 85%" + usePreloaderGate) -- only the card's own inner
-// content differs, since a press mention has no photo to build a
-// ProjectsGrid-style image card around. Card shape reuses that same
-// rounded-[8px] radius (there's no shadow on ProjectsGrid's own cards to
-// match either, so none added here), with the actual visual treatment
-// (bordered ink-tinted panel, avatar + name + date, headline) borrowed
-// from home/Press.jsx's carousel cards -- the one place on this site that
-// already solved "how does a press mention look as a card."
+// Press grid: same container and reveal as projects/ProjectsGrid.jsx, with
+// card styling borrowed from home/Press.jsx.
 export default function MediaGrid({ items }) {
   const gridRef = useRef(null);
   const cardRefs = useRef([]);
@@ -125,19 +109,9 @@ export default function MediaGrid({ items }) {
               ...(reduceMotion ? undefined : { opacity: 0 }),
             }}
           >
-            {/* Job-listing-card reference (client-provided, 2026-09-21):
-                everything always visible, no hover-reveal -- that was tried
-                and reverted. Avatar + name/date stay side-by-side (name
-                bold, date a smaller muted line directly under it, same
-                pairing as the reference's "Company Name  5 days ago"), then
-                the headline gets real breathing room below, then a divider
-                + bottom-right pill button anchor the card's bottom edge.
-                mt-auto on the footer wrapper below is what pins that row to
-                the bottom even when headlines run short, so every card in a
-                row lands its button on the same baseline regardless of
-                headline length (grid's default align-items: stretch is what
-                gives this h-full flex-col card the row's full height to
-                push against). */}
+            {/* Everything always visible (a hover reveal was tried and
+                reverted). mt-auto on the footer row pins the button to the
+                bottom so buttons line up across a row. */}
             <div className="flex items-center gap-3">
               <OutletAvatar publication={item.publication} url={item.url} />
               <div>
@@ -163,12 +137,7 @@ export default function MediaGrid({ items }) {
               {item.headline}
             </p>
 
-            {/* Visual affordance only, not a second link -- the whole card
-                above is already the <a> to item.url. A real nested <a>/
-                <button> here would be invalid HTML (interactive content
-                inside interactive content) and would give keyboard/screen
-                reader users two separate stops for the exact same
-                destination. */}
+            {/* Visual only -- the whole card is already the link. */}
             <div className="mt-auto flex flex-col pt-6 md:pt-8">
               <div className="border-t" style={{ borderColor: "rgba(43,38,34,0.1)" }} />
               <div className="mt-4 flex justify-end md:mt-5">

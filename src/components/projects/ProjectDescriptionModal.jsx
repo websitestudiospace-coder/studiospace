@@ -6,13 +6,8 @@ import { createPortal } from "react-dom";
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
-// Rendered via a portal straight onto document.body -- this modal can be
-// opened while the hero's pinned scroll sequence is mid-tween, and several
-// of that sequence's elements carry a live GSAP `transform`/`filter`, either
-// of which turns its element into a containing block for any descendant
-// `position: fixed` node. Portaling out to the body sidesteps that
-// entirely, so the overlay always covers the real viewport regardless of
-// what the hero is doing underneath it.
+// Portaled to <body>: the hero behind it has GSAP transforms/filters, which
+// would make it the containing block for this fixed overlay.
 export default function ProjectDescriptionModal({ name, longDescription, onClose }) {
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -68,8 +63,8 @@ export default function ProjectDescriptionModal({ name, longDescription, onClose
           {name}
         </h2>
 
-        {/* TODO: label + longDescription below are placeholder copy pending
-            the client's real project write-up. */}
+        {/* TODO: label + longDescription are placeholder copy pending the
+            client's project write-up. */}
         <p
           className="mt-2 text-xs uppercase tracking-[0.15em]"
           style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}

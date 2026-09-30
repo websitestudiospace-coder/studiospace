@@ -15,43 +15,27 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
-// Total pinned scroll distance -- 100vh of that is the natural viewport, the
-// remaining 40vh is the runway the shrink/reposition/reveal scrubs across
-// (the timeline itself completes at 85%, leaving a ~15% settle buffer).
+// Total pinned scroll distance: 100vh viewport + 40vh runway. The timeline
+// finishes at 85%, leaving a short settle.
 const SECTION_HEIGHT_VH = 140;
 
-// Image box keyframes, as a percentage of the sticky h-screen container.
-// `left` never animates -- staying pinned at 0 while `width`/`height` shrink
-// is what reads as "moves to the left side" without a separate position
-// tween. Desktop settles into a left column; mobile settles into a shorter
-// top band (a 46%-wide column would be too narrow to hold a home's worth of
-// stats/copy on a phone).
-// GSAP only inherits a tween's unit from the property's *current* value when
-// none is given -- passing bare numbers here defaults to pixels (CSS's own
-// default for width/height/top), not percent, collapsing the box to a
-// literal 46px-ish square instead of 46% of the viewport. Every value here
-// must carry its own "%" string.
+// Image box keyframes as % of the sticky frame. `left` stays 0, so shrinking
+// width/height reads as moving to the left. Desktop settles into a left
+// column, mobile into a shorter top band. Values must be "%" strings: GSAP
+// treats bare numbers as px.
 const IMAGE_END_DESKTOP = { width: "46%", height: "76%", top: "12%" };
 const IMAGE_END_MOBILE = { width: "100%", height: "42%", top: "0%" };
 
-// Name heading keyframes -- same "tween top/left/xPercent/yPercent/fontSize
-// directly" technique as ProjectsHero's own shrinking heading, since GSAP
-// can't animate a CSS clamp() formula. Desktop ends bottom-left, sitting on
-// the now-B&W image; mobile stays horizontally centered (that image band is
-// full-width) and just rises/shrinks.
+// Name heading keyframes (GSAP can't tween clamp()). Desktop ends bottom-left
+// on the image; mobile stays centered and just rises/shrinks.
 const NAME_START_FONT_DESKTOP_CAP = 88;
 const NAME_START_FONT_MOBILE_CAP = 40;
 const NAME_END_FONT_DESKTOP = 28;
 const NAME_END_FONT_MOBILE = 22;
 
-// Project names vary a lot in length ("The Neo Colonial Home" vs. "The
-// Modern Neo Classical Home"), and the starting state centers the name at
-// full width with no wrap -- a fixed font size that fits the short names
-// would overflow/clip the long ones. Fitting the size to the actual name
-// (capped at the authored max) keeps every project's hero legible instead
-// of tuning a separate constant per project. 0.56 is Agatho's rough average
-// glyph-width-to-font-size ratio for uppercase Latin text -- approximate on
-// purpose, since this only needs to avoid overflow, not hit an exact width.
+// Names vary a lot in length, so the starting size is fitted to the name
+// (capped at the max). 0.56 approximates Agatho's uppercase glyph width /
+// font size -- only needs to prevent overflow.
 const AGATHO_AVG_CHAR_WIDTH_RATIO = 0.56;
 
 function fitNameFontSize(name, maxWidth, cap) {
@@ -59,11 +43,8 @@ function fitNameFontSize(name, maxWidth, cap) {
   return Math.min(cap, fitted);
 }
 
-// The same fit as a CSS min(), so the server-rendered heading already has
-// its starting size before GSAP runs (window.innerWidth * f == f*100 vw).
-// Without it the name painted at the default size in the top-left corner,
-// then jumped to its centered start once the preloader finished -- a
-// layout shift the CLS metric counted.
+// The same fit as a CSS min(), so the server-rendered heading already has its
+// starting size before GSAP runs (avoids a layout shift).
 function fitNameFontSizeCss(name, viewportFraction, cap) {
   const vw = (viewportFraction * 100) / (name.length * AGATHO_AVG_CHAR_WIDTH_RATIO);
   return `min(${cap}px, ${vw.toFixed(4)}vw)`;
@@ -150,10 +131,9 @@ export default function ProjectHero({ project }) {
       const ctx = gsap.context(() => {
         gsap.set(imageBoxRef.current, { top: "0%", left: "0%", width: "100%", height: "100%" });
         gsap.set(imageFilterRef.current, { filter: "grayscale(0%)" });
-        // The server-rendered translate(-50%, -50%) centering has to go
-        // before xPercent/yPercent take over, or GSAP would parse it as a
-        // pixel offset and apply the centering twice. Reverting the context
-        // restores it.
+        // Clear the server-rendered translate(-50%, -50%) before xPercent/
+        // yPercent take over, or the centering is applied twice. Reverting
+        // the context restores it.
         gsap.set(nameRef.current, { clearProps: "transform" });
         gsap.set(nameRef.current, {
           top: "50%",
@@ -168,10 +148,8 @@ export default function ProjectHero({ project }) {
           y: isDesktop ? 0 : 24,
         });
 
-        // ONE ScrollTrigger, ONE timeline, on the section's own pinned root
-        // -- the image box, its grayscale filter, the name, and the details
-        // panel never get their own independent triggers (the same golden
-        // rule as About/Projects/AboutHero).
+        // One ScrollTrigger and one timeline for image, filter, name and
+        // details panel.
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: outerRef.current,
@@ -185,9 +163,8 @@ export default function ProjectHero({ project }) {
         // reads as a literal fraction of the pinned scroll range.
         tl.to({}, { duration: 1 }, 0);
 
-        // 0%-70%: image shrinks + repositions to its settled box while
-        // converting to grayscale, name rides along to its settled spot on
-        // top of it.
+        // 0%-70%: image shrinks into its settled box and turns grayscale;
+        // the name rides along on top.
         tl.to(imageBoxRef.current, { ...imageEnd, ease: "none", duration: 0.7 }, 0);
         tl.to(
           imageFilterRef.current,
@@ -307,11 +284,9 @@ export default function ProjectHero({ project }) {
             {project.name}
           </h1>
 
-          {/* Placement is responsive CSS, not the isDesktop state: that
-              state is false during the server render, so the panel used to
-              paint in its mobile spot and jump to the desktop column on
-              hydration (0.37 CLS). Starts hidden -- the timeline reveals it,
-              and it no longer flashes over the photo before GSAP runs. */}
+          {/* Placement via responsive CSS rather than isDesktop state (which
+              is false during SSR and caused a layout shift on hydration).
+              Starts hidden; the timeline reveals it. */}
           <div
             ref={detailsRef}
             className="absolute left-0 top-[42%] h-[58%] w-full md:left-auto md:right-0 md:top-0 md:h-full md:w-[54%]"

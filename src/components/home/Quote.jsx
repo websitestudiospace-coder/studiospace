@@ -26,10 +26,8 @@ export default function Quote() {
   const quote2Ref = useRef(null);
   const q1WordsRef = useRef([]);
   const q2CharsRef = useRef([]);
-  // The pinned/scrubbed sequence below now runs at every viewport width --
-  // only prefers-reduced-motion opts out, not device/screen size. Starts
-  // `true` (the fallback render) before the matchMedia check resolves, to
-  // avoid a first-paint flash of the heavier pinned/scrubbed sequence.
+  // Pinned sequence at every width; only reduced motion opts out. Starts
+  // `true` to avoid a first-paint flash before matchMedia resolves.
   const simple = useReducedMotion(true);
 
   const q1Words = QUOTE_1.split(" ");
@@ -56,12 +54,8 @@ export default function Quote() {
       });
       gsap.set(quote2Ref.current, { yPercent: 15 });
 
-      // Quote's own arrival: as the section scrolls up from the bottom of
-      // the viewport into place (i.e. while Hero's pin is releasing above
-      // it), fade and scale in Quote's own root — no ancestor wrapper is
-      // involved, so this ScrollTrigger's measurements of wrapperRef stay
-      // exactly as clean as the word-reveal ScrollTrigger below, which also
-      // targets wrapperRef directly.
+      // Quote's arrival: fade/scale in its own root as it scrolls up into
+      // place (no transformed ancestor, so measurements stay clean).
       gsap.set(wrapperRef.current, { opacity: 0, scale: 0.97 });
       gsap.to(wrapperRef.current, {
         opacity: 1,
@@ -77,11 +71,8 @@ export default function Quote() {
 
       const q1WordEls = q1WordsRef.current.filter(Boolean);
 
-      // The scrub runs exactly as long as the sticky frame stays pinned:
-      // section height minus frame height (135vh - 100vh = 35vh on desktop,
-      // 100svh - 65svh = 35svh on mobile). "bottom bottom" only equals that
-      // when the frame is a full viewport tall, which it no longer is on
-      // mobile.
+      // The scrub lasts exactly as long as the frame stays pinned: section
+      // height minus frame height (35vh desktop, 35svh mobile).
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: wrapperRef.current,
@@ -92,22 +83,9 @@ export default function Quote() {
         },
       });
 
-      // Phase A — reveal Quote 1 left-to-right, in actual reading order
-      // (gray -> dark). Staggering the words array directly (DOM order),
-      // rather than shuffling them into randomized groups the way this used
-      // to work, is what guarantees words light up in the same order the
-      // sentence is read instead of scrambling mid-sentence.
-      //
-      // Reveal/hold/recede below are sized as fractions of this section's
-      // existing, unchanged pin distance (135vh section, 35vh of actual
-      // scroll) -- not lengthened, reallocated: the reveal and recede are
-      // just the transition (quick), the hold is the actual reading moment
-      // (long). Previously reveal/hold/recede/buffer/rise/hold split
-      // roughly 14/13/9/3/49/13% of the scroll range, leaving each quote
-      // only ~13% of the pin fully legible and static -- not enough scroll
-      // distance to read a full sentence at a normal pace before it moved
-      // again. Now ~9/27/5/2/30/27%: each hold is more than doubled, at the
-      // reveal/recede's expense.
+      // Phase A: reveal Quote 1 word by word in reading order (gray -> dark).
+      // Timing within the 35vh pin: short reveal/recede, long holds for
+      // reading (~9/27/5/2/30/27%).
       tl.to(q1WordEls, {
         opacity: 1,
         color: INK,
@@ -116,16 +94,10 @@ export default function Quote() {
         ease: "none",
       });
 
-      // Hold — the fully revealed sentence stays legible for a real stretch
-      // of scroll before receding, instead of the reveal and recede meeting
-      // with no gap (previously the recede began the instant the last word
-      // finished lighting up, so the sentence was never legible as a whole
-      // for more than a flash).
+      // Hold so the full sentence is readable before it recedes.
       tl.to({}, { duration: 3.5 });
 
-      // Phase A — recede Quote 1 (dark -> gray), same left-to-right order,
-      // while it drifts upward slightly so it reads as receding, not just
-      // dissolving in place.
+      // Phase A: recede Quote 1 (dark -> gray), drifting up slightly.
       const recedeStart = tl.duration();
       tl.to(q1WordEls, {
         opacity: MUTED_OPACITY,
@@ -151,9 +123,8 @@ export default function Quote() {
       // Kept short so this doesn't read as dead scroll space.
       tl.to({}, { duration: 0.2 });
 
-      // Phase B — Quote 2 becomes visible and floats in character by
-      // character, while the container itself rises slightly for a matching
-      // parallax depth cue.
+      // Phase B: Quote 2 floats in character by character while the container
+      // rises slightly.
       tl.set(quote2Ref.current, {
         visibility: "visible",
         pointerEvents: "auto",
@@ -175,12 +146,8 @@ export default function Quote() {
         riseStart
       );
 
-      // Hold — Quote 2 stays settled and centered on screen for a beat
-      // before the pin releases. Without this, the settle tween's end
-      // coincided exactly with the pin's release, so the line was only ever
-      // centered for a single frame before it started scrolling away like
-      // ordinary content -- reading as "stuck" near the top edge with empty
-      // space beneath rather than as an intentionally placed statement.
+      // Hold Quote 2 in place before the pin releases, so it doesn't start
+      // scrolling away the moment it settles.
       tl.to({}, { duration: 3.5 });
     }, wrapperRef);
 
@@ -217,12 +184,10 @@ export default function Quote() {
   }
 
   return (
-    // Mobile: the pinned frame is 65svh rather than a full screen -- the
-    // quote block is only ~210-250px tall on a phone, so a full-height frame
-    // left ~280px of bare cream above and below it. The pin's scroll length
-    // stays 35 (section = frame + 35svh), so the animation paces the same.
-    // home/About.jsx's mobile pull-up is derived from this 65svh -- change
-    // them together. Desktop keeps 100vh / 135vh.
+    // Mobile: the pinned frame is 65svh (the quote is only ~210-250px tall),
+    // and the section is frame + 35svh so pacing matches desktop.
+    // home/About.jsx's mobile pull-up depends on this 65svh -- change them
+    // together. Desktop: 100vh frame, 135vh section.
     <section ref={wrapperRef} className="relative w-full h-[100svh] md:h-[135vh]">
       <div
         ref={stickyRef}
@@ -276,10 +241,7 @@ export default function Quote() {
                 let flatIndex = 0;
                 return q2Words.map((word, wi) => (
                   <Fragment key={wi}>
-                    {/* white-space: nowrap keeps this word's per-letter
-                        spans from being line-broken mid-word — without it,
-                        adjacent inline-block boxes are individually
-                        breakable even with no space between them. */}
+                    {/* nowrap stops the per-letter spans breaking mid-word. */}
                     <span style={{ whiteSpace: "nowrap" }}>
                       {word.split("").map((char) => {
                         const idx = flatIndex++;

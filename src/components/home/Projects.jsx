@@ -17,12 +17,10 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
-// Curated cover images for these 3 featured cards (distinct from each
-// project's own gallery cover) -- slug is looked up from @/data/projects by
-// name so each card links to its real /projects/[slug] page instead of
-// duplicating slugs here by hand. Each image is a copy of a photo from that
-// project's own gallery (project-2 = Neo Colonial #3, project-3 = Modern
-// Organic #2, project-1 = Modern Classical #8) -- keep name and image paired.
+// Curated images for the three featured cards. Each is a copy of a photo from
+// that project's gallery (project-2 = Neo Colonial #3, project-3 = Modern
+// Organic #2, project-1 = Modern Classical #8) -- keep names and images
+// paired. Slugs are looked up by name from @/data/projects.
 const PROJECTS = [
   { name: "The Neo Colonial Home", image: "/images/projects/project-2.jpg" },
   { name: "The Modern Organic Home", image: "/images/projects/project-3.jpg" },
@@ -32,10 +30,7 @@ const PROJECTS = [
   return { ...project, slug: data?.slug ?? "", location: data?.location ?? null };
 });
 
-// Heading + "See All" row. Part of the same pinned/scrubbed sequence as the
-// cards and CTA -- it's the first two steps of that single timeline (see
-// Projects() below), so it lives inside the sticky viewport right alongside
-// the grid rather than in its own separate static section.
+// Heading + "See All" row; the first two steps of the pinned timeline.
 function ProjectsHeader({ headingRef, seeAllRef }) {
   return (
     <div className="mb-10 flex w-full flex-col items-start justify-between gap-4 md:mb-16 md:flex-row md:items-end">
@@ -68,16 +63,9 @@ function ProjectsHeader({ headingRef, seeAllRef }) {
 function ProjectsGrid({ cardRefs, ctaRef }) {
   return (
     <>
-      {/* grid-cols-1 at mobile, matching /projects index's ProjectsGrid --
-          the enhanced/pinned sequence below is desktop-only (see the
-          isDesktop check in Projects()), so on mobile this always renders
-          through the plain, non-pinned "!enhanced" branch with normal
-          document flow. No fixed-height sticky container to overflow, so
-          full-width single-column cards are safe here. */}
+      {/* Single column on mobile (the pinned sequence is desktop-only). */}
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-8">
-        {/* Same card component as the /projects listing, so the two stay
-            identical -- only the curated photos and this section's own
-            pinned/scrubbed entrance (via cardRefs) differ. */}
+        {/* Same card component as the /projects listing. */}
         {PROJECTS.map((project, i) => (
           <ProjectCard
             key={project.name}
@@ -85,9 +73,7 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
             name={project.name}
             location={project.location}
             image={project.image}
-            // Only the first card is above-the-fold-adjacent priority
-            // content -- cards 2/3 fall through to next/image's default
-            // native lazy loading like every other below-fold image.
+            // Only the first card is loaded eagerly.
             priority={i === 0}
             cardRef={(el) => {
               if (el && cardRefs) cardRefs.current[i] = el;
@@ -97,7 +83,7 @@ function ProjectsGrid({ cardRefs, ctaRef }) {
       </div>
 
       <div ref={ctaRef} className="mt-14 flex justify-start md:mt-20">
-        {/* TODO: replace with popup form once fields are finalized */}
+        {/* TODO: replace with a popup form once fields are finalized. */}
         <Button href="/contact" variant="secondary">
           Let&apos;s create a space that feels like you! Start your project
           here
@@ -124,33 +110,16 @@ export default function Projects() {
     return () => mql.removeEventListener("change", update);
   }, []);
 
-  // Desktop-only: the pinned/scrubbed sequence holds its grid inside a fixed
-  // h-screen sticky viewport with overflow-hidden, which only has room for
-  // the 3-column desktop layout. Mobile's single-column stacked cards would
-  // be taller than one screen and get clipped, so mobile always falls
-  // through to the plain "!enhanced" branch below (normal document flow,
-  // same as /projects index).
+  // Desktop-only pin: stacked mobile cards wouldn't fit in one sticky screen.
   const enhanced = !reduceMotion && isDesktop;
 
-  // Same reasoning as About.jsx: this section is now pinned (sticky) with
-  // a "top top" -> "bottom bottom" ScrollTrigger, so its measured start/end
-  // depend on every section above it already being in its final, settled
-  // layout. Creating the trigger before Preloader's intro finishes (and
-  // before Hero/Quote/About's own mount-time layout upgrades have landed)
-  // bakes in stale positions that a later ScrollTrigger.refresh() won't
-  // fix. Wait for "preloader:complete" the same way About.jsx does.
+  // Wait for the preloader so the pinned trigger measures settled layout.
   usePreloaderGate(
     () => {
       const cards = cardRefs.current.filter(Boolean);
 
       const ctx = gsap.context(() => {
-        // ONE timeline, ONE ScrollTrigger on the section's own root. Every
-        // phase below is a tween positioned at an absolute fraction of this
-        // single scrub -- heading, "See All", cards, and the CTA never get
-        // their own independent triggers, because the section itself
-        // defines the scroll range they all animate against (the same
-        // golden rule as the card-stagger fix and About's image-grow
-        // sequence).
+        // One timeline and one ScrollTrigger for the whole section.
         gsap.set([headingRef.current, seeAllRef.current], {
           opacity: 0,
           y: 28,
@@ -167,13 +136,9 @@ export default function Projects() {
           },
         });
 
-        // Anchor the timeline to exactly 1 "unit" so every position below
-        // reads as a literal fraction of the pinned scroll range. Six steps
-        // share the first 85% of that range in equal sixths (heading,
-        // "See All", the three cards, then the CTA), leaving a ~15% settle
-        // buffer before the pin releases -- previously all six steps
-        // divided the full range with the CTA landing exactly at 100%,
-        // leaving no buffer at all.
+        // Timeline length pinned to 1. Six steps (heading, "See All", three
+        // cards, CTA) share the first 85% in equal sixths; the last 15% is a
+        // settle before the pin releases.
         tl.to({}, { duration: 1 }, 0);
 
         const STEP = 0.85 / 6;
@@ -227,11 +192,8 @@ export default function Projects() {
     enhanced
   );
 
-  // Mobile's own, non-pinned version of the same sequence (the pinned one
-  // above can't fit stacked cards in one screen): heading and "See All"
-  // fade up, each card scales 1.15 -> 1 with a fade as it individually
-  // enters the viewport, then the CTA fades in. One-shot per element, in
-  // normal document flow. Reduced motion keeps the static layout.
+  // Mobile (no pin): heading and "See All" fade up, each card scales
+  // 1.15 -> 1 as it enters, then the CTA fades in. Reduced motion is static.
   const mobileAnim = !reduceMotion && !isDesktop;
 
   usePreloaderGate(

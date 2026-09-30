@@ -1,10 +1,5 @@
-// Schema for a client-addable press mention. Kept independent of the
-// existing hand-tuned PRESS_ITEMS array in @/data/press -- that array stays
-// exactly as it is (see @/lib/press for why: no risk to the 5 existing
-// mentions). A press mention created here just gets merged alongside them
-// on the home page's Press carousel and the /media grid, so the client
-// doesn't need a developer to touch code to add a new one. Mirrors
-// project.js's own shape/conventions.
+// Sanity schema for a press mention the client adds through /studio, merged
+// with the static list in @/data/press.
 const pressMention = {
   name: "pressMention",
   title: "Press Mention",

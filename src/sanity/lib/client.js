@@ -5,9 +5,7 @@ export const client = createClient({
   projectId,
   dataset,
   apiVersion,
-  // Dataset is public, so published content reads with no token. `cdn: true`
-  // serves through Sanity's fast, cached CDN -- fine here since a client
-  // adding/editing a project isn't a page that needs to reflect instantly;
-  // a normal redeploy/revalidation window is acceptable.
+  // Public dataset, so no token needed. The CDN may lag an edit by a short
+  // while, which is fine for this content.
   useCdn: true,
 });

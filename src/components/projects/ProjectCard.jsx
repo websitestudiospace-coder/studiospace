@@ -9,12 +9,8 @@ import useReducedMotion from "@/hooks/useReducedMotion";
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
-// Real hover capability, not just viewport width -- a touch device with a
-// wide screen (a tablet in landscape, say) still can't hover, so this
-// checks `(hover: hover)` directly rather than a breakpoint. Starts `false`
-// (assume no hover, i.e. the always-visible fallback) until the check
-// resolves on mount -- errs toward showing the overlay first rather than
-// risking a flash of hidden text on a touch device.
+// Real hover capability (not width): tablets can be wide and still can't
+// hover. Starts false so touch devices never flash a hidden overlay.
 function useCanHover() {
   const [canHover, setCanHover] = useState(false);
 
@@ -29,14 +25,10 @@ function useCanHover() {
   return canHover;
 }
 
-// The project card shared by the /projects listing (ProjectsGrid) and the
-// homepage's "Our Projects" section (home/Projects), so a change here
-// applies to both. Entrance animations stay with each caller (they differ),
-// which is why the ref and any initial inline style are passed in.
-//
-// `image` is either a Cloudinary/remote URL (the listing's covers) or a
-// local /public path (the homepage's curated photos, not mirrored to
-// Cloudinary) -- CldImage for the former, next/image for the latter.
+// Project card shared by the /projects listing and the home page's featured
+// section. Entrance animations stay with each caller, which passes the ref
+// and any initial style. `image` is a Cloudinary URL (CldImage) or a local
+// /public path (next/image).
 export default function ProjectCard({
   href,
   name,
@@ -50,15 +42,9 @@ export default function ProjectCard({
   const canHover = useCanHover();
   const reduceMotion = useReducedMotion();
 
-  // Touch devices get the overlay permanently visible (there's no `:hover`
-  // to reveal it on), but at a slightly lower opacity than the desktop
-  // hover-in state -- a full-strength dark scrim sitting on every card at
-  // once reads heavier scrolling a mobile grid (several cards visible in
-  // the viewport simultaneously) than the same scrim appearing transiently
-  // under a cursor on desktop, so this dials it back a touch rather than
-  // matching the hover state 1:1. `reduceMotion` only removes the
-  // transition itself on hover-capable devices -- the reveal-on-hover/
-  // focus logic still works, it just snaps instead of easing.
+  // Touch devices can't hover, so the overlay is always visible there, at a
+  // lower opacity so a grid of cards doesn't look heavy. Reduced motion only
+  // removes the transition.
   const overlayVisibilityClass = !canHover
     ? "opacity-90"
     : reduceMotion
@@ -91,18 +77,8 @@ export default function ProjectCard({
       ) : (
         <CldImage src={image} alt={name} priority={priority} {...imageProps} />
       )}
-      {/* Clean by default -- no visible scrim/text until hover (or
-          focus/touch, see overlayVisibilityClass above). Height is
-          content-driven (name + location + padding), not a fixed fraction
-          of the card, so it reads as a bottom "strip" rather than covering
-          half the photo. Ink-toned scrim (not black) per the brand-token
-          rule -- rgba(43,38,34,...) is #2B2622 -- fading from solid-ish at
-          the bottom edge to fully transparent above, with a real
-          backdrop-filter blur over that same region for the frosted-glass
-          look from the client's reference. Text centered (both axes) per
-          that same reference -- no "view project" icon anymore (client
-          asked for it removed); padding is symmetric top/bottom now that
-          there's no icon to reserve extra headroom for. */}
+      {/* Name/location strip at the bottom: hidden until hover/focus (always
+          shown on touch). Ink-tinted scrim with a backdrop blur. */}
       <div
         className={`absolute inset-x-0 bottom-0 flex flex-col items-center justify-center px-5 py-5 text-center md:px-6 md:py-6 ${overlayVisibilityClass}`}
         style={{

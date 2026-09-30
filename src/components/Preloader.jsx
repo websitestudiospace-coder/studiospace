@@ -6,12 +6,8 @@ import gsap from "gsap";
 
 const CREAM = "#F7EFE4";
 
-// Root layout (src/app/layout.js) persists across client-side <Link>
-// navigations in the App Router, so this only genuinely mounts once per
-// document load anyway -- this flag is the belt-and-suspenders guarantee:
-// it survives a hard refresh mid-session (sessionStorage, not state), so if
-// anything ever forces a remount (an error boundary reset, a future
-// template.js, a non-Link navigation) the full ~3s intro doesn't replay.
+// sessionStorage flag so the intro plays once per tab session, even if
+// something forces a remount or the page is hard-refreshed.
 const SESSION_KEY = "sp_ace_preloader_played";
 
 export default function Preloader() {
@@ -27,8 +23,7 @@ export default function Preloader() {
     try {
       alreadyPlayed = window.sessionStorage.getItem(SESSION_KEY) === "1";
     } catch {
-      // Privacy modes / locked-down browsers can throw on sessionStorage
-      // access -- fall back to always playing rather than crashing.
+      // sessionStorage can throw in locked-down browsers; just play the intro.
     }
 
     const finish = () => {

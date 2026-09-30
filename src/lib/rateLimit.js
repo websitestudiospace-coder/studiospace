@@ -1,9 +1,5 @@
-// Simple in-memory, fixed-window rate limiter. Deliberately not backed by
-// Redis/an external service -- this app runs as a single persistent Node
-// process (Hostinger, not serverless edge functions with cold starts that
-// would wipe this Map), so in-memory state is enough at this project's
-// traffic scale. If this ever runs across multiple processes/instances,
-// this would need a shared store instead.
+// In-memory, fixed-window rate limiter. Enough for a single long-running Node
+// process (Hostinger); multiple instances would need a shared store.
 const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_REQUESTS = 5; // per IP, per window
 

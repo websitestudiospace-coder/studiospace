@@ -20,9 +20,8 @@ const MAROON = "#6E1F24";
 const DRAG_THRESHOLD = 6;
 const SWIPE_RATIO = 0.18;
 
-// Auto-advance timing: how often the carousel moves on its own, and how
-// long it waits after the visitor's last drag/hover/dot-click before
-// resuming.
+// How often the carousel advances, and how long it waits after the visitor's
+// last drag/hover/dot click before resuming.
 const AUTO_ADVANCE_MS = 5000;
 const RESUME_IDLE_MS = 2000;
 
@@ -40,8 +39,7 @@ function ArrowIcon() {
   );
 }
 
-// Derives the outlet's bare domain from its article URL (strips "www."),
-// used to request that outlet's real favicon rather than a generic logo.
+// Bare domain of an article URL, used to fetch the outlet's favicon.
 function getDomain(pageUrl) {
   try {
     return new URL(pageUrl).hostname.replace(/^www\./, "");
@@ -50,11 +48,8 @@ function getDomain(pageUrl) {
   }
 }
 
-// Real favicon per outlet, via Google's zero-maintenance favicon service --
-// no stated preference in brain.md for self-hosted logo assets, and this
-// avoids storing/maintaining 5 external brand logos as project assets.
-// Falls back to the original plain gray circle if the favicon fails to
-// load, so one broken/blocked domain never breaks a card's layout.
+// Outlet favicon from Google's favicon service (no logo files to maintain).
+// Falls back to a plain circle if it fails to load.
 function OutletAvatar({ publication, url }) {
   const [failed, setFailed] = useState(false);
   const domain = getDomain(url);
@@ -85,7 +80,7 @@ function OutletAvatar({ publication, url }) {
 
 function PressHeading({ headingRef }) {
   return (
-    // TODO: placeholder heading copy -- pending final copy approval
+    // TODO: placeholder heading copy -- pending final copy approval.
     <h2
       ref={headingRef}
       className="text-center text-[32px] md:text-[48px]"
@@ -174,9 +169,8 @@ function PressCarousel({
             aria-label={`Go to press item ${i + 1}`}
             aria-current={i === index}
             onClick={() => onDotClick(i)}
-            // A fixed 44x44 tap box (the touch-target guideline) around the
-            // unchanged visible dot. The row has no gap: the boxes' own
-            // padding already spaces the dots out.
+            // 44x44 tap box around the small visible dot; the padding also
+            // spaces the dots.
             className="flex h-11 min-w-11 items-center justify-center"
           >
             <span
@@ -233,9 +227,8 @@ export default function Press({ items }) {
     return () => window.removeEventListener("resize", handleResize);
   }, [goTo]);
 
-  // Drag / swipe -- gated behind a small movement threshold so a tap on the
-  // arrow link inside a card still registers as a normal click instead of
-  // being eaten by the drag handling.
+  // Drag/swipe with a small movement threshold, so a tap on a card's link
+  // still counts as a click.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
@@ -300,9 +293,8 @@ export default function Press({ items }) {
     };
   }, [goTo, items.length]);
 
-  // Real mouse hover only -- a touch tap fires an emulated mouseenter with
-  // no matching mouseleave on most mobile browsers, which would leave
-  // hoveringRef stuck true and pause auto-advance for good after one tap.
+  // Mouse hover only: touch taps fire mouseenter without a mouseleave, which
+  // would pause auto-advance for good.
   const handleHoverEnter = useCallback((e) => {
     if (e.pointerType !== "mouse") return;
     hoveringRef.current = true;
@@ -322,9 +314,7 @@ export default function Press({ items }) {
     [goTo]
   );
 
-  // Tracks whether the carousel is actually on-screen, so the auto-advance
-  // timer below doesn't keep silently ticking (and fighting scroll restore)
-  // while this section is scrolled out of view.
+  // Pause auto-advance while the carousel is off-screen.
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
@@ -336,9 +326,8 @@ export default function Press({ items }) {
     return () => observer.disconnect();
   }, []);
 
-  // Auto-advance, loops back to the first item after the last. Disabled
-  // entirely under prefers-reduced-motion or while off-screen; paused while
-  // the visitor is dragging/hovering or shortly after their last dot click.
+  // Auto-advance (looping). Off under reduced motion or off-screen; paused
+  // while dragging/hovering or shortly after a dot click.
   useEffect(() => {
     if (reduceMotion || !inView) return;
     const id = setInterval(() => {
@@ -349,11 +338,8 @@ export default function Press({ items }) {
     return () => clearInterval(id);
   }, [reduceMotion, inView, goTo, items.length]);
 
-  // One-shot reveal (not scroll-scrubbed): this section doesn't need to
-  // feel scroll-locked, so it just plays once as it enters the viewport.
-  // Still waits for "preloader:complete" since "top 80%" is calculated
-  // against this section's own position, which depends on every section
-  // above it already being in its final, settled layout.
+  // One-shot reveal; waits for the preloader so "top 80%" is measured
+  // against settled layout.
   usePreloaderGate(
     () => {
       const ctx = gsap.context(() => {

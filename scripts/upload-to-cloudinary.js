@@ -1,23 +1,14 @@
-// Uploads public/images/projects/<slug>/* to Cloudinary and records a
-// local-path -> Cloudinary-URL mapping. Component code is intentionally NOT
-// touched by this script -- it only uploads and records URLs so the mapping
-// can be reviewed before anything in src/ starts referencing Cloudinary.
+// Uploads public/images/projects/<slug>/* to Cloudinary and records each
+// local path -> Cloudinary URL in scripts/cloudinary-url-map.json, which
+// @/lib/projects uses to resolve image URLs.
 //
 // Usage:
-//   node --env-file=.env.local scripts/upload-to-cloudinary.js <slug>   # one project (test run)
+//   node --env-file=.env.local scripts/upload-to-cloudinary.js <slug>   # one project
 //   node --env-file=.env.local scripts/upload-to-cloudinary.js --all    # every project folder
 //
-// Requires CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
-// in the environment (see .env.local) -- run via `npm run upload:cloudinary`
-// or pass --env-file=.env.local directly as shown above.
-//
-// Uploads are done via a signed request to Cloudinary's REST API, shelled
-// out to `curl` rather than the `cloudinary` npm SDK's own HTTP client: on
-// this network, the SDK's request consistently fails with a fast client-side
-// "Request Timeout" (even for a 68-byte file) during a mid-connection TLS
-// renegotiation that curl's platform TLS backend tolerates but Node's does
-// not. Signature generation still happens locally with Node's crypto module
-// -- only the actual file transfer is delegated to curl.
+// Needs CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
+// (see .env.example). Uploads are signed locally and sent with `curl`: Node's
+// HTTP client timed out during a TLS renegotiation on the original network.
 
 const fs = require("fs");
 const path = require("path");
@@ -35,13 +26,9 @@ const UPLOAD_TIMEOUT_SECONDS = 120;
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".webm"]);
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
-// This account is on Cloudinary's Free plan, which rejects any single asset
-// over 10MB (confirmed against the live API: "File size too large... Your
-// file exceeds the Free plan upload limit."). A failed attempt still
-// uploads the full file body before the server responds (no early
-// rejection), so skipping oversized files locally saves real time/bandwidth
-// instead of just failing slowly. Most of this project's source photography
-// exceeds this -- see the run summary for exactly how many.
+// Cloudinary's Free plan rejects assets over 10MB, and only after the whole
+// body has been sent, so oversized files are skipped locally. Compress them
+// first (scripts/convert-to-webp.js).
 const FREE_PLAN_MAX_BYTES = 10 * 1024 * 1024;
 
 function requireEnv(name) {
@@ -78,10 +65,8 @@ function listProjectSlugs() {
     .sort();
 }
 
-// Mirrors src/lib/projects.js's walkImages -- a project's photos can live in
-// a nested subfolder (e.g. the-neo-colonial-home/Photos/), not just directly
-// under the project's own folder, so this has to recurse the same way that
-// resolver does or a whole subfolder silently never gets uploaded.
+// Recurses, since some projects keep photos in a subfolder (e.g.
+// the-neo-colonial-home/Photos/).
 function walkFiles(dir, baseDir = dir) {
   let results = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -198,9 +183,8 @@ async function uploadSlug(slug, map) {
   const files = listFilesForSlug(slug);
   console.log(`\n${slug} (${files.length} files)`);
 
-  // Purge this slug's existing entries before repopulating -- otherwise a
-  // stale key survives forever once its source file is renamed or deleted
-  // (e.g. the .jpg entries left behind after the WebP conversion pass).
+  // Clear this slug's old entries first so renamed/deleted files don't leave
+  // stale keys behind.
   const keyPrefix = `public/images/projects/${slug}/`;
   for (const key of Object.keys(map)) {
     if (key.startsWith(keyPrefix)) delete map[key];

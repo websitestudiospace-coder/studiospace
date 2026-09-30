@@ -2,13 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-// Tracks prefers-reduced-motion live (not just at mount) so components can
-// bail out of GSAP entrances the instant the OS setting changes mid-session.
-// `initial` is the value used before the matchMedia check resolves on
-// mount -- defaults to false (assume motion is fine) to match most
-// callers, but Quote.jsx's heavier pinned/scrubbed sequence deliberately
-// starts `true` (assume reduced) to avoid a first-paint flash of the
-// enhanced branch.
+// Live prefers-reduced-motion value. `initial` is used until matchMedia
+// resolves on mount; pass true for heavy pinned sequences to avoid a
+// first-paint flash.
 export default function useReducedMotion(initial = false) {
   const [reduceMotion, setReduceMotion] = useState(initial);
 

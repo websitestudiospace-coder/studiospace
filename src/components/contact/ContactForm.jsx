@@ -4,20 +4,14 @@ import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import Button from "@/components/ui/Button";
 
-// The project enquiry form, shared by the Contact page ("Design With Us")
-// and the site-wide Footer -- same fields, same client-side validation,
-// same POST to /api/contact, same success popup. Styled cream-on-ink, which
-// suits both places (both sit on an INK background).
+// The project enquiry form, shared by the Contact page and the Footer: same
+// fields, validation, POST to /api/contact and success popup.
 
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 const MAROON = "#6E1F24";
 
-// Client spec (recorded walkthrough, 2026-09-08): "Residential" is a parent
-// with two sub-types -- flattened into 5 individually-selectable options
-// here rather than a two-level UI, since this site's existing form controls
-// are single-level selects and the client only needs each of the 5 to be
-// choosable on its own.
+// "Residential" sub-types flattened into individually selectable options.
 const PROJECT_TYPES = [
   "Residential – New Build",
   "Residential – Remodel",
@@ -26,11 +20,8 @@ const PROJECT_TYPES = [
   "Others",
 ];
 
-// Client spec: every field on this form is compulsory, no exceptions --
-// there is no longer an "optional" concept here at all. Client also asked
-// specifically for a "red asterisk" -- MAROON is the closest brand token to
-// that, so the asterisk (only) renders in solid maroon while the label text
-// itself stays the usual muted cream.
+// Every field is required; the asterisk is maroon (the client asked for a
+// red one).
 function FieldLabel({ children }) {
   return (
     <span
@@ -42,13 +33,9 @@ function FieldLabel({ children }) {
   );
 }
 
-// Inline, per-field validation message -- rendered instead of relying on
-// the browser's own native `required`/`type=email` popups, which don't
-// match this site's styling and (more importantly) fire before React's
-// onSubmit ever runs, so they'd pre-empt these custom messages entirely.
-// The form itself carries `noValidate` for exactly this reason; `required`
-// stays on each control anyway for its screen-reader semantics, paired
-// with `aria-invalid`/`aria-describedby` pointing at this element.
+// Inline per-field error. The form uses `noValidate` so the browser's own
+// popups don't pre-empt these; `required` stays on each control for screen
+// readers, alongside aria-invalid/aria-describedby.
 function FieldError({ id, error }) {
   if (!error) return null;
   return (
@@ -63,11 +50,7 @@ function FieldError({ id, error }) {
   );
 }
 
-// py-2.5 (not just pb-2) gives every field a taller tap/focus target on
-// mobile -- previously ~29px tall (bottom padding only, no top), under the
-// ~44px touch-target guideline. Purely a padding change on a borderless,
-// background-less underline field, so it reads as slightly roomier rather
-// than visually different.
+// py-2.5 keeps each field a comfortable ~44px touch target.
 const fieldClass =
   "mt-2 w-full border-0 border-b bg-transparent py-2.5 text-sm focus:outline-none";
 const fieldBorderDefault = "rgba(247, 239, 228, 0.3)";
@@ -101,10 +84,9 @@ function SelectField({ label, name, idPrefix, options, error, ...selectProps }) 
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
-      {/* Callers must pass defaultValue="" (or a controlled value) -- without
-          it, browsers skip the disabled placeholder option and auto-select
-          the first real option instead, which silently satisfies `required`
-          before the user has chosen anything. */}
+      {/* Callers must pass defaultValue="" (or a controlled value); otherwise
+          the browser auto-selects the first real option and silently
+          satisfies `required`. */}
       <select
         {...selectProps}
         name={name}
@@ -148,15 +130,12 @@ function TextareaField({ label, name, idPrefix, error, ...textareaProps }) {
   );
 }
 
-// idle -> submitting -> submitted, or back to idle (with `error` set) on
-// any failure so the visitor can fix something and retry without losing
-// what they already typed.
+// idle -> submitting -> submitted, or back to idle with `error` set so the
+// visitor can fix things without losing what they typed.
 const STATUS = { IDLE: "idle", SUBMITTING: "submitting", SUBMITTED: "submitted" };
 
-// Mirrors ContactForm's own `name` attributes/order and the server-side
-// list in src/app/api/contact/route.js -- every field is required, no
-// exceptions. Kept as its own list (rather than deriving from the JSX)
-// so validate() below can run before anything ever touches the network.
+// Must match the fields' `name`s and the server-side list in
+// src/app/api/contact/route.js.
 const REQUIRED_FIELDS = [
   { name: "name", label: "Name" },
   { name: "email", label: "Email" },
@@ -182,19 +161,15 @@ function validate(data) {
   return errors;
 }
 
-// `submitVariant` lets each host keep its own button style (the Contact
-// page's filled "primary", the Footer's underlined "text"). The useId()
-// prefix keeps each instance's error-message ids unique, since the Contact
-// page renders this form twice (its own section plus the Footer's).
+// `submitVariant` lets each host keep its own button style. useId() keeps
+// error ids unique when the form renders twice (Contact page + Footer).
 export default function ContactForm({ formRef, submitVariant = "primary" }) {
   const idPrefix = useId();
   const [status, setStatus] = useState(STATUS.IDLE);
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Clears one field's error as soon as the visitor edits it, rather than
-  // leaving a stale "required" message sitting under a field they already
-  // fixed until the next full submit attempt re-validates everything.
+  // Clear a field's error as soon as it's edited.
   const clearFieldError = (name) => {
     setFieldErrors((prev) => {
       if (!prev[name]) return prev;
@@ -206,11 +181,8 @@ export default function ContactForm({ formRef, submitVariant = "primary" }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Captured up front: the browser nulls out e.currentTarget once the
-    // event finishes dispatching, i.e. at the first `await` below. Calling
-    // e.currentTarget.reset() after the fetch threw a TypeError, so every
-    // successful send (email already delivered) fell into the catch and
-    // told the visitor it had failed.
+    // Captured before the first `await`: the browser nulls e.currentTarget
+    // after dispatch, and reset() on null made successful sends look failed.
     const form = e.currentTarget;
 
     const data = Object.fromEntries(new FormData(form));
@@ -219,9 +191,7 @@ export default function ContactForm({ formRef, submitVariant = "primary" }) {
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       setError(null);
-      // Move focus to the first invalid field, in the form's own field
-      // order, so keyboard/screen-reader users land on the first problem
-      // instead of having to hunt for it.
+      // Focus the first invalid field for keyboard/screen-reader users.
       const firstInvalid = REQUIRED_FIELDS.find(({ name }) => errors[name]);
       form.elements[firstInvalid?.name]?.focus();
       return;
@@ -230,11 +200,8 @@ export default function ContactForm({ formRef, submitVariant = "primary" }) {
     setError(null);
     setStatus(STATUS.SUBMITTING);
 
-    // Real POST to /api/contact (src/app/api/contact/route.js), re-wired
-    // after the twentieth session's deliberate frontend-only pass. Server
-    // re-validates independently -- this call can still come back with a
-    // 400/500 (e.g. SMTP unconfigured), which surfaces as the same inline
-    // `error` banner a client-side validation failure would, not a crash.
+    // The server re-validates; a 400/500 (e.g. SMTP not configured) shows as
+    // the same inline error banner.
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
@@ -244,12 +211,8 @@ export default function ContactForm({ formRef, submitVariant = "primary" }) {
       const payload = await res.json().catch(() => null);
 
       if (res.ok && payload?.ok) {
-        // Client request (2026-09-21): confirmation should be a popup, not
-        // a screen that replaces the form -- the form now stays on screen
-        // (and clears itself via e.currentTarget.reset(), captured before
-        // this async gap since React pools/clears synthetic events) so the
-        // visitor can immediately send a second message if they want to,
-        // rather than the whole form vanishing behind a "thanks" message.
+        // Success shows a popup and clears the form, so a second message
+        // can be sent straight away.
         form.reset();
         setStatus(STATUS.SUBMITTED);
       } else {
@@ -264,11 +227,8 @@ export default function ContactForm({ formRef, submitVariant = "primary" }) {
     }
   };
 
-  // Field order below is the client's exact spec, verbatim from the
-  // recorded walkthrough: name, email, phone, location, project budget,
-  // project type, then the project-description textarea last. Every field
-  // is compulsory (see FieldLabel/TextField above) -- phone in particular
-  // used to be marked optional here and no longer is.
+  // Field order is the client's spec: name, email, phone, location, budget,
+  // project type, then details. All required.
   return (
     <>
     {status === STATUS.SUBMITTED ? (
@@ -370,26 +330,14 @@ export default function ContactForm({ formRef, submitVariant = "primary" }) {
   );
 }
 
-// Centered modal popup shown on successful submit, in place of the old
-// "form disappears, thank-you text takes its place" behavior (client
-// request, 2026-09-21). Fixed/full-viewport overlay so it reads clearly as
-// a popup regardless of where the form sits on the page; z-[200] clears
-// Nav's own z-[100] (see MeetFounders.jsx's STICKY_COLUMN_TOP_PX comment
-// for that same fixed-Nav reference point). Auto-dismisses after 6s but
-// also closable immediately, for anyone who wants to keep reading the page
-// right away rather than waiting it out.
+// Success popup. z-[200] sits above the Nav (z-[100]). Auto-dismisses after
+// 6s, or closes immediately via the button.
 //
-// Portaled to <body>: the form's hosts animate their wrappers in with GSAP
-// transforms (e.g. the Footer's signup block), and a transformed ancestor
-// becomes the containing block for `position: fixed` -- without the portal
-// the overlay was sized to the footer block instead of the viewport, and
-// the card sat half-hidden under the Nav. Only ever mounted client-side
-// (after a submit), so `document` is always available here.
+// Portaled to <body>: hosts animate their wrappers with GSAP transforms, and
+// a transformed ancestor becomes the containing block for `position: fixed`
+// (the overlay would size to that wrapper instead of the viewport).
 function SuccessPopup({ onClose }) {
-  // This component only exists while status === SUBMITTED, so it mounts
-  // fresh each time it appears -- a plain mount-effect timer is enough,
-  // no ref/guard needed. Cleanup clears the timer if onClose already fired
-  // (the close button) before the 6s auto-dismiss would have.
+  // Mounts fresh on each success, so a plain mount-effect timer is enough.
   useEffect(() => {
     const id = setTimeout(onClose, 6000);
     return () => clearTimeout(id);

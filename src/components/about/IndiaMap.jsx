@@ -15,14 +15,8 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
-// Custom illustrated map, not a real Google Maps embed -- that approach
-// (the shared IndiaMapEmbed component) is still used as-is on the Contact
-// page for the studio's actual address, but the client wanted this
-// About-page section to instead be a minimal, illustrated India outline
-// with the three states the studio actually works in (Maharashtra,
-// Telangana, Karnataka) highlighted -- see IndiaWorkMap.jsx. This file
-// still just wires the About page's own heading/caption/CTA and one-shot
-// reveal animation around whichever map lives in mapWrapRef.
+// "Our Work Across India": heading, caption and CTA beside an illustrated map
+// of the states the studio works in (IndiaWorkMap.jsx).
 
 export default function IndiaMap() {
   const sectionRef = useRef(null);
@@ -32,10 +26,7 @@ export default function IndiaMap() {
   const ctaRef = useRef(null);
   const reduceMotion = useReducedMotion(true);
 
-  // One-shot reveal, not scroll-scrubbed -- the iframe's own map content
-  // has no scroll-tied animation at all, this just fades the section in as
-  // a whole once as it enters the viewport (same Phase-3 idiom as Press/
-  // Footer/the rest of this page).
+  // One-shot fade-in as the section enters the viewport.
   usePreloaderGate(
     () => {
       const ctx = gsap.context(() => {
@@ -69,10 +60,7 @@ export default function IndiaMap() {
   return (
     <section ref={sectionRef} className="w-full py-16 md:py-24" style={{ backgroundColor: CREAM }}>
       <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 gap-12 px-6 md:grid-cols-[2fr_3fr] md:items-start md:gap-16 md:px-16">
-        {/* Text column -- decorative line, two-line heading, italic
-            subtext, then the CTA, all stacked and left-aligned (matches
-            the reference's left column). Stacks above the map column on
-            mobile via the grid-cols-1 default above. */}
+        {/* Text column (stacks above the map on mobile). */}
         <div className="flex flex-col">
           <div className="h-px w-12" style={{ backgroundColor: INK, opacity: 0.3 }} />
 
@@ -105,8 +93,7 @@ export default function IndiaMap() {
           </div>
         </div>
 
-        {/* Map column -- wider (3fr vs 2fr) than the text column, per the
-            reference's ~60-65% split. */}
+        {/* Map column, wider than the text (3fr vs 2fr). */}
         <div ref={mapWrapRef} className="w-full">
           <IndiaWorkMap />
         </div>

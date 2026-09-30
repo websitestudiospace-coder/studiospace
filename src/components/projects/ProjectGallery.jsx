@@ -8,31 +8,16 @@ import usePreloaderGate from "@/hooks/usePreloaderGate";
 import { responsiveImageProps } from "@/lib/cloudinaryImage";
 
 const CREAM = "#F7EFE4";
-// Lightbox scrim/close-button use ink (#2B2622) directly as rgba() literals
-// below (for opacity), not this named constant -- no solid-ink usage in
-// this file otherwise.
+// Lightbox scrim/close button use ink (#2B2622) as rgba() literals.
 
-// Every cell is the same 2:3 portrait box (height = 1.5 x width), so each row
-// lines up edge to edge regardless of the photos' own orientation; photos are
-// cropped into it with object-fit: cover (the lightbox still shows the full,
-// uncropped photo). 2:3 because that's the native shape of nearly every photo
-// in scripts/photo-manifest.json, so those fill the cell with no crop -- only
-// the occasional landscape shot is cropped to its centre.
+// Every cell is the same 2:3 portrait box so rows line up regardless of each
+// photo's orientation; photos are cropped with object-fit: cover (the lightbox
+// shows them uncropped). 2:3 is the native shape of nearly every photo.
 const CELL_HEIGHT_RATIO = 3 / 2;
 
-// Column-count breakpoints, keyed off the actual measured container width
-// (via ResizeObserver on the grid itself). The gallery spans the full
-// viewport minus the site's side gutter (see the section markup below), not
-// this site's usual max-w-[1100px] content column, so containerWidth tracks
-// the viewport width -- these tiers are tuned against that full range
-// (~327px on a 375px phone up through ultra-wide desktops), not the old
-// ~1100px-capped inner widths. More tiers than before for exactly that
-// reason: a fixed "4 columns and done" cap that was fine capped at 1100px
-// reads as absurdly wide individual photos once the container can be
-// 1920px+, so column count keeps climbing (capped at 6) rather than a
-// handful of images stretching edge to edge. The 3-column tier (and the
-// wide gap) start at 600, not 640, so a 768px tablet always gets 3 columns
-// once the md:px-8 gutter and scrollbar are subtracted (~689px of grid).
+// Column tiers keyed off the measured grid width (full viewport minus the side
+// gutter). The 3-column tier and wide gap start at 600 so a 768px tablet gets
+// 3 columns after the gutter and scrollbar.
 const COLUMN_BREAKPOINTS = [
   { minWidth: 2200, columns: 6 },
   { minWidth: 1900, columns: 5 },
@@ -49,18 +34,11 @@ function getColumnCount(containerWidth) {
   return tier.columns;
 }
 
-// Places `photos` in a uniform grid, strictly left to right, top to bottom.
-// The manifest order (scripts/photo-manifest.json, see @/lib/projects) is
-// the client's chosen sequence, so it has to read exactly in that order.
-// Every row has the same height and every cell is one column wide (see
-// CELL_HEIGHT_RATIO), so rows are evenly aligned; this replaced a masonry
-// layout where each photo kept its natural height and columns ended
-// unevenly. The one exception: a photo flagged `wide` in the manifest (a
-// landscape shot the client wants shown as landscape, e.g. the Modern
-// Organic Home's PAS_0754) spans two columns at the same row height. If
-// fewer than two columns are left in the current row it starts the next row
-// instead, leaving that slot empty, since the order can't be shuffled to
-// fill it.
+// Uniform grid filled strictly left to right, top to bottom, in manifest
+// order (the client's chosen sequence). Every row has the same height. A
+// photo flagged `wide` in the manifest spans two columns at the same row
+// height; if fewer than two columns are left in the row it starts the next
+// row, leaving that slot empty (the order can't be shuffled to fill it).
 function computeGridLayout(photos, containerWidth) {
   const columns = getColumnCount(containerWidth);
   const gap = containerWidth >= GAP_BREAKPOINT ? GAP_WIDE : GAP_NARROW;
@@ -103,12 +81,8 @@ function CloseIcon() {
   );
 }
 
-// Full-screen lightbox for a clicked photo -- portaled to document.body for
-// the same reason ProjectDescriptionModal.jsx is: masonry items above sit
-// under a live GSAP `transform` (the position/size tween), which turns them
-// into a containing block for any descendant `position: fixed` node, so a
-// non-portaled overlay would be clipped/mispositioned by whichever item was
-// clicked instead of covering the real viewport.
+// Full-screen lightbox, portaled to <body>: grid items are GSAP-transformed,
+// which would make them the containing block for a `position: fixed` overlay.
 function GalleryLightbox({ photo, alt, onClose }) {
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -187,12 +161,7 @@ function GalleryItem({ photo, alt, placed, cellWidth, itemRef, onOpen, onMouseEn
   );
 }
 
-// Uniform photo grid (animation adapted from React Bits' "Masonry" pattern),
-// filled strictly left to right into same-size cells (see computeGridLayout
-// above). Real project photos, full color throughout -- no grayscale/filter
-// anywhere in this component (unlike the site's Google Maps embeds, which
-// are intentionally black-and-white; that's a different, unrelated
-// convention).
+// Project photo grid (entrance animation adapted from React Bits' "Masonry").
 export default function ProjectGallery({ name, photos = [] }) {
   const containerRef = useRef(null);
   const itemRefs = useRef([]);
@@ -202,9 +171,7 @@ export default function ProjectGallery({ name, photos = [] }) {
   const [placed, setPlaced] = useState(false);
   const reduceMotion = useReducedMotion();
 
-  // Plain, always-on measurement (not preloader-gated) -- same pattern
-  // MeetFounders' wordmark sizing uses: this just tracks real layout, the
-  // GSAP positioning effect below is what actually needs to wait for the
+  // Always-on width measurement; only the GSAP positioning waits for the
   // preloader.
   useEffect(() => {
     const el = containerRef.current;
@@ -222,18 +189,9 @@ export default function ProjectGallery({ name, photos = [] }) {
     [photos, containerWidth]
   );
 
-  // Gated through usePreloaderGate like every other animated component on
-  // this site, even though this is a mount trigger rather than a scroll
-  // trigger -- the container's width (used for the column-count math above)
-  // only reflects real, settled layout once the preloader intro has
-  // finished, same reasoning every ScrollTrigger-driven component here
-  // already depends on this gate for.
-  //
-  // Always runs (not skipped under reduceMotion) because the masonry
-  // position/size math itself isn't a motion effect -- photos still need to
-  // land in their real grid position either way. reduceMotion only decides
-  // whether that placement is tweened or set immediately, and whether the
-  // hover-scale handlers below do anything.
+  // Waits for the preloader so the measured width reflects settled layout.
+  // Always runs, even with reduced motion: items still need positioning;
+  // reduceMotion only decides tween vs. immediate set (and hover scaling).
   usePreloaderGate(
     () => {
       if (containerWidth <= 0 || layout.items.length === 0) return undefined;
@@ -246,9 +204,7 @@ export default function ProjectGallery({ name, photos = [] }) {
           if (!el) return;
 
           if (isFirstMount && !reduceMotion) {
-            // Mount-in: blur-to-focus + slide up into place, staggered so
-            // photos read as settling in one after another rather than a
-            // single simultaneous block.
+            // Mount-in: staggered blur-to-focus and slide up.
             gsap.fromTo(
               el,
               {
@@ -282,10 +238,8 @@ export default function ProjectGallery({ name, photos = [] }) {
               height: item.height,
             });
           } else {
-            // Not the first mount -- a resize/breakpoint change reflowed
-            // the grid. Reposition existing items rather than replaying the
-            // mount-in animation; still respects reduceMotion (immediate
-            // set instead of a tween).
+            // Later runs (resize/breakpoint change): move items into place
+            // without replaying the entrance.
             const vars = { x: item.x, y: item.y, width: item.width, height: item.height };
             if (reduceMotion) {
               gsap.set(el, vars);
@@ -321,13 +275,10 @@ export default function ProjectGallery({ name, photos = [] }) {
 
   return (
     <section className="w-full px-6 py-16 md:px-8 md:py-24" style={{ backgroundColor: CREAM }}>
-      {/* Wider than this page's usual max-w-[1100px] content column (no
-          max-w/mx-auto on the grid), but inset by a side gutter (px-6 /
-          md:px-8 -- half the md:px-16 NextProjectLink and ProjectsGrid use,
-          per the client) so the outer columns never sit flush against the
-          viewport edge.
-          The ResizeObserver below measures this div's own width, so the
-          columns reflow to fit inside that padding. */}
+      {/* Wider than the usual max-w-[1100px] column, inset by a side gutter
+          (px-6 / md:px-8) so the outer columns never touch the viewport
+          edge. The ResizeObserver measures this div, so columns fit inside
+          that padding. */}
       <div
         ref={containerRef}
         className="relative w-full"

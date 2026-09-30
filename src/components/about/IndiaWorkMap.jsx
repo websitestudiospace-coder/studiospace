@@ -5,30 +5,18 @@ const INK = "#2B2622";
 const BASE_FILL = "#E8E1D6";
 const HIGHLIGHT_FILL = "#AE9873";
 
-// Coordinates below are in the package's own viewBox units (0 0 612 696,
-// standard map orientation -- x increases east, y increases south).
-// Dot positions are each target state's actual SVG bounding-box center,
-// confirmed (via a headless canvas isPointInPath check against the real
-// path geometry, not eyeballed) to land inside that state's shape, not in
-// a concave notch outside it. labelPos is deliberately NOT the same as
-// dot -- it's shifted so the three leader lines fan out into the left
-// margin without crossing each other (Maharashtra and Telangana's dots
-// sit only ~22 units apart vertically but at different x, so pulling
-// their label rows apart -- 380/470/560 -- keeps each line in its own
-// vertical band).
+// Coordinates are in the package's viewBox units (0 0 612 696; x east, y
+// south). Each dot is its state's bounding-box center (verified to fall
+// inside the shape). labelPos is offset so the leader lines fan out into the
+// left margin without crossing.
 const HIGHLIGHTS = {
   mh: { label: "MAHARASHTRA", dot: [179.7, 435.3], labelPos: [-30, 380] },
   tg: { label: "TELANGANA", dot: [237.1, 456.6], labelPos: [-30, 470] },
   ka: { label: "KARNATAKA", dot: [170.6, 518.7], labelPos: [-30, 560] },
 };
 
-// The package's own landmass (including outlying islands) already spans
-// the full 0 0 612 696 viewBox with no built-in margin, so there's no
-// empty space inside it to drop labels into -- this pads the viewBox
-// itself, mostly on the left (where these three western/southern states
-// sit, with open sea beyond their coastline in this data's orientation),
-// so the leader lines/labels have somewhere to live outside the map
-// outline instead of overlapping other states.
+// The map fills its viewBox edge to edge, so pad the viewBox (mostly on the
+// left) to make room for the labels.
 const PAD_LEFT = 190;
 const PAD_TOP = 10;
 const PAD_RIGHT = 10;

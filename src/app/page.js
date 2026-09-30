@@ -9,9 +9,7 @@ import Footer from "@/components/home/Footer";
 import { getAllPressItems } from "@/lib/press";
 import { DEFAULT_SHARE_IMAGE } from "@/lib/site";
 
-// Matches layout.js's own SITE_DESCRIPTION (pulled from home/About.jsx's
-// real positioning copy) -- the homepage is meant to carry the site's main
-// brand title/description, same as the root layout's own default.
+// Same title/description as the root layout's defaults.
 const HOME_DESCRIPTION =
   "Based in Bangalore and working pan-India, Studio SP_ACE is a bespoke interior design studio offering a complete journey from design to execution.";
 

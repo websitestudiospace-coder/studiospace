@@ -6,26 +6,9 @@ import { getProjectPhoto } from "@/lib/projects";
 import { getAllPressItems } from "@/lib/press";
 import { DEFAULT_SHARE_IMAGE } from "@/lib/site";
 
-// MediaHero is a "use client" component (GSAP/DOM refs) and
-// getProjectPhoto() reads scripts/photo-manifest.json + cloudinary-url-map
-// off disk via Node's fs -- server-only, can't run inside a client
-// component. Resolved here instead (this page is a server component) and
-// passed down as a plain prop URL, same pattern contact/page.js's own
-// CONTACT_HERO_PHOTO and about/page.js's beliefImages already use.
-//
-// TODO: placeholder hero photo -- swap for the client's chosen photo if
-// they want a different one. Picked (not guessed from a filename --
-// downloaded and actually viewed first, same discipline the Careers-photo
-// pick used) specifically because it's a real, existing gallery photo not
-// already used elsewhere on the site for a different purpose (not a
-// project cover, not one of WhatWeBelieve's 6 belief photos, not the
-// Careers photo) -- a wide, well-lit dining/living space with arched
-// glass doors, which reads well letterboxed across a full-bleed hero band.
-// Its top band was measured (not assumed) before picking it: ~4.8:1
-// contrast against cream Nav text with no gradient at all, ~7.2:1 once
-// this hero's own gradient is added -- comfortably legible, unlike
-// AboutHero's photo which needed a dedicated top-gradient fix for the
-// same reason (see PROJECT_STATUS.md's twenty-sixth-session entry).
+// Hero photo, resolved here because getProjectPhoto() reads the filesystem
+// and MediaHero is a client component. A gallery photo not used elsewhere
+// on the site; its top is dark enough for the cream Nav text.
 const MEDIA_HERO_PHOTO = {
   src: getProjectPhoto("the-modern-transitional-home", "9.webp"),
   alt: "A round dining table with navy chairs beneath a wood-beamed ceiling, opening through arched glass doors into a living room with built-in blue cabinetry",
@@ -57,11 +40,7 @@ export default async function MediaPage() {
 
   return (
     <>
-      {/* No `lightHero` -- MediaHero is now a full-bleed photo hero (like
-          Home/Projects/Contact), not the plain-CREAM version that used to
-          need the solid-from-y=0 nav treatment. Default transparent-then-
-          solid Nav behavior applies, same as those other photo-hero pages
-          -- logo always visible immediately, same as every other page. */}
+      {/* Default transparent-then-solid Nav over the photo hero. */}
       <Nav />
       <MediaHero heroPhoto={MEDIA_HERO_PHOTO} />
       <MediaGrid items={pressItems} />

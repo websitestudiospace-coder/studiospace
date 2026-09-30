@@ -19,17 +19,10 @@ function loadCloudinaryMap() {
   return cloudinaryMapCache;
 }
 
-// Every project photo/video is mirrored to Cloudinary (see
-// scripts/upload-to-cloudinary.js, keyed by this same "public/images/..."
-// path), so this swaps a local path for its Cloudinary URL wherever the
-// upload map has one, falling back to the local path itself if the map has
-// no entry (e.g. a file added after the last upload pass hasn't run yet).
-// Exported (not just used internally by the project-photo helpers below) --
-// the map itself is a flat path->URL lookup with nothing project-specific
-// about it, so a non-project caller with its own Cloudinary-mirrored image
-// (e.g. the Contact page's hero photo, uploaded the same way but with no
-// project slug to hang a getProjectPhoto()-style helper off of) can resolve
-// its URL the exact same way rather than duplicating this lookup.
+// Swaps a local "/images/..." path for its Cloudinary URL using the upload
+// map (scripts/cloudinary-url-map.json, written by upload-to-cloudinary.js).
+// Falls back to the local path if the file hasn't been uploaded yet.
+// Exported for non-project images uploaded the same way (e.g. Contact hero).
 export function toCloudinaryUrl(localSrc) {
   if (!localSrc) return localSrc;
   const map = loadCloudinaryMap();
@@ -47,21 +40,15 @@ function loadPhotoManifest() {
   return photoManifestCache;
 }
 
-// Every project's photo list, natural sort order, and pixel dimensions come
-// from this build-time manifest (see scripts/build-photo-manifest.js) rather
-// than walking public/images/projects/<slug> on disk -- the local WebP
-// mirror was deleted once Cloudinary hosting was confirmed working
-// end-to-end, so this manifest (built from that mirror right before it was
-// removed) is now the only remaining record of what each project's gallery
-// contains, what order it goes in, and how it should lay out.
+// Photo lists, order and pixel dimensions for the original projects come from
+// scripts/photo-manifest.json, not the filesystem: the local photo files were
+// removed once Cloudinary hosting was in place, so the manifest is the only
+// record of each gallery. Edit it by hand to reorder (see ARCHITECTURE.md).
 function getManifestEntry(slug) {
   return loadPhotoManifest()[slug] ?? { photos: [], hasVideo: false, posterFile: null };
 }
 
-// Returns every photo in a project's folder, natural-sorted, each carrying
-// its own pixel dimensions so callers (e.g. ProjectGallery's masonry grid)
-// can compute proportional layout from the real aspect ratio without any
-// client-side measuring.
+// Every photo for a project, in manifest order, with pixel dimensions.
 function listProjectPhotos(slug) {
   return getManifestEntry(slug).photos.map(({ file, width, height, wide }) => ({
     file,
@@ -74,15 +61,11 @@ function listProjectPhotos(slug) {
   }));
 }
 
-// Splits a project's photos into its cover (listing card, detail-page hero,
-// Next Project preview, share image) and its on-page gallery. Default rule:
-// the manifest's first photo is the cover and is left out of the gallery.
-// A manifest entry can instead name its cover explicitly with `coverFile`
-// -- then the whole `photos` list is the gallery, in order, cover included
-// at wherever it falls. That's for projects where the client gave a full
-// gallery order but wanted to keep a different photo as the cover (see
-// the-modern-eclectic-home, the-modern-neo-classical-home,
-// the-shraddhas-thinkpad in scripts/photo-manifest.json).
+// Splits a project's photos into its cover (listing card, hero, Next Project
+// preview, share image) and its gallery. Default: the first photo is the
+// cover and is left out of the gallery. If the manifest entry sets
+// `coverFile`, that photo is the cover and the whole `photos` list is the
+// gallery, cover included at its listed position.
 function splitCoverAndGallery(slug) {
   const photos = listProjectPhotos(slug);
   const { coverFile } = getManifestEntry(slug);
@@ -94,14 +77,9 @@ function splitCoverAndGallery(slug) {
   return { cover, galleryPhotos };
 }
 
-// A compressed project video is expected at
-// public/images/projects/<slug>/video.mp4, alongside that project's photos
-// -- with an optional video-poster image (same folder) shown until
-// playback starts. Presence of both is recorded in the
-// photo manifest (see getManifestEntry) rather than checked on disk, for the
-// same reason listProjectPhotos reads from it. Falls back to the older
-// public/videos/projects/<slug>.mp4 convention if that's ever used instead.
-// Until either exists for a project, the video section is skipped entirely.
+// Project video: public/images/projects/<slug>/video.mp4 (served from
+// Cloudinary) with an optional poster, both recorded in the manifest. Falls
+// back to public/videos/projects/<slug>.mp4. No video -> section skipped.
 function getProjectVideo(slug) {
   const entry = getManifestEntry(slug);
   if (entry.hasVideo) {
@@ -119,12 +97,8 @@ function getProjectVideo(slug) {
   return null;
 }
 
-// Resolves one specific photo (by its manifest filename) from a project's
-// gallery to its Cloudinary URL -- for callers that want a particular real
-// photo (not the cover, not the full gallery) to use elsewhere on the site,
-// e.g. WhatWeBelieve's belief-illustration images on the About page. `file`
-// must match the manifest's own `file` value exactly, subfolder prefix
-// included where the project has one (e.g. "Photos/3.webp").
+// Cloudinary URL for one photo by its manifest filename (including any
+// subfolder, e.g. "Photos/3.webp"), for use elsewhere on the site.
 export function getProjectPhoto(slug, file) {
   const match = getManifestEntry(slug).photos.find((photo) => photo.file === file);
   return match ? toCloudinaryUrl(`/images/projects/${slug}/${file}`) : null;
@@ -147,12 +121,9 @@ const SANITY_PROJECT_QUERY = `*[_type == "project"] | order(coalesce(order, 9999
   videoUrl,
 }`;
 
-// Client-added projects (via /studio) live entirely in Sanity -- photos and
-// video are uploaded there directly, no photo-manifest/Cloudinary pipeline
-// step required (see the module comment above for why the original 7
-// projects keep using that pipeline instead of also being migrated in).
-// Fails soft (empty array) rather than breaking the whole /projects page if
-// Sanity is briefly unreachable.
+// Projects added through /studio live entirely in Sanity (photos and video
+// uploaded there). Returns [] if Sanity is unreachable so /projects still
+// renders the static projects.
 async function fetchSanityProjects() {
   try {
     const docs = await client.fetch(SANITY_PROJECT_QUERY);
@@ -206,10 +177,8 @@ export async function getProjectBySlug(slug) {
   return sanityProjects.find((project) => project.slug === slug) ?? null;
 }
 
-// Cycles to the next project after `slug` in the combined (static + Sanity)
-// roster, wrapping back to the first -- used by the "Next Project" link at
-// the bottom of the detail page. Returns a lightweight {slug, name, cover}
-// rather than the full project (no gallery/video needed for a preview link).
+// The project after `slug` in the combined roster, wrapping to the first.
+// Used by the "Next Project" link.
 export async function getNextProject(slug) {
   const all = await getAllProjects();
   const index = all.findIndex((project) => project.slug === slug);

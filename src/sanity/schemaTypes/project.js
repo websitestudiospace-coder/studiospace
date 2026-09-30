@@ -1,11 +1,6 @@
-// Schema for a client-addable project (case study). Kept independent of the
-// existing hand-tuned PROJECTS array in @/data/projects -- that array and
-// its Cloudinary/photo-manifest pipeline stay exactly as they are (see
-// @/lib/projects for why: no risk to the 7 existing, already-polished
-// projects). A project created here just gets merged alongside them on the
-// /projects grid, so the client doesn't need a developer to run any scripts
-// to add a new one -- photos/video upload directly through Sanity's own
-// asset storage.
+// Sanity schema for a project the client adds through /studio. These are
+// merged after the static projects in @/data/projects; photos and video are
+// uploaded straight to Sanity, no scripts needed.
 const project = {
   name: "project",
   title: "Project",

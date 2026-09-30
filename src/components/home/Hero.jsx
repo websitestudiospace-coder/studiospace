@@ -8,10 +8,8 @@ export default function Hero() {
         muted
         playsInline
         preload="none"
-        // The poster is the single most prominent above-the-fold image on
-        // the site (first paint of the homepage) -- fetchPriority hints the
-        // browser to fetch it with the same urgency `priority` gives an
-        // <Image>, since <video poster> has no equivalent prop of its own.
+        // The poster is the first thing painted on the home page; <video
+        // poster> has no `priority` prop, so hint it directly.
         fetchPriority="high"
         className="absolute inset-0 h-full w-full object-cover"
       >

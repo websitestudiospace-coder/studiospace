@@ -8,11 +8,8 @@ const SANITY_PRESS_QUERY = `*[_type == "pressMention"] | order(coalesce(order, 9
   url,
 }`;
 
-// Client-added press mentions (via /studio) live entirely in Sanity -- see
-// the module comment in pressMention.js for why the original 5 mentions
-// keep using the static @/data/press array instead of also being migrated
-// in. Fails soft (empty array) rather than breaking the Press carousel/grid
-// if Sanity is briefly unreachable, same as fetchSanityProjects().
+// Press mentions added through /studio. Returns [] if Sanity is unreachable
+// so the carousel/grid still show the static mentions.
 async function fetchSanityPressItems() {
   try {
     const docs = await client.fetch(SANITY_PRESS_QUERY);

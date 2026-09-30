@@ -1,17 +1,13 @@
-// Captures, for every project folder, exactly what src/lib/projects.js used
-// to discover live from public/images/projects/<slug>/ -- the natural-sorted
-// photo list with pixel dimensions, plus which video-poster file (if any)
-// exists -- into scripts/photo-manifest.json.
+// !! DO NOT RUN THIS against the current checkout. !!
+// It rebuilds scripts/photo-manifest.json from the local photo files in
+// public/images/projects/<slug>/, but those files were deleted after the
+// move to Cloudinary -- the folders now hold only video files. Running it
+// would write EMPTY photo lists for every project, and it would also discard
+// the hand-edited gallery orders, `coverFile` and `wide` flags. Edit the
+// manifest by hand instead (see ARCHITECTURE.md).
 //
-// This has to run BEFORE the local WebP files are deleted (they're the only
-// remaining source of pixel dimensions once media-source/ is the only copy
-// left, and that folder holds full-resolution originals, not the resized
-// WebP dimensions the gallery layout was built against). Once this manifest
-// exists, src/lib/projects.js reads it instead of walking the filesystem, so
-// deleting the local WebP mirror no longer breaks photo discovery, ordering,
-// or portrait/landscape layout.
-//
-// Usage: node scripts/build-photo-manifest.js
+// Kept only as a record of how the manifest was first generated.
+// Usage (only with a full local WebP mirror): node scripts/build-photo-manifest.js
 
 const fs = require("fs");
 const path = require("path");
@@ -24,9 +20,7 @@ const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 const RESERVED_BASENAMES = new Set(["video-poster.jpg", "video-poster.png", "video-poster.webp"]);
 const POSTER_CANDIDATES = ["video-poster.webp", "video-poster.jpg", "video-poster.png"];
 
-// Same natural-sort rule as src/lib/projects.js's naturalCompare -- kept in
-// sync deliberately rather than imported, since this is a plain Node script
-// (no bundler) and the app module uses ESM path aliases.
+// Natural sort (so "2" comes before "10").
 function naturalCompare(a, b) {
   const chunk = /(\d+)|(\D+)/g;
   const ax = a.match(chunk) ?? [];

@@ -20,10 +20,8 @@ const INK = "#2B2622";
 const WORDMARK = "SP_ACE";
 const LOGO_ASPECT_RATIO = "6154 / 2752"; // logo.png's real natural pixel dimensions (previous value was stale)
 
-// Solved (via a search against the browser's actual canvas 2D filter
-// implementation, not hand-derived matrices, to land on an exact match)
-// filter chain that recolors the logo's black-crushed silhouette
-// (brightness(0)) to precisely #F7EFE4 -- verified pixel-for-pixel.
+// Filter chain that recolours the logo's black silhouette (brightness(0)) to
+// exactly #F7EFE4 (cream).
 const CREAM_LOGO_FILTER =
   "brightness(0) saturate(100%) invert(67%) sepia(4%) saturate(425%) hue-rotate(355deg) brightness(127%) contrast(127%)";
 
@@ -36,8 +34,8 @@ const NAV_LINKS = [
   { label: "Contact Us", href: "/contact" },
 ];
 
-// Only Instagram is a confirmed real account for now -- add Pinterest /
-// LinkedIn / Facebook here once the client provides them.
+// Only Instagram is confirmed so far -- add other networks when the client
+// provides them.
 const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://instagram.com/studio_sp_ace" },
 ];
@@ -48,12 +46,8 @@ const GENERAL_EMAIL = "hello@studiospace.co.in";
 
 const MICRO_LABEL_CLASS = "block text-[11px] uppercase tracking-[0.15em] md:text-xs";
 
-// No intro line under the heading, at the client's request -- this is a
-// project enquiry form, not the newsletter signup it used to be, and the
-// old copy read as one. The form is the full project enquiry form, shared
-// with the Contact page (same fields, validation, /api/contact POST and
-// success popup -- see ContactForm.jsx). "text" keeps the Footer's own
-// underlined submit button rather than the Contact page's filled one.
+// The shared project enquiry form (see ContactForm.jsx), with the Footer's
+// underlined "text" submit button. No intro line, at the client's request.
 function SignupBlock({ blockRef }) {
   return (
     <div ref={blockRef} className="col-span-2 md:col-span-1">
@@ -74,15 +68,10 @@ function SignupBlock({ blockRef }) {
   );
 }
 
-// `contents` on mobile keeps nav and the contact block as two independent
-// grid items -- the side-by-side half-width columns below the signup block.
-// At desktop they sit side by side inside the one right-hand grid column.
-// The contact block (email + Instagram, each under a small label, same
-// label/value pattern as the Contact page) is what fills the space beside
-// the nav -- Instagram on its own used to leave that column bare.
-//
-// `fullWidth` (Footer's hideForm case): with no form block beside it, the
-// row spans both grid columns with nav left and the contact block right.
+// Nav links plus a contact block (email + Instagram). `contents` on mobile
+// makes them two independent half-width grid items; on desktop they sit side
+// by side in the right-hand column. `fullWidth` (hideForm) spans both
+// columns.
 function LinksColumns({ navRef, socialRef, fullWidth = false }) {
   return (
     <div
@@ -112,9 +101,8 @@ function LinksColumns({ navRef, socialRef, fullWidth = false }) {
           <span className={MICRO_LABEL_CLASS} style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.55 }}>
             Email
           </span>
-          {/* <wbr> lets the address break after the @ in the ~150px mobile
-              half-column instead of overflowing; it stays on one line
-              wherever it fits. */}
+          {/* <wbr> lets the address break after the @ in the narrow mobile
+              column. */}
           <p
             className="mt-2 text-[13px] md:text-sm"
             style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
@@ -168,15 +156,10 @@ function Wordmark({ wordmarkRef }) {
   );
 }
 
-// Client layout: Terms left, copyright centered, Privacy right. The middle
-// column is `auto` between two equal 1fr columns, so the copyright sits at
-// the row's true center whatever the two links' widths. Below lg (1024px)
-// the three don't fit on one line (~634px of text at 768px), so mobile and
-// tablet keep the same left/right idea over two rows: Terms left and
-// Privacy right, copyright centered beneath. DOM order
-// matches the desktop left-to-right order for keyboard/screen readers.
-// items-center keeps the copyright level with the links, whose py-3.5 is
-// tap-target padding the plain text doesn't have.
+// Terms left, copyright centered, Privacy right: the middle column is `auto`
+// between two 1fr columns, so the copyright sits at the true center. Below
+// lg they don't fit on one line, so Terms/Privacy share a row with the
+// copyright centered beneath. DOM order matches the visual order.
 function LegalRow() {
   const textStyle = { fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 };
   const linkClass = "flex items-center whitespace-nowrap py-3.5 transition-opacity duration-200 ease-out hover:opacity-70";
@@ -205,9 +188,8 @@ function LegalRow() {
   );
 }
 
-// `hideForm` drops the enquiry form block (SignupBlock) and keeps the rest
-// of the footer -- used on /contact, where the same form already sits
-// directly above the footer as "Design With Us".
+// `hideForm` drops the enquiry form, used on /contact where the same form
+// sits directly above the footer.
 export default function Footer({ hideForm = false }) {
   const sectionRef = useRef(null);
   const signupRef = useRef(null);
@@ -216,20 +198,13 @@ export default function Footer({ hideForm = false }) {
   const wordmarkRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
-  // One-shot reveal (not scroll-scrubbed): Footer doesn't need to feel
-  // scroll-locked, so it just plays once as it enters the viewport. Still
-  // waits for "preloader:complete" since "top 80%" is calculated against
-  // this section's own position, which depends on every section above it
-  // already being in its final, settled layout.
+  // One-shot reveal; waits for the preloader so "top 80%" is measured
+  // against settled layout.
   usePreloaderGate(
     () => {
       const ctx = gsap.context(() => {
-        // ONE consolidated timeline: signup block first, then the nav/social
-        // link columns together, then the wordmark wipes in -- same
-        // single-timeline rule as every other section (no separate triggers
-        // per piece).
-        // signupRef is null when hideForm skips the form block -- only
-        // animate it when it's actually rendered.
+        // One timeline: form block, then link columns, then the wordmark
+        // wipe. signupRef is null when hideForm is set.
         const signup = signupRef.current;
         if (signup) gsap.set(signup, { opacity: 0, y: 24 });
         gsap.set([navRef.current, socialRef.current], { opacity: 0, y: 24 });
@@ -249,9 +224,7 @@ export default function Footer({ hideForm = false }) {
           { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" },
           0.15
         );
-        // Left-to-right wipe: clip the right edge in from 100% down to 0%.
-        // clip-path's inset() args are top/right/bottom/left, so animating
-        // the "right" value is what reveals the image left-to-right.
+        // Left-to-right wipe by animating clip-path inset()'s right value.
         tl.to(
           wordmarkRef.current,
           { clipPath: "inset(0% 0% 0% 0%)", ease: "power3.out", duration: 0.7 },
@@ -268,12 +241,8 @@ export default function Footer({ hideForm = false }) {
   return (
     <footer id="footer" ref={sectionRef} className="w-full" style={{ backgroundColor: INK }}>
       <div className="mx-auto w-full max-w-[1600px] px-6 pt-16 md:px-16 md:pt-24">
-        {/* grid-cols-2 (not -1) at mobile, with the signup block spanning
-            both columns, so the nav/social columns share a row instead of
-            each getting their own full-width stack. Desktop is also
-            grid-cols-2 (not -3) -- LinksColumns collapses nav+social into
-            one column there (see its own comment), so signup and links are
-            the only two real columns. */}
+        {/* Two columns at every width: the form block spans both on mobile,
+            and nav + contact share the second column on desktop. */}
         <div className="grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-2 md:gap-16">
           {!hideForm && <SignupBlock blockRef={signupRef} />}
           <LinksColumns navRef={navRef} socialRef={socialRef} fullWidth={hideForm} />

@@ -13,11 +13,8 @@ const MAROON = "#6E1F24";
 
 const HEADING = "What We Believe";
 
-// The client's real "SP_ACE Way" -- 6 points, replacing the 4 placeholder
-// titles/bodies this section shipped with. Every downstream calculation in
-// this file (stack depth, scroll length, card count) already derives from
-// BELIEFS.length rather than a hardcoded 4, so this array is the only thing
-// that needed to change.
+// The client's six "SP_ACE Way" points. Stack depth and scroll length are
+// derived from BELIEFS.length.
 const BELIEFS = [
   {
     title: "Personal, Always",
@@ -45,54 +42,22 @@ const BELIEFS = [
   },
 ];
 
-// Fourth rebuild: a scroll-pinned image+text card stack (React Bits'
-// "ScrollStack" pattern), adapted rather than ported verbatim -- the
-// reference creates its own Lenis instance for window-scroll mode, which
-// this project can't do (one shared Lenis instance for the whole page,
-// created in SmoothScroll.jsx; a second instance would fight it for the
-// same window scroll). Instead this subscribes to that shared instance via
-// src/lib/lenis.js. The reference's own transform math (translateY/scale
-// from scroll position, applied as direct style writes, not GSAP tweens)
-// is reimplemented here rather than copied blind, tuned for this page's own
-// content width -- rotationAmount and blurAmount are both omitted entirely
-// (not just zeroed): this site's motion vocabulary doesn't use rotation or
-// blur anywhere, and the reference's own defaults for a demo with many more
-// cards didn't fit this page's card count.
-//
-// Cards pin via `position: sticky` (this site's locked convention -- never
-// GSAP's `pin: true`, and this pattern doesn't use GSAP's pin either), and
-// nothing here is also an independent ScrollTrigger target elsewhere on
-// the page, so the golden rule holds even though the stacking transforms
-// themselves are manual scroll math rather than GSAP.
-//
-// Real project photography now illustrates each belief (passed down as
-// `beliefImages` from about/page.js, a server component -- getProjectPhoto()
-// in src/lib/projects.js reads the filesystem via Node's `fs`, which can't
-// run inside this "use client" component, so the resolved Cloudinary URLs
-// arrive as a plain prop instead).
+// Scroll-pinned card stack (adapted from React Bits' "ScrollStack"). The
+// frame pins with position: sticky and cards are moved by manual scroll
+// math, subscribed to the site's single shared Lenis instance
+// (src/lib/lenis.js) -- never create a second one. Photos arrive as
+// `beliefImages` from about/page.js, a server component, because resolving
+// them reads the filesystem.
 
-// Desktop scroll budget per card (vh) before the next one takes over, plus
-// a trailing hold on the last card so it doesn't release the instant it
-// settles. Shorter on mobile, matching every other pinned sequence on this
-// site (Quote/MeetFounders/the old WhatWeBelieve stack all shorten their
-// scroll distance on mobile) so the mechanic doesn't feel endless on a
-// small screen.
-//
-// Scaled down ~20% alongside the card-size reduction below (85/45/60/25 ->
-// 70/35/50/20): a smaller card is a smaller visual "move" per transition,
-// so the old scroll budget started to feel like it was taking longer than
-// the motion on screen justified. Same ratio between DISTANCE and
-// TRAILING_HOLD preserved in both tiers -- only the absolute pacing changed.
+// Scroll budget per card (vh), plus a hold after the last card settles.
+// Shorter on mobile, like the site's other pinned sequences.
 const ITEM_DISTANCE_VH_DESKTOP = 70;
 const ITEM_DISTANCE_VH_MOBILE = 50;
 const TRAILING_HOLD_VH_DESKTOP = 35;
 const TRAILING_HOLD_VH_MOBILE = 20;
 
-// Cards already settled when the pin starts. Mobile starts with the first
-// card in place: at progress 0 every card is invisible, so card 1's own
-// fade-in used to leave the heading pinned over ~250px of scroll with blank
-// cream beneath it. Cards 2+ still arrive and stack exactly as before, and
-// the section drops card 1's 50vh of scroll budget. Desktop unchanged.
+// Cards already in place when the pin starts. On mobile the first card shows
+// immediately so the pinned heading never sits over an empty frame.
 const LEAD_CARDS_DESKTOP = 0;
 const LEAD_CARDS_MOBILE = 1;
 
@@ -117,10 +82,8 @@ const MAX_STACK_DEPTH = BELIEFS.length - 1;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
-// Pure function of the continuous progress value `x` (0..BELIEFS.length)
-// and a card's own index -- returns the opacity/y/scale/zIndex to apply.
-// Kept as one function (not scattered across the update loop) so the
-// desktop and mobile card sets below can share the exact same math.
+// Opacity/y/scale/zIndex for card `index` at continuous progress `x`
+// (0..BELIEFS.length). Shared by every card so they all use the same math.
 function getCardStyle(x, index) {
   const local = x - index;
 
@@ -137,27 +100,9 @@ function getCardStyle(x, index) {
     };
   }
   const depth = Math.min(local - 1, MAX_STACK_DEPTH);
-  // Opacity has to collapse much faster than position/scale here. A first
-  // pass faded all three together (opacity 1 - depth*0.06) and, confirmed
-  // via screenshot, produced a sustained garbled overlap: `depth` and the
-  // NEXT card's own arrival-`local` are numerically identical during the
-  // handoff (both equal x - index - 1), so a slow opacity falloff meant
-  // this card stayed near-fully-opaque for this card's ENTIRE arrival --
-  // two cards' text legible on top of each other for a full unit of
-  // scroll, not a brief blend. Collapsing to 0 by depth 0.2 (a fifth of
-  // that same distance) keeps the crossfade brief enough that only a
-  // short blend is ever visible, while position/scale keep easing across
-  // the full stack depth so receded cards still read as a visible pile.
-  // A 0.08 floor (tried first) still let 2-3 stacked-behind cards'
-  // ghosted text combine into a genuinely readable palimpsest once several
-  // had accumulated -- confirmed via screenshot at a settled scroll
-  // position, not just the transitional blend this was meant to allow.
-  // Full 0 instead, same as how Quote.jsx sets `visibility: hidden` on its
-  // own receded quote before the next one appears -- this codebase's own
-  // established way of guaranteeing zero overlap risk rather than a faint
-  // trace that can still stack up. The visible "pile" cue comes from the
-  // position/scale easing below instead (still applied over the full
-  // depth), not from lingering ghost text.
+  // Receding cards fade out within the first 0.2 of depth. `depth` equals the
+  // next card's arrival progress, so a slower fade leaves two cards' text
+  // overlapping for a whole step; the stacked "pile" comes from y/scale.
   const textOpacity = depth >= 0.2 ? 0 : 1 - depth / 0.2;
   return {
     opacity: textOpacity,
@@ -178,42 +123,9 @@ function NumberBadge({ index }) {
   );
 }
 
-// Shared between StackCard and StaticCard -- the two only ever differed in
-// their outer wrapper (ref/grid-area/willChange/shadow depth for the
-// animated stack vs. a plain block with a lighter shadow for the reduced-
-// motion list), never in this inner layout, so duplicating it twice was
-// pure copy-paste risk. Redesigned per client feedback that the original
-// 50/50 split + dead-centered, same-weight text read as flat and generic:
-//
-// - Photo now takes ~58% of the card's width (was 50%) -- 5 of the 6 real
-//   belief photos are portrait-cropped source images (confirmed against
-//   scripts/photo-manifest.json: ratios 0.664-0.745, only IMG_1380.webp is
-//   landscape at 1.499), so a wider, narrower photo panel both reads as
-//   more dominant AND crops those portraits less aggressively than the old
-//   near-square box did. Still `object-cover` (never distorts, only crops)
-//   -- confirmed real ratios before touching this, per the brief.
-// - A soft ink-tinted gradient sits over the photo's seam edge (bottom on
-//   mobile where the panels stack, right on desktop where they sit side by
-//   side -- `isDesktop` is already tracked by the parent for the scroll
-//   math, reused here rather than fighting Tailwind's responsive classes
-//   against an inline style) so the transition into the text panel reads
-//   as a deliberate edge treatment, not a hard crop meeting a flat box.
-// - A short maroon rule sits between the number badge and the heading,
-//   and the heading itself is bumped up a full step relative to the body
-//   (text-xl/2xl -> text-2xl/3xl) with tighter vertical rhythm throughout
-//   -- together these give the text panel a clearer badge -> title -> body
-//   hierarchy instead of three same-weight lines floating in whitespace.
-//
-// Card scaled down ~20% across the board per client feedback that the
-// premium-redesign card read as too large/dominant in the viewport --
-// every internal measurement below (padding, badge, rule, heading, body
-// margins) was scaled down together with the outer card dimensions in
-// StackCard/StaticCard, not just the outer box, so the card reads as
-// genuinely smaller rather than the same content cramped into a smaller
-// frame. Photo panel width stays a `%` (58%) and height stays `md:h-full`,
-// so it scales automatically with the outer card and keeps the exact same
-// aspect ratio -- crop severity on the 5 portrait-cropped belief photos
-// (ratios 0.664-0.745, see the proportion note above) is unchanged.
+// Inner layout shared by StackCard and StaticCard. On desktop the photo takes
+// 58% of the width (most belief photos are portrait, so a narrower panel
+// crops them less), with an ink vignette on the edge that meets the text.
 function CardBody({ index, belief, image, isDesktop }) {
   return (
     <>
@@ -229,10 +141,8 @@ function CardBody({ index, belief, image, isDesktop }) {
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
-        {/* Seam vignette -- a sibling on top of the img (same absolute
-            stacking level, later in DOM order), not an inset box-shadow on
-            this relative parent, which would paint BEHIND the img's own
-            absolutely-positioned box and never actually be visible. */}
+        {/* Vignette sits above the img; an inset box-shadow on the parent
+            would paint behind it. */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
@@ -271,10 +181,7 @@ function StackCard({ index, belief, image, isDesktop, cardRef }) {
       style={{
         backgroundColor: CARD_SURFACE,
         borderColor: "rgba(43,38,34,0.14)",
-        // Two layers -- a tight, close contact shadow plus a deeper, more
-        // diffuse one -- rather than the original single flat shadow. Reads
-        // as the card actually sitting elevated above the page rather than
-        // just having a blur under it; still soft/diffuse, not heavy.
+        // Close contact shadow plus a deeper, diffuse one.
         boxShadow: "0 2px 6px rgba(43,38,34,0.08), 0 28px 60px rgba(43,38,34,0.2)",
         willChange: "transform, opacity",
       }}
@@ -302,13 +209,7 @@ function StaticCard({ index, belief, image, isDesktop }) {
 export default function WhatWeBelieve({ beliefImages = [] }) {
   const sectionRef = useRef(null);
   const cardRefs = useRef([]);
-  // `initial = true` -- the same fix documented at length in
-  // PROJECT_STATUS.md for the prior WhatWeBelieve rebuilds: starting
-  // `false` lets the gated effect below briefly run with a stale value
-  // before matchMedia resolves, which (for a GSAP-based effect) leaves
-  // content permanently invisible under reduced motion. This effect isn't
-  // GSAP, but starting `true` is still correct here for the same first-
-  // paint-flash reason Quote.jsx originally adopted it for.
+  // Start as "reduced" so nothing animates before matchMedia has resolved.
   const reduceMotion = useReducedMotion(true);
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -352,11 +253,7 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
       if (lenis) {
         lenis.on("scroll", update);
       } else {
-        // Defensive fallback only -- in normal operation SmoothScroll's
-        // effect has already registered the shared instance by the time
-        // this gated effect runs (usePreloaderGate waits for
-        // "preloader:complete", which fires well after mount). Never
-        // creates a second Lenis instance either way.
+        // Fallback if the shared Lenis instance isn't registered yet.
         window.addEventListener("scroll", update, { passive: true });
       }
       window.addEventListener("resize", update);
@@ -411,10 +308,8 @@ export default function WhatWeBelieve({ beliefImages = [] }) {
       className="relative w-full"
       style={{ backgroundColor: CREAM, height: `${totalVh}vh` }}
     >
-      {/* Mobile: heading + stack sit at the top of the pinned frame (pt-28
-          clears the 96px fixed nav) rather than centered in a full screen,
-          which put ~150px of cream above the heading. Desktop stays
-          centered. */}
+      {/* Mobile: content sits at the top (pt-28 clears the fixed nav);
+          desktop centers it. */}
       <div className="sticky top-0 flex h-screen w-full flex-col items-center justify-start overflow-hidden px-6 pt-28 md:justify-center md:px-16 md:pt-0">
         <h2
           className="mb-10 text-center text-[32px] md:mb-14 md:text-[48px]"

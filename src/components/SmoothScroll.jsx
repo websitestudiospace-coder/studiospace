@@ -24,10 +24,8 @@ export default function SmoothScroll({ children }) {
       touchMultiplier: 1.5,
     });
 
-    // The one and only Lenis instance for the whole page -- registered here
-    // so other components (e.g. WhatWeBelieve's scroll-stack) can subscribe
-    // to its scroll events via src/lib/lenis.js instead of ever creating
-    // their own instance.
+    // The only Lenis instance in the app. Other components subscribe to it
+    // via src/lib/lenis.js -- never create a second one.
     setLenis(lenis);
     lenisRef.current = lenis;
 
@@ -37,42 +35,17 @@ export default function SmoothScroll({ children }) {
     gsap.ticker.add(syncLenis);
     gsap.ticker.lagSmoothing(0);
 
-    // Runs after every descendant's own mount effects (children commit
-    // before parents), so every ScrollTrigger below has already been
-    // created by this point. The custom "agatho" font can still swap in
-    // after that initial measurement and shift text metrics/heights, so
-    // refresh again once it's actually loaded.
+    // Runs after all children's mount effects, so every ScrollTrigger exists
+    // by now. Refresh again once fonts load, since Agatho can shift heights.
     ScrollTrigger.refresh();
     document.fonts?.ready.then(() => ScrollTrigger.refresh());
 
-    // Lenis's own `autoResize` (on by default) watches `document.
-    // documentElement` via ResizeObserver to recompute its scroll `limit`
-    // when content height changes -- but ResizeObserver reports the ROOT
-    // element's own generated box, which browsers pin to the viewport
-    // regardless of how much its content overflows (a root-element-specific
-    // quirk, not something this project's CSS causes -- confirmed live:
-    // Lenis's limit never budged even minutes after content grew well past
-    // it). `document.body` doesn't have that special root treatment: as a
-    // normal block element with no explicit height in globals.css, its own
-    // rendered box genuinely does grow to match its content, so observing
-    // IT instead reliably fires on any real height change.
-    //
-    // This matters most across a client-side route change: this component
-    // lives in the root layout and never unmounts on navigation (the App
-    // Router only swaps the route's own page content), so the same Lenis
-    // instance persists across routes, carrying whatever `limit` it last
-    // measured. A one-shot `usePathname()`-triggered resize (the approach
-    // ScrollProgress.jsx already uses for its own, separate ScrollTrigger
-    // cache) isn't reliable here on its own -- confirmed live, it still
-    // measured a too-short height, because the new route's full content
-    // hadn't finished streaming in yet at the moment the pathname changed.
-    // A persistent observer sidesteps that race entirely: it doesn't matter
-    // when body's real height finishes settling, only that something is
-    // listening for whenever it does. Left unfixed, navigating from a
-    // shorter page (e.g. "/") to a taller one (e.g. "/about") clamped real
-    // wheel-scroll input at exactly the shorter page's own scrollHeight
-    // minus the viewport height, permanently blocking WhatWeBelieve's last
-    // couple of cards from ever becoming reachable.
+    // Recompute Lenis's scroll limit whenever the page height changes. Lenis's
+    // own autoResize observes <html>, whose box stays viewport-sized, so it
+    // misses content growth; <body> grows with its content. This instance
+    // persists across client-side navigations, and the new page's content can
+    // finish streaming after the route change, so a persistent observer is
+    // needed -- otherwise a taller page's end is unreachable by wheel scroll.
     const bodyResizeObserver = new ResizeObserver(() => lenis.resize());
     bodyResizeObserver.observe(document.body);
 
@@ -85,18 +58,13 @@ export default function SmoothScroll({ children }) {
     };
   }, []);
 
-  // Cancel any in-flight smooth-scroll glide on every route change. This
-  // Lenis instance outlives navigations (see above), so clicking a link
-  // (e.g. a project page's "Next Project") while a wheel/touch glide was
-  // still easing toward the old page's bottom let Lenis keep animating after
-  // the App Router had already scrolled the new page to the top -- its next
-  // frame wrote the old target straight back, landing the new page near its
-  // bottom. reset() stops that animation and re-syncs Lenis to wherever the
-  // page actually is now. A layout effect in this parent runs after the
-  // router's own scroll-to-top (done in its descendant layout-phase
-  // handlers) in the same commit, before Lenis's next frame. It only syncs
-  // to the current position rather than forcing 0, so back/forward scroll
-  // restoration still works.
+  // Cancel any in-flight glide on route change. This Lenis instance outlives
+  // navigations, so a link clicked mid-glide (e.g. "Next Project") let Lenis
+  // keep easing toward the old page's bottom after the router had scrolled
+  // the new page to the top. reset() re-syncs Lenis to the real position.
+  // A layout effect in this parent runs after the router's own scroll-to-top
+  // in the same commit, before Lenis's next frame. It syncs to wherever the
+  // page is rather than forcing 0, so back/forward restoration still works.
   useLayoutEffect(() => {
     lenisRef.current?.reset();
   }, [pathname]);

@@ -5,19 +5,15 @@ import useReducedMotion from "@/hooks/useReducedMotion";
 
 const CREAM = "#F7EFE4";
 const BUTTON_BG = "rgba(43,38,34,0.55)";
-// Shows the mute/unmute button. Only meaningful while the project videos
-// actually carry an audio track -- set false if they're ever re-encoded
-// silent (e.g. with ffmpeg's -an) again.
+// Show the mute button (the videos have an audio track; set false if they're
+// ever re-encoded silent).
 const SOUND_ENABLED = true;
-// How far ahead of the viewport the video gets its src. autoPlay overrides
-// preload, so a <video autoPlay> with a src starts streaming at page load --
-// and this section sits below the whole gallery, where that competed with
-// the hero and gallery images for bandwidth on a video most visitors
-// hadn't reached yet. Two viewports ahead leaves time to buffer the start.
+// How far ahead of the viewport the video gets its src. autoPlay ignores
+// preload, so attaching the src earlier would stream the video at page load,
+// competing with the hero and gallery images.
 const LOAD_AHEAD_MARGIN = "200% 0px";
-// Every project video is 1920x1080 today. Used until the file's own
-// metadata arrives, then replaced by its real ratio, so a differently
-// shaped video is never cropped or stretched.
+// All project videos are 1920x1080; replaced by the file's real ratio once
+// its metadata loads.
 const DEFAULT_ASPECT_RATIO = "16 / 9";
 
 function SpeakerIcon({ muted }) {
@@ -65,15 +61,11 @@ function IconButton({ label, onClick, children, className = "h-11 w-11" }) {
   );
 }
 
-// Autoplaying, looping project video, rendered only when a project actually
-// has a video.mp4 (see @/lib/projects's getProjectVideo -- the parent
-// simply doesn't mount this otherwise). Plain progressive streaming: the
-// files are encoded with +faststart, so playback starts once the first
-// chunk arrives. Always starts muted -- browsers only allow autoplay
-// without a user gesture when muted -- and the toggle turns sound on.
-// A play/pause button sits beside it (WCAG 2.2.2: moving content longer
-// than 5s needs a way to pause it). Under prefers-reduced-motion it doesn't
-// autoplay at all: the poster shows with a centered play button instead.
+// Autoplaying, looping, muted project video (only mounted when the project
+// has one). Files are +faststart, so playback starts on the first chunk.
+// Muted is required for autoplay; the toggle turns sound on. Play/pause
+// satisfies WCAG 2.2.2 (moving content > 5s). Reduced motion: no autoplay,
+// the poster shows with a play button.
 export default function ProjectVideo({ video }) {
   const sectionRef = useRef(null);
   const videoRef = useRef(null);
@@ -87,10 +79,9 @@ export default function ProjectVideo({ video }) {
   const [hasPlayed, setHasPlayed] = useState(false);
   const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
 
-  // Observing only starts at the first scroll (or straight away if the page
-  // opened already scrolled): at hydration the gallery above hasn't
-  // measured its width yet and is 0px tall, which put this section right
-  // under the hero and tripped the observer on load.
+  // Start observing at the first scroll (or immediately if the page opened
+  // scrolled): at hydration the gallery is still 0px tall, which put this
+  // section right under the hero.
   useEffect(() => {
     const el = sectionRef.current;
     if (!el || nearViewport) return undefined;
@@ -118,10 +109,8 @@ export default function ProjectVideo({ video }) {
     if (videoWidth && videoHeight) setAspectRatio(`${videoWidth} / ${videoHeight}`);
   };
 
-  // Sets the DOM property directly as well as state so the change is
-  // instant. Unmuting never starts a paused video -- pausing is the play
-  // button's job, and a reduced-motion visitor who only wants sound
-  // shouldn't have it start moving.
+  // Set the DOM property as well as state so the change is instant. Unmuting
+  // never starts a paused video.
   const handleToggleSound = () => {
     const next = !muted;
     setMuted(next);
@@ -129,12 +118,10 @@ export default function ProjectVideo({ video }) {
     if (videoEl) videoEl.muted = next;
   };
 
-  // A click is a user gesture, so play() is allowed even where muted
-  // autoplay was refused (e.g. iOS Low Power Mode leaves it on the poster
-  // with this button showing "Play"). If the section was reached without
-  // scrolling past it, the src may not be attached yet -- attach it and
-  // play once React has rendered it (setting src by hand as well would
-  // make React's own src write restart the load mid-play).
+  // A click counts as a gesture, so play() works even where muted autoplay
+  // was refused (e.g. iOS Low Power Mode). If the src isn't attached yet,
+  // attach it and play after React renders it (setting src by hand as well
+  // would restart the load).
   const handleTogglePlay = () => {
     const videoEl = videoRef.current;
     if (!videoEl) return;
@@ -157,10 +144,8 @@ export default function ProjectVideo({ video }) {
 
   return (
     <section ref={sectionRef} className="relative w-full">
-      {/* No src until the section is near (see above). autoPlay starts it
-          as soon as the src lands (skipped under reduced motion); muted +
-          playsInline are what allow that without a gesture, including
-          inline (not fullscreen) on iOS. */}
+      {/* No src until the section is near. muted + playsInline allow
+          autoplay without a gesture, inline on iOS. */}
       <video
         ref={videoRef}
         src={nearViewport ? video.src : undefined}
@@ -180,9 +165,8 @@ export default function ProjectVideo({ video }) {
         style={{ aspectRatio }}
       />
 
-      {/* Reduced motion: an obvious play button on the poster until the
-          visitor chooses to start it; after that the corner controls take
-          over. */}
+      {/* Reduced motion: a play button on the poster until the visitor
+          starts it; then the corner controls take over. */}
       {showPosterPlay && (
         <div className="absolute inset-0 z-10 flex items-center justify-center">
           <IconButton label="Play video" onClick={handleTogglePlay} className="h-16 w-16">

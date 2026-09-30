@@ -40,11 +40,8 @@ export default function LegalContent({ title, updated, children }) {
   const bodyRef = useRef(null);
   const reduceMotion = useReducedMotion();
 
-  // One-shot reveal (not scroll-scrubbed), same Phase 3 pattern as
-  // ContactContent/Footer: heading block first, then the legal body.
-  // Still waits for "preloader:complete" since "top 80%" is calculated
-  // against this section's own position, which depends on Nav/Preloader
-  // having already settled.
+  // One-shot reveal; waits for the preloader so "top 80%" is measured
+  // against settled layout.
   usePreloaderGate(
     () => {
       const ctx = gsap.context(() => {
@@ -76,9 +73,8 @@ export default function LegalContent({ title, updated, children }) {
       style={{ backgroundColor: INK }}
     >
       <div className="mx-auto w-full max-w-[900px]">
-        {/* This is placeholder legal content pending review by a qualified
-            lawyer before launch -- swap in lawyer-reviewed copy before
-            going live. Intentionally not shown to visitors. */}
+        {/* TODO before launch: placeholder legal copy -- replace with
+            lawyer-reviewed text. */}
         <div ref={headingRef}>
           <h1
             className={`${HEADING_CLASS} mt-10`}

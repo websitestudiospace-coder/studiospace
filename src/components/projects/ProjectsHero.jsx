@@ -14,41 +14,27 @@ if (typeof window !== "undefined") {
 const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
-// TODO: placeholder hero shot -- swap for a dedicated wide hero photo from
-// the client once provided. Reusing a project image for now.
+// TODO: placeholder hero shot (a project photo) -- swap for a dedicated wide
+// hero photo when the client provides one.
 const HERO_IMAGE = "/images/projects/project-1.jpg";
 
-// Settled height of the shrinking content once the shrink finishes -- a
-// section-heading-row height, not a sliver. This wrapper's own height is
-// what's tweened (not a separate image height), so the image -- sized via
-// next/image's `fill` against this same wrapper -- shrinks with it for
-// free, and nothing empty is left behind once the pin releases.
-// Exported for ProjectsGrid, which sits its (desktop) grid just below this
-// settled row.
+// Settled height of the shrinking wrapper (a heading-row height). The image
+// fills the wrapper, so it shrinks with it. Exported for ProjectsGrid, which
+// sits its desktop grid just below this row.
 export const SETTLED_HEIGHT_DESKTOP = 160;
 const SETTLED_HEIGHT_MOBILE = 108;
 
-// Heading font-size keyframes (px, tweened directly rather than via CSS
-// clamp() since GSAP can't animate a clamp() formula) -- END matches
-// ProjectsGrid's own heading treatment (clamp(32px, 5vw, 56px)) so the
-// settled state reads as the same heading, just landed in place. Mobile
-// START is capped and also scaled off viewport width (12-character
-// "OUR PROJECTS" in Agatho overflows a phone-width viewport at any fixed
-// size much above this once centered) -- verified against a 390px-wide
-// screenshot.
+// Heading font-size keyframes in px (GSAP can't tween clamp()). END matches
+// ProjectsGrid's heading size. Mobile START is capped by viewport width so
+// "OUR PROJECTS" never overflows a phone screen.
 const HEADING_START_DESKTOP = 128;
 const HEADING_START_MOBILE_CAP = 44;
 const HEADING_END_DESKTOP = 56;
 const HEADING_END_MOBILE = 32;
 
-// Settled left inset for the heading, so its left edge lands exactly on
-// ProjectsGrid's first column. The grid's left edge is its section padding
-// (px-6 / md:px-16) plus centering of its max-w-[1100px] content. The
-// heading, though, is absolutely positioned inside a wrapper that is itself
-// already centered at max-w-[1100px] (padding doesn't offset an absolute
-// child), so the inset is the difference between the two left edges. The
-// old formula added the centering offset a second time, landing the heading
-// ~170px (1440px) to ~410px (1920px) right of the grid on wide screens.
+// Settled left inset so the heading lines up with ProjectsGrid's first
+// column. The heading's wrapper is already centered at max-w-[1100px], so
+// this is only the difference between the two left edges.
 function computeHeadingInset(isDesktopViewport) {
   const vw = window.innerWidth;
   const pad = isDesktopViewport ? 64 : 24;
@@ -76,11 +62,8 @@ export default function ProjectsHero() {
 
   const enhanced = !reduceMotion;
 
-  // Same reasoning as the homepage's pinned sections (About.jsx etc.):
-  // this is a "top top" -> "bottom bottom" pinned ScrollTrigger, so its
-  // measured start/end depend on layout having already settled. Wait for
-  // "preloader:complete" (Preloader lives in the root layout, so it
-  // mounts on every route, including this one) before measuring.
+  // Pinned "top top" -> "bottom bottom" trigger: wait for the preloader so
+  // start/end are measured against settled layout.
   usePreloaderGate(
     () => {
       const settledHeight = isDesktop ? SETTLED_HEIGHT_DESKTOP : SETTLED_HEIGHT_MOBILE;
@@ -91,20 +74,10 @@ export default function ProjectsHero() {
       const headingInset = computeHeadingInset(isDesktop);
 
       const ctx = gsap.context(() => {
-        // ONE consolidated timeline: the shrink wrapper's own height, the
-        // image's fade, and the heading's position/size all tween against
-        // the same scrub -- never separate triggers. Note this animates
-        // `shrinkRef` (an inner wrapper), not `stickyRef` itself -- the
-        // sticky element's own box stays a constant 100vh the whole time.
-        // Native position:sticky only releases once its (live) box's
-        // bottom edge catches up with its containing block; if the sticky
-        // element's own height were the thing shrinking down to a small
-        // settled size, that catch-up would lag roughly a full viewport
-        // height behind the shrink actually finishing, leaving a large
-        // dead scroll gap before the grid appears. Keeping stickyRef's own
-        // height fixed and shrinking an inner wrapper instead means the
-        // sticky release lines up with the scrub's own end, right where
-        // the grid should take over.
+        // One timeline: wrapper height, image fade and heading position/size.
+        // It shrinks the inner `shrinkRef`, not the sticky element itself:
+        // a shrinking sticky box releases about a viewport late, leaving a
+        // dead gap before the grid.
         gsap.set(shrinkRef.current, { height: "100vh" });
         gsap.set(headingRef.current, {
           top: "50%",
@@ -126,12 +99,9 @@ export default function ProjectsHero() {
 
         tl.to({}, { duration: 1 }, 0);
 
-        // 0%-75%: wrapper collapses from a full screen down to a settled
-        // header-row height (image shrinks along with it for free), while
-        // the heading slides from centered-large to left-aligned-small --
-        // vertical centering is never separately tweened, it falls out of
-        // top:50%/yPercent:-50 recalculating against the shrinking parent
-        // every frame.
+        // 0%-75%: wrapper collapses to a heading-row height while the heading
+        // moves from centered-large to left-aligned-small (vertical centering
+        // follows from top:50%/yPercent:-50 on the shrinking parent).
         tl.to(
           shrinkRef.current,
           { height: `${settledHeight}px`, ease: "none", duration: 0.85 },
@@ -148,18 +118,12 @@ export default function ProjectsHero() {
           },
           0
         );
-        // Image dissolves out over the back half of the shrink so it never
-        // reads as a cropped sliver -- just fully gone by the time the
-        // heading lands. The heading's own color crossfades cream -> ink
-        // on the same window so it's always legible against whatever is
-        // behind it (dark image, then the cream page background).
+        // Image fades out over the back half of the shrink; the heading
+        // crossfades cream -> ink so it stays legible on both backgrounds.
         tl.to(imageRef.current, { opacity: 0, ease: "none", duration: 0.4 }, 0.45);
         tl.to(headingRef.current, { color: INK, ease: "none", duration: 0.4 }, 0.45);
 
-        // 85%-100%: hold the settled state so it registers before the pin
-        // releases into the grid below -- previously a 75%-100% hold left
-        // a ~25% dead tail; trimmed to ~15% to match the site's other
-        // pinned sections.
+        // 85%-100%: short hold before the pin releases.
       }, outerRef);
 
       return () => ctx.revert();
@@ -170,9 +134,8 @@ export default function ProjectsHero() {
 
   if (reduceMotion) {
     return (
-      // Same container shape as ProjectsGrid (padding outside, centered
-      // max-w-[1100px] inside) so the heading lines up with its first column,
-      // plus bottom padding as the breathing room above the grid.
+      // Same container shape as ProjectsGrid so the heading lines up with its
+      // first column.
       <section className="w-full px-6 pb-12 pt-16 md:px-16 md:pb-16 md:pt-24" style={{ backgroundColor: CREAM }}>
         <div className="mx-auto w-full max-w-[1100px]">
           <h1

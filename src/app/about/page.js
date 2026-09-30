@@ -7,27 +7,8 @@ import IndiaMap from "@/components/about/IndiaMap";
 import { getProjectPhoto } from "@/lib/projects";
 import { DEFAULT_SHARE_IMAGE } from "@/lib/site";
 
-// WhatWeBelieve's scroll-stack needs a real photo per belief, but it's a
-// "use client" component (GSAP/Lenis/DOM refs) and getProjectPhoto() reads
-// the filesystem (via Node's fs, see src/lib/projects.js) -- server-only,
-// can't run inside a client component. Resolved here instead (this page is
-// a server component) and passed down as plain prop URLs, same pattern
-// src/app/projects/[slug]/page.js already uses for ProjectDetail.
-//
-// Client-requested photo swap (2026-09-15) -- all 6 replaced with a new,
-// specific set of project photos, same order as given. Each was checked
-// against scripts/cloudinary-url-map.json first: every one of the 6
-// already had a real getProjectPhoto()-resolvable entry (confirmed by
-// matching Cloudinary version ids), including the two the client's own
-// URLs looked hardest to resolve (the-modern-classical-home/8 and
-// the-modern-neo-classical-home/IMG_1391) -- those two were just missing
-// their ".webp" extension and carrying inline transform params
-// (c_limit,w_1920/f_auto/q_auto) plus a Cloudinary Media Library UI
-// tracking param (?_a=BAVT+OE80) copy-pasted from the console, not a sign
-// they were unmapped. So every entry below goes through getProjectPhoto()
-// like the rest of this array, with no plain-string fallback needed. Each
-// photo was actually opened/viewed (not guessed from its filename) before
-// writing its alt text below.
+// Belief-card photos, resolved here because getProjectPhoto() reads the
+// filesystem and WhatWeBelieve is a client component. Chosen by the client.
 const BELIEF_IMAGES = [
   {
     src: getProjectPhoto("the-neo-colonial-home", "Photos/3.webp"),
@@ -79,30 +60,10 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <>
-      {/* No `lightHero` -- AboutHero's enhanced (desktop) branch is now a
-          full-bleed photo directly under Nav, same as Home's hero, so this
-          page uses the same default transparent-then-solid Nav behavior
-          Home does (see Nav.jsx's own `solid` logic). AboutHero carries its
-          own top gradient for cream-nav-text legibility over that photo
-          (see that file) -- the same fix Home's Hero.jsx already uses. Note:
-          the mobile/reduced-motion fallback below md doesn't have an
-          equivalent full-bleed hero (a deliberate AboutHero constraint, see
-          that file's own comment on why the pinned sequence has no mobile
-          equivalent) -- its top-of-page background is plain CREAM, so a
-          transparent Nav is genuinely low-contrast there for the same brief
-          initial-scroll window. Flagged, not silently patched: fixing it for
-          real would mean giving the mobile fallback its own full-bleed hero
-          treatment, which is out of this task's scope. */}
+      {/* Default transparent-then-solid Nav: AboutHero carries its own dark
+          top band. Known gap: on mobile the top of the page is cream, so the
+          transparent Nav has low contrast for the first ~80px of scroll. */}
       <Nav />
-      {/* StudioDescription's copy now lives inside AboutHero's own scroll
-          sequence (see that component) -- the section itself is retired but
-          its file is kept around in case its content needs referencing back.
-          OurStory's copy also now lives inside AboutHero's StudioCopy (now
-          split back into two labeled sub-sections, "About Studio SP_ACE"
-          and "Our Story" -- see AboutHero.jsx) -- unlike StudioDescription,
-          OurStory.jsx itself has been deleted rather than kept around,
-          since the client wants this content consolidated, not just
-          visually adjacent. */}
       <AboutHero />
       <MeetFounders />
       <WhatWeBelieve beliefImages={BELIEF_IMAGES} />

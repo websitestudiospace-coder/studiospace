@@ -13,9 +13,7 @@ export default defineConfig({
   schema,
   plugins: [
     structureTool(),
-    // Lets whoever's logged into Sanity run raw GROQ queries from within
-    // /studio -- a debugging convenience, not needed for the client's
-    // day-to-day "add a project" workflow.
+    // Raw GROQ query tool inside /studio (a debugging aid).
     visionTool({ defaultApiVersion: apiVersion }),
   ],
 });

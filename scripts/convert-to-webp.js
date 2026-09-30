@@ -1,14 +1,9 @@
-// Converts every JPEG/PNG in a single public/images/projects/<slug>/ folder
-// to WebP in place, then moves the raw originals out of the served path into
-// media-source/projects/<slug>/ (gitignored, matches the existing convention
-// used for raw source videos) so nothing served gets deleted, just relocated.
+// Converts every JPEG/PNG in public/images/projects/<slug>/ to WebP in place
+// and moves the originals to media-source/projects/<slug>/ (gitignored).
+// Videos and existing .webp files are left alone. One slug at a time, so each
+// project's output can be checked.
 //
-// Usage:
-//   node scripts/convert-to-webp.js <slug>
-//
-// Only image files are touched -- video.mp4 and any file already in .webp
-// format are left alone. Run one slug at a time; this intentionally has no
-// --all mode so each project's output can be reviewed before moving on.
+// Usage: node scripts/convert-to-webp.js <slug>
 
 const fs = require("fs");
 const path = require("path");
@@ -25,10 +20,8 @@ function formatBytes(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(2)}MB`;
 }
 
-// Mirrors src/lib/projects.js's walkImages -- a project's photos can live in
-// a nested subfolder (e.g. the-neo-colonial-home/Photos/), not just directly
-// under the project's own folder, so this has to recurse the same way that
-// resolver does or a whole subfolder silently never gets converted.
+// Recurses, since some projects keep photos in a subfolder (e.g.
+// the-neo-colonial-home/Photos/).
 function walkConvertibleFiles(dir, baseDir = dir) {
   let results = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

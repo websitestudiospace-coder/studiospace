@@ -19,16 +19,9 @@ const CREAM = "#F7EFE4";
 // (About/Projects/Press/Contact all share this).
 const HEADING_CLASS = "text-[32px] md:text-[48px]";
 
-// Rebuilt to structurally mirror ContactContent.jsx's own hero -- itself
-// explicitly modeled on ProjectHero.jsx's established visual language
-// (full-bleed photo, bottom-anchored gradient, uppercase Agatho heading
-// with the same text-shadow) without importing that file's pinned
-// scroll-shrink mechanic, since Contact (and now Media) has nothing
-// equivalent to reveal by shrinking an image into a corner -- see
-// ContactContent.jsx's own comment on exactly this reasoning. Same
-// h-[50vh] md:h-[70vh] sizing, same one-shot usePreloaderGate-gated
-// fade+y reveal (not scroll-scrubbed), same reduced-motion behavior
-// (renders at its settled state immediately, no animation queued).
+// Full-bleed photo hero in the same style as the Contact hero (50vh/70vh,
+// bottom gradient, one-shot fade-in; settled immediately under reduced
+// motion).
 export default function MediaHero({ heroPhoto }) {
   const heroRef = useRef(null);
   const reduceMotion = useReducedMotion();
@@ -73,19 +66,10 @@ export default function MediaHero({ heroPhoto }) {
       ) : (
         <div className="absolute inset-0" style={{ backgroundColor: INK }} />
       )}
-      {/* Same gradient ContactContent's hero uses. Measured (not assumed)
-          against this specific photo before picking it: its top band
-          alone (no gradient) already sits at ~4.8:1 contrast against
-          cream text, and ~7.2:1 once this gradient's own top-25%-black
-          stop is added -- comfortably legible for the site's default
-          transparent-then-solid Nav (see media/page.js, which no longer
-          needs `lightHero` now that this hero has a real photo behind
-          it). */}
+      {/* Same gradient as the Contact hero; keeps the cream Nav legible. */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-black/25" />
 
-      {/* TODO: placeholder subtext -- pending final copy approval, same
-          convention as every other unconfirmed-copy spot on this site
-          (home/Press.jsx's own heading, ContactContent's hero). */}
+      {/* TODO: placeholder subtext -- pending final copy approval. */}
       <div className="absolute inset-x-0 bottom-0 px-6 pb-8 md:px-16 md:pb-12">
         <h1
           className={`${HEADING_CLASS} uppercase text-white`}
