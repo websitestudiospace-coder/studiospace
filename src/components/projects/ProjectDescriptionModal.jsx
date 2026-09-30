@@ -63,8 +63,6 @@ export default function ProjectDescriptionModal({ name, longDescription, onClose
           {name}
         </h2>
 
-        {/* TODO: label + longDescription are placeholder copy pending the
-            client's project write-up. */}
         <p
           className="mt-2 text-xs uppercase tracking-[0.15em]"
           style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
