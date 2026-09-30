@@ -128,7 +128,7 @@ function InquiriesSplit({ splitRef }) {
             <div key={entry.label}>
               <span
                 className="block text-xs uppercase tracking-[0.15em]"
-                style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.55 }}
+                style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.7 }}
               >
                 {entry.label}
               </span>

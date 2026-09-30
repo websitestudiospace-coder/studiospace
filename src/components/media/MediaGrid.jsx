@@ -123,7 +123,7 @@ export default function MediaGrid({ items }) {
                 </p>
                 <p
                   className="mt-0.5 text-xs md:text-sm"
-                  style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.65 }}
+                  style={{ fontFamily: "var(--font-manrope)", color: INK, opacity: 0.7 }}
                 >
                   {item.date}
                 </p>

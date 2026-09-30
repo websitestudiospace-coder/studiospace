@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import useReducedMotion from "@/hooks/useReducedMotion";
 import usePreloaderGate from "@/hooks/usePreloaderGate";
-import { SETTLED_HEIGHT_DESKTOP } from "@/components/projects/ProjectsHero";
+import { SETTLED_HEIGHT_DESKTOP, SETTLED_HEIGHT_MOBILE } from "@/components/projects/ProjectsHero";
 import ProjectCard from "@/components/projects/ProjectCard";
 
 if (typeof window !== "undefined") {
@@ -14,10 +14,11 @@ if (typeof window !== "undefined") {
 
 const CREAM = "#F7EFE4";
 
-// Desktop: where the grid rests once ProjectsHero's pin releases (just under
-// its settled heading row). Must match md:mt-[calc(168px-100vh)] below --
-// Tailwind needs the value written out literally.
-const DESKTOP_GRID_TOP_PX = SETTLED_HEIGHT_DESKTOP + 8;
+// Where the grid rests once ProjectsHero's pin releases, just under its
+// settled heading row. Must match mt-[calc(124px-100vh)] and
+// md:mt-[calc(168px-100vh)] below -- Tailwind needs the values written out.
+const GRID_TOP_PX_DESKTOP = SETTLED_HEIGHT_DESKTOP + 8;
+const GRID_TOP_PX_MOBILE = SETTLED_HEIGHT_MOBILE + 16;
 // ProjectsHero finishes shrinking at 85% of its pinned scroll (60vh), so
 // the grid is still 15% of 60vh = 9vh below its resting spot at that point.
 const HERO_SETTLED_REMAINING_VH = 0.09;
@@ -33,8 +34,8 @@ export default function ProjectsGrid({ projects }) {
     () => {
       const ctx = gsap.context(() => {
         const cards = cardRefs.current.filter(Boolean);
-        // pointerEvents: on desktop the (still hidden) cards sit under the
-        // pinned hero until they reveal -- don't let them catch clicks.
+        // pointerEvents: the (still hidden) cards sit under the pinned hero
+        // until they reveal -- don't let them catch clicks.
         gsap.set(cards, { opacity: 0, y: 32, pointerEvents: "none" });
 
         const isDesktop = () => window.matchMedia("(min-width: 768px)").matches;
@@ -47,12 +48,10 @@ export default function ProjectsGrid({ projects }) {
           stagger: 0.12,
           scrollTrigger: {
             trigger: gridRef.current,
-            // Desktop: reveal only once the hero heading has shrunk into its
-            // corner (the grid is pulled up under the hero). Mobile: top 85%.
+            // Reveal only once the hero heading has shrunk into its corner
+            // (the grid is pulled up under the hero).
             start: () =>
-              isDesktop()
-                ? `top ${DESKTOP_GRID_TOP_PX + window.innerHeight * HERO_SETTLED_REMAINING_VH}px`
-                : "top 85%",
+              `top ${(isDesktop() ? GRID_TOP_PX_DESKTOP : GRID_TOP_PX_MOBILE) + window.innerHeight * HERO_SETTLED_REMAINING_VH}px`,
             // Reverse on leaveBack: scrolling back up must hide the cards
             // again, or they paint over the hero as it grows back.
             toggleActions: "play none none reverse",
@@ -67,12 +66,10 @@ export default function ProjectsGrid({ projects }) {
   );
 
   // ProjectsHero's sticky wrapper stays 100vh while its content shrinks, which
-  // leaves blank space inside the pin. Pull the grid up into it: on desktop
-  // all the way to just below the settled heading row (cards stay hidden
-  // until the heading has settled, see the trigger above); on mobile by
-  // -50vh, tuned so the grid enters only once the heading is already small.
-  // Only while the pin animation runs (not under reduced motion).
-  const pullUpClass = reduceMotion ? "" : "mt-[-50vh] md:mt-[calc(168px-100vh)]";
+  // leaves blank space inside the pin. Pull the grid up to just below the
+  // settled heading row; the cards stay hidden until the heading has settled
+  // (see the trigger above). Only while the pin animation runs.
+  const pullUpClass = reduceMotion ? "" : "mt-[calc(124px-100vh)] md:mt-[calc(168px-100vh)]";
 
   return (
     <section

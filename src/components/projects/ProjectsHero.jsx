@@ -20,9 +20,9 @@ const HERO_IMAGE = "/images/projects/project-1.jpg";
 
 // Settled height of the shrinking wrapper (a heading-row height). The image
 // fills the wrapper, so it shrinks with it. Exported for ProjectsGrid, which
-// sits its desktop grid just below this row.
+// sits its grid just below this row.
 export const SETTLED_HEIGHT_DESKTOP = 160;
-const SETTLED_HEIGHT_MOBILE = 108;
+export const SETTLED_HEIGHT_MOBILE = 108;
 
 // Heading font-size keyframes in px (GSAP can't tween clamp()). END matches
 // ProjectsGrid's heading size. Mobile START is capped by viewport width so

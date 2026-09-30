@@ -51,7 +51,7 @@ const MICRO_LABEL_CLASS = "block text-[11px] uppercase tracking-[0.15em] md:text
 function SignupBlock({ blockRef }) {
   return (
     <div ref={blockRef} className="col-span-2 md:col-span-1">
-      <h3 style={{ fontFamily: "var(--font-agatho)", color: CREAM }} className="leading-none">
+      <h2 style={{ fontFamily: "var(--font-agatho)", color: CREAM }} className="leading-none">
         <span className="block text-lg uppercase tracking-[0.05em] md:text-xl">Join the</span>
         <span className="block text-6xl uppercase md:text-7xl" style={{ lineHeight: 0.95 }}>
           World
@@ -59,7 +59,7 @@ function SignupBlock({ blockRef }) {
         <span className="block text-lg uppercase tracking-[0.05em] md:text-xl">
           of Studio <InlineWordmark text={WORDMARK} />
         </span>
-      </h3>
+      </h2>
 
       <div className="mt-8">
         <ContactForm submitVariant="text" />
