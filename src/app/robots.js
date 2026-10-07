@@ -1,10 +1,11 @@
-// TEMPORARY (pre-launch holding page): block all crawling. At launch, restore
-// `allow: "/"` and the sitemap line (see git history).
+import { SITE_URL } from "@/lib/site";
+
 export default function robots() {
   return {
     rules: {
       userAgent: "*",
-      disallow: "/",
+      allow: "/",
     },
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }
