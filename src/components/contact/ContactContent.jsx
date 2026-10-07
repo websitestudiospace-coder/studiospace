@@ -32,6 +32,7 @@ const STUDIO_INFO = [
 ];
 
 const INSTAGRAM_URL = "https://instagram.com/studio_sp_ace";
+const YOUTUBE_URL = "https://www.youtube.com/@studiosp_ace";
 
 // "Let's Connect" panel entries. Separate from STUDIO_INFO because this
 // panel labels and orders them differently. hello@ is the only inbox here;
@@ -40,6 +41,7 @@ const GENERAL_INQUIRIES_ENTRIES = [
   { label: "Studio", value: "Bangalore, India" },
   { label: "General", value: "hello@studiospace.co.in", href: "mailto:hello@studiospace.co.in" },
   { label: "Instagram", value: "@studio_sp_ace", href: INSTAGRAM_URL },
+  { label: "YouTube", value: "@studiosp_ace", href: YOUTUBE_URL },
 ];
 
 // Client-provided Careers inbox (2026-09-21), replacing the earlier
@@ -91,6 +93,24 @@ function StudioInfo({ infoRef }) {
           style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
         >
           @studio_sp_ace
+        </a>
+      </div>
+
+      <div>
+        <span
+          className="block text-xs uppercase tracking-[0.15em]"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM, opacity: 0.65 }}
+        >
+          YouTube
+        </span>
+        <a
+          href={YOUTUBE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hit-area mt-1 inline-block text-sm transition-opacity duration-200 ease-out hover:opacity-70 md:text-base"
+          style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
+        >
+          @studiosp_ace
         </a>
       </div>
     </div>

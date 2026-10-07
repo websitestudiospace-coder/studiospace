@@ -34,10 +34,10 @@ const NAV_LINKS = [
   { label: "Contact Us", href: "/contact" },
 ];
 
-// Only Instagram is confirmed so far -- add other networks when the client
-// provides them.
+// Add other networks here when the client provides them.
 const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://instagram.com/studio_sp_ace" },
+  { label: "YouTube", href: "https://www.youtube.com/@studiosp_ace" },
 ];
 
 // Same "General" inbox the Contact page lists (ContactContent.jsx's
@@ -68,7 +68,7 @@ function SignupBlock({ blockRef }) {
   );
 }
 
-// Nav links plus a contact block (email + Instagram). `contents` on mobile
+// Nav links plus a contact block (email + social links). `contents` on mobile
 // makes them two independent half-width grid items; on desktop they sit side
 // by side in the right-hand column. `fullWidth` (hideForm) spans both
 // columns.
