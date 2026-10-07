@@ -46,6 +46,22 @@ const GENERAL_EMAIL = "hello@studiospace.co.in";
 
 const MICRO_LABEL_CLASS = "block text-[11px] uppercase tracking-[0.15em] md:text-xs";
 
+// External-link arrow. An SVG rather than the "↗" character, which some
+// platforms render as a coloured emoji. Sized in em to track the label text.
+function ArrowUpRight() {
+  return (
+    <svg width="0.9em" height="0.9em" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M4.5 11.5L11.5 4.5M5.5 4.5H11.5V10.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 // The shared project enquiry form (see ContactForm.jsx), with the Footer's
 // underlined "text" submit button. No intro line, at the client's request.
 function SignupBlock({ blockRef }) {
@@ -126,7 +142,7 @@ function LinksColumns({ navRef, socialRef, fullWidth = false }) {
               style={{ fontFamily: "var(--font-manrope)", color: CREAM }}
             >
               {link.label}
-              <span aria-hidden="true">↗</span>
+              <ArrowUpRight />
             </a>
           ))}
         </div>
