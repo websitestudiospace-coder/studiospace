@@ -199,4 +199,4 @@ Security headers and the Content-Security-Policy live in `next.config.mjs`. If y
 - Some copy is placeholder, marked `TODO` in code: the Contact hero heading/subtext, the Media hero subtext, the Press heading, the MeetFounders tagline and the Projects hero photo.
 - New Sanity content needs a rebuild to appear (section 4). To make it appear on its own, add `export const revalidate = <seconds>` to the affected pages, or trigger a redeploy from a Sanity webhook.
 - No dedicated social share image yet (see section 5).
-- `npm audit` flags Sanity CLI tooling (dev-only). See `TODO.md`.
+- `npm audit` flags Sanity CLI tooling (not used by the live pages). See `TODO.md`.
