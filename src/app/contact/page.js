@@ -17,14 +17,14 @@ export const metadata = {
     title: "Contact | Studio SP_ACE",
     description: "Get in touch with Studio SP_ACE to start your architecture and interior design project.",
     siteName: "Studio SP_ACE",
-    images: [{ url: "/images/contact-share.jpg", width: 678, height: 452, alt: "Contact Studio SP_ACE" }],
+    images: [],
     type: "website",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Contact | Studio SP_ACE",
     description: "Get in touch with Studio SP_ACE to start your architecture and interior design project.",
-    images: ["/images/contact-share.jpg"],
+    images: [],
   },
 };
 
