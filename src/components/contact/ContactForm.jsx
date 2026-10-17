@@ -140,9 +140,10 @@ const REQUIRED_FIELDS = [
   { name: "name", label: "Name" },
   { name: "email", label: "Email" },
   { name: "phone", label: "Phone" },
-  { name: "location", label: "Location" },
-  { name: "projectBudget", label: "Project Budget" },
+  { name: "location", label: "Project Location" },
   { name: "projectType", label: "Project Type" },
+  { name: "carpetArea", label: "Carpet Area" },
+  { name: "projectBudget", label: "Project Budget" },
   { name: "projectDetails", label: "Tell us about your project" },
 ];
 
@@ -268,7 +269,7 @@ export default function ContactForm({ formRef, submitVariant = "primary" }) {
         />
         <TextField
           idPrefix={idPrefix}
-          label="Location"
+          label="Project Location"
           type="text"
           name="location"
           autoComplete="address-level2"
@@ -277,15 +278,7 @@ export default function ContactForm({ formRef, submitVariant = "primary" }) {
         />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-        <TextField
-          idPrefix={idPrefix}
-          label="Project Budget"
-          type="text"
-          name="projectBudget"
-          error={fieldErrors.projectBudget}
-          onChange={() => clearFieldError("projectBudget")}
-        />
+      <div className="mt-6">
         <SelectField
           idPrefix={idPrefix}
           label="Project Type"
@@ -294,6 +287,25 @@ export default function ContactForm({ formRef, submitVariant = "primary" }) {
           defaultValue=""
           error={fieldErrors.projectType}
           onChange={() => clearFieldError("projectType")}
+        />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <TextField
+          idPrefix={idPrefix}
+          label="Carpet Area"
+          type="text"
+          name="carpetArea"
+          error={fieldErrors.carpetArea}
+          onChange={() => clearFieldError("carpetArea")}
+        />
+        <TextField
+          idPrefix={idPrefix}
+          label="Project Budget"
+          type="text"
+          name="projectBudget"
+          error={fieldErrors.projectBudget}
+          onChange={() => clearFieldError("projectBudget")}
         />
       </div>
 
