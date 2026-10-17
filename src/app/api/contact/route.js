@@ -8,9 +8,10 @@ const FIELDS = [
   { key: "name", label: "Name", maxLength: 200 },
   { key: "email", label: "Email", maxLength: 200 },
   { key: "phone", label: "Phone", maxLength: 50 },
-  { key: "location", label: "Location", maxLength: 200 },
-  { key: "projectBudget", label: "Project Budget", maxLength: 100 },
+  { key: "location", label: "Project Location", maxLength: 200 },
   { key: "projectType", label: "Project Type", maxLength: 100 },
+  { key: "carpetArea", label: "Carpet Area", maxLength: 100 },
+  { key: "projectBudget", label: "Project Budget", maxLength: 100 },
   { key: "projectDetails", label: "Tell us about your project", maxLength: 5000 },
 ];
 

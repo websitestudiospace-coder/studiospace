@@ -2,7 +2,6 @@ import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import ContactContent from "@/components/contact/ContactContent";
 import { getProjectPhoto } from "@/lib/projects";
-import { DEFAULT_SHARE_IMAGE } from "@/lib/site";
 
 // Hero photo, resolved here because getProjectPhoto() reads the filesystem.
 // Landscape, so it crops well into the wide banner.
@@ -18,14 +17,14 @@ export const metadata = {
     title: "Contact | Studio SP_ACE",
     description: "Get in touch with Studio SP_ACE to start your architecture and interior design project.",
     siteName: "Studio SP_ACE",
-    images: [{ url: DEFAULT_SHARE_IMAGE }],
+    images: [{ url: "/images/contact-share.jpg", width: 678, height: 452, alt: "Contact Studio SP_ACE" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Contact | Studio SP_ACE",
     description: "Get in touch with Studio SP_ACE to start your architecture and interior design project.",
-    images: [DEFAULT_SHARE_IMAGE],
+    images: ["/images/contact-share.jpg"],
   },
 };
 
