@@ -84,19 +84,23 @@ export default function About() {
   const mobileImageRef = useRef(null);
   const mobileTextRef = useRef(null);
   const reduceMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 768px)");
     const update = () => setIsDesktop(mql.matches);
     update();
+    setMounted(true);
     mql.addEventListener("change", update);
     return () => mql.removeEventListener("change", update);
   }, []);
 
   // The pinned image/text split only works at desktop widths; mobile and
   // reduced motion use the stacked layout in the `!enhanced` branch below.
-  const enhanced = !reduceMotion && isDesktop;
+  // Gated on `mounted` so the mobile GSAP animation doesn't attach to DOM
+  // nodes before the desktop media query has resolved.
+  const enhanced = mounted && !reduceMotion && isDesktop;
 
   // Waits for the preloader: sections above (hero pin, Quote) settle their
   // layout a commit after mount, and a trigger created earlier keeps a stale
@@ -106,7 +110,7 @@ export default function About() {
       const ctx = gsap.context(() => {
         // One scrubbed timeline for the whole section; every phase is placed
         // at an absolute fraction of it so the phases can't drift apart.
-        gsap.set(imageRef.current, { width: "0%" });
+        gsap.set(imageRef.current, { width: "0%", filter: "grayscale(100%)" });
         gsap.set(textRef.current, { opacity: 0, x: TEXT_SLIDE_X });
 
         const tl = gsap.timeline({
@@ -180,7 +184,9 @@ export default function About() {
 
   // Mobile: no pin. The photo scales up from 0.9 and goes grayscale -> colour
   // as it scrolls in; the copy fades up once. Reduced motion stays static.
-  const mobileAnim = !reduceMotion && !isDesktop;
+  // Gated on `mounted` so this does not fire prematurely during SSR/mount
+  // when `isDesktop` has not yet resolved.
+  const mobileAnim = mounted && !reduceMotion && !isDesktop;
 
   usePreloaderGate(
     () => {
@@ -224,6 +230,7 @@ export default function About() {
     // (edge to edge) from md up.
     return (
       <section
+        key="about-mobile"
         className="relative flex w-full flex-col items-center gap-8 px-6 py-16 md:flex-row md:gap-12 md:px-0 md:py-24"
         style={{
           backgroundColor: CREAM,
@@ -257,6 +264,7 @@ export default function About() {
 
   return (
     <section
+      key="about-desktop"
       ref={outerRef}
       className="relative w-full"
       style={{
