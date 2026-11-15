@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { CldImage } from "next-cloudinary";
 import Link from "next/link";
 
@@ -7,6 +8,11 @@ const CREAM = "#F7EFE4";
 const INK = "#2B2622";
 
 export default function NextProjectLink({ project }) {
+  const isCloudinary =
+    project.cover &&
+    (project.cover.includes("res.cloudinary.com") ||
+      (!project.cover.startsWith("http") && !project.cover.startsWith("/")));
+
   return (
     <section className="w-full px-6 py-16 md:px-16 md:py-24" style={{ backgroundColor: CREAM }}>
       <Link
@@ -22,13 +28,23 @@ export default function NextProjectLink({ project }) {
 
         <div className="relative h-[220px] w-full max-w-[420px] overflow-hidden rounded-[8px] md:h-[280px]">
           {project.cover ? (
-            <CldImage
-              src={project.cover}
-              alt={project.name}
-              fill
-              sizes="(max-width: 768px) 90vw, 420px"
-              className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-            />
+            isCloudinary ? (
+              <CldImage
+                src={project.cover}
+                alt={project.name}
+                fill
+                sizes="(max-width: 768px) 90vw, 420px"
+                className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              />
+            ) : (
+              <Image
+                src={project.cover}
+                alt={project.name}
+                fill
+                sizes="(max-width: 768px) 90vw, 420px"
+                className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              />
+            )
           ) : (
             <div className="absolute inset-0" style={{ backgroundColor: INK }} />
           )}

@@ -5,6 +5,8 @@ import ProjectsGrid from "@/components/projects/ProjectsGrid";
 import { getAllProjects } from "@/lib/projects";
 import { DEFAULT_SHARE_IMAGE } from "@/lib/site";
 
+export const revalidate = 60;
+
 export const metadata = {
   title: "Projects | Studio SP_ACE",
   description: "Explore Studio SP_ACE's portfolio of architecture and interior design projects.",

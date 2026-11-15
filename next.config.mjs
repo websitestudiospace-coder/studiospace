@@ -11,11 +11,11 @@ const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""};
   style-src 'self' 'unsafe-inline';
-  img-src 'self' blob: data: https://res.cloudinary.com https://www.google.com https://*.gstatic.com;
-  media-src 'self' https://res.cloudinary.com;
+  img-src 'self' blob: data: https://res.cloudinary.com https://cdn.sanity.io https://www.google.com https://*.gstatic.com;
+  media-src 'self' https://res.cloudinary.com https://studiospace.co.in https://*.studiospace.co.in;
   font-src 'self';
   frame-src 'none';
-  connect-src 'self';
+  connect-src 'self' https://*.api.sanity.io https://cdn.sanity.io;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -61,6 +61,12 @@ const studioCspHeader = `
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   devIndicators: false,
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "cdn.sanity.io" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+    ],
+  },
   async headers() {
     return [
       {

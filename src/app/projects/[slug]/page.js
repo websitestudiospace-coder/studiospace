@@ -3,11 +3,14 @@ import Nav from "@/components/home/Nav";
 import Footer from "@/components/home/Footer";
 import ProjectDetail from "@/components/projects/ProjectDetail";
 import { PROJECTS } from "@/data/projects";
-import { getProjectBySlug, getNextProject } from "@/lib/projects";
+import { getAllProjects, getProjectBySlug, getNextProject } from "@/lib/projects";
 import { toShareImage } from "@/lib/site";
 
-export function generateStaticParams() {
-  return PROJECTS.map((project) => ({ slug: project.slug }));
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const projects = await getAllProjects();
+  return projects.map((project) => ({ slug: project.slug }));
 }
 
 export async function generateMetadata({ params }) {

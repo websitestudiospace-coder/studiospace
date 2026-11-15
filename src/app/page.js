@@ -13,6 +13,8 @@ import { DEFAULT_SHARE_IMAGE } from "@/lib/site";
 const HOME_DESCRIPTION =
   "Based in Bangalore and working pan-India, Studio SP_ACE is a bespoke interior design studio offering a complete journey from design to execution.";
 
+export const revalidate = 60;
+
 export const metadata = {
   title: "Studio SP_ACE | Architecture & Interior Design",
   description: HOME_DESCRIPTION,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { CldImage } from "next-cloudinary";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -196,6 +197,11 @@ export default function ProjectHero({ project }) {
     enhanced
   );
 
+  const isCloudinary =
+    project.cover &&
+    (project.cover.includes("res.cloudinary.com") ||
+      (!project.cover.startsWith("http") && !project.cover.startsWith("/")));
+
   if (reduceMotion) {
     return (
       <>
@@ -205,14 +211,25 @@ export default function ProjectHero({ project }) {
         >
           <div className="relative h-[50vh] w-full overflow-hidden md:h-[85vh] md:w-[46%]">
             {project.cover ? (
-              <CldImage
-                src={project.cover}
-                alt={project.name}
-                fill
-                priority
-                sizes="(max-width: 767px) 100vw, 46vw"
-                className="object-cover grayscale"
-              />
+              isCloudinary ? (
+                <CldImage
+                  src={project.cover}
+                  alt={project.name}
+                  fill
+                  priority
+                  sizes="(max-width: 767px) 100vw, 46vw"
+                  className="object-cover grayscale"
+                />
+              ) : (
+                <Image
+                  src={project.cover}
+                  alt={project.name}
+                  fill
+                  priority
+                  sizes="(max-width: 767px) 100vw, 46vw"
+                  className="object-cover grayscale"
+                />
+              )
             ) : (
               <div className="absolute inset-0" style={{ backgroundColor: INK }} />
             )}
@@ -250,14 +267,25 @@ export default function ProjectHero({ project }) {
           >
             <div ref={imageFilterRef} className="absolute inset-0">
               {project.cover ? (
-                <CldImage
-                  src={project.cover}
-                  alt={project.name}
-                  fill
-                  priority
-                  sizes="100vw"
-                  className="object-cover"
-                />
+                isCloudinary ? (
+                  <CldImage
+                    src={project.cover}
+                    alt={project.name}
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={project.cover}
+                    alt={project.name}
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover"
+                  />
+                )
               ) : (
                 <div className="absolute inset-0" style={{ backgroundColor: INK }} />
               )}

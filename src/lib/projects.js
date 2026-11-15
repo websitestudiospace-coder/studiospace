@@ -104,6 +104,21 @@ export function getProjectPhoto(slug, file) {
   return match ? toCloudinaryUrl(`/images/projects/${slug}/${file}`) : null;
 }
 
+function normalizeVideoUrl(url) {
+  if (!url) return null;
+  if (url.includes("player.cloudinary.com/embed")) {
+    try {
+      const parsed = new URL(url);
+      const cloudName = parsed.searchParams.get("cloud_name");
+      const publicId = parsed.searchParams.get("public_id");
+      if (cloudName && publicId) {
+        return `https://res.cloudinary.com/${cloudName}/video/upload/${publicId}.mp4`;
+      }
+    } catch {}
+  }
+  return url;
+}
+
 const SANITY_PROJECT_QUERY = `*[_type == "project"] | order(coalesce(order, 9999) asc, _createdAt desc) {
   "slug": slug.current,
   name,
@@ -144,7 +159,7 @@ async function fetchSanityProjects() {
           width: image.dimensions?.width ?? null,
           height: image.dimensions?.height ?? null,
         })),
-        video: doc.videoUrl ? { src: doc.videoUrl, poster: null } : null,
+        video: doc.videoUrl ? { src: normalizeVideoUrl(doc.videoUrl), poster: null } : null,
       }));
   } catch (err) {
     console.error("[projects] Sanity fetch failed, showing static projects only:", err);

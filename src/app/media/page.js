@@ -14,6 +14,8 @@ const MEDIA_HERO_PHOTO = {
   alt: "A round dining table with navy chairs beneath a wood-beamed ceiling, opening through arched glass doors into a living room with built-in blue cabinetry",
 };
 
+export const revalidate = 60;
+
 export const metadata = {
   title: "Media | Studio SP_ACE",
   description:
