@@ -7,5 +7,5 @@ export const client = createClient({
   apiVersion,
   // Public dataset, so no token needed. The CDN may lag an edit by a short
   // while, which is fine for this content.
-  useCdn: true,
+  useCdn: false,
 });

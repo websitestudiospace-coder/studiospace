@@ -58,6 +58,8 @@ export default function ProjectCard({
     onError: () => setImageFailed(true),
   };
 
+  const isCloudinary = image && (image.includes("res.cloudinary.com") || (!image.startsWith("http") && !image.startsWith("/")));
+
   return (
     <Link
       href={href}
@@ -72,10 +74,10 @@ export default function ProjectCard({
             background: `linear-gradient(135deg, ${INK} 0%, rgba(43,38,34,0.6) 100%)`,
           }}
         />
-      ) : image.startsWith("/") ? (
-        <Image src={image} alt={name} priority={priority} {...imageProps} />
-      ) : (
+      ) : isCloudinary ? (
         <CldImage src={image} alt={name} priority={priority} {...imageProps} />
+      ) : (
+        <Image src={image} alt={name} priority={priority} {...imageProps} />
       )}
       {/* Name/location strip at the bottom: hidden until hover/focus (always
           shown on touch). Ink-tinted scrim with a backdrop blur. */}
