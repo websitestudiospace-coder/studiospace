@@ -129,6 +129,7 @@ const SANITY_PROJECT_QUERY = `*[_type == "project"] | order(coalesce(order, 9999
   squareFootage,
   completion,
   coverImage,
+  order,
   "galleryPhotos": galleryPhotos[] {
     ...,
     "dimensions": asset->metadata.dimensions
@@ -153,6 +154,7 @@ async function fetchSanityProjects() {
         location: doc.location ?? null,
         squareFootage: doc.squareFootage ?? null,
         completion: doc.completion ?? null,
+        order: typeof doc.order === "number" ? doc.order : null,
         cover: urlFor(doc.coverImage).width(1600).url(),
         galleryPhotos: (doc.galleryPhotos ?? []).map((image) => ({
           src: urlFor(image).width(1920).url(),
@@ -168,12 +170,17 @@ async function fetchSanityProjects() {
 }
 
 export async function getAllProjects() {
-  const staticProjects = PROJECTS.map((project) => ({
+  const staticProjects = PROJECTS.map((project, index) => ({
     ...project,
+    order: (index + 1) * 10,
     cover: splitCoverAndGallery(project.slug).cover?.src ?? null,
   }));
   const sanityProjects = await fetchSanityProjects();
-  return [...staticProjects, ...sanityProjects];
+  return [...sanityProjects, ...staticProjects].sort((a, b) => {
+    const orderA = a.order != null ? a.order : 9999;
+    const orderB = b.order != null ? b.order : 9999;
+    return orderA - orderB;
+  });
 }
 
 export async function getProjectBySlug(slug) {
